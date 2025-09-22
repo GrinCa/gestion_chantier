@@ -1,0 +1,59 @@
+Résumé du projet "Carnet de Niveaux Laser"
+
+Etat actuel (ce qui a été fait) :
+- Authentification locale implémentée (inscription / connexion).
+- Persistance locale via IndexedDB (lib idb-keyval). Clés utilisateurs: "user:{username}".
+- Type User étendu avec role ("admin" | "user") et tools?: string[] (droits par outil).
+- Interface Admin (AdminPanel) séparée :
+  - Liste des utilisateurs.
+  - Modification des rôles.
+  - Gestion des droits outils (checkbox).
+  - Suppression d'utilisateurs.
+  - Export CSV basique et paramètres globaux simulés.
+- Interface utilisateur :
+  - Page d'accueil avec rendu conditionnel suivant role.
+  - Gestion des droits d'accès aux outils (user.tools).
+  - Navigation simple par step (home, admin, calculatrice, etc.).
+- Outil "Calculatrice de moyenne" développé en composant séparé :
+  - Pavé numérique 3x4, colonne d'actions, affichage des valeurs en "pills", suppression par clic.
+  - Calculs : moyenne, écart-type (sample), min, max.
+- Découpage initial du code en composants sous src/components.
+
+Points importants / limitations actuelles :
+- Les mots de passe sont stockés en clair dans IndexedDB — NON SECURISE pour production.
+- La persistance est locale (IndexedDB) : les données ne sont pas partagées entre appareils.
+- Pas de backend/API encore en place.
+- Tests unitaires/integra tion manquants.
+
+Prochaines étapes recommandées :
+1. Sécurité
+   - Hacher + saler les mots de passe avant stockage (bcrypt/scrypt côté backend ou WebCrypto côté client).
+   - Ajouter authentification par token si backend.
+2. Backend / Base de données distante
+   - Ajouter une API (REST/GraphQL) et migrer la logique de persistence vers une vraie DB (Postgres, MySQL, Supabase, etc.).
+   - Remplacer idb-keyval par fetch vers API.
+3. Robustesse & UI
+   - Ajouter validation des formulaires, messages d'erreur utilisateurs.
+   - Tests unitaires des composants et tests d'intégration.
+   - Gestion des sessions (persistantes) et logout sécurisé.
+4. Fonctionnalités admin avancées
+   - Logs d'activité persistants.
+   - Gestion fine des permissions (rôles personnalisés).
+   - Interface pour attribuer/revoquer droits outils (déjà partiellement présente, persister modifications).
+5. Architecture
+   - Créer dossiers dédiés : src/components, src/hooks, src/services (api, storage), src/types.
+   - Extraire la logique idb-keyval dans un service storage pour faciliter migration.
+6. Outils futurs
+   - Brancher les outils indépendants (relevé, export CSV, etc.) via des routes/pages et autorisations.
+   - Ajouter import/export de projets/chantiers.
+
+Commandes et dépendances
+- Installer idb-keyval : npm install idb-keyval
+- Démarrer le projet (selon setup) : npm run dev  (ou npm start)
+
+Notes pour un nouveau contributeur / LLM
+- Point d'entrée : src/App.tsx — contient le router "step" et les hooks utilisateurs.
+- Composants admin / outils dans src/components.
+- Pour migrer la persistence, modifier les fonctions saveUser/findUser/... et déplacer la logique vers src/services/api.ts.
+
+Fin du résumé.
