@@ -218,6 +218,10 @@ function useProjects() {
 // --- UI ---
 function HauteurLaserTool({ project, updateProject }: { project: Project; updateProject: (id: string, patch: Partial<Project>) => void }) {
   const [showReleve, setShowReleve] = useState(false);
+  const [showCalculatrice, setShowCalculatrice] = useState(false);
+  const [calcValues, setCalcValues] = useState<number[]>([]);
+  const [calcInput, setCalcInput] = useState("");
+
   // Derived values
   const currentStation = project?.stations[project.stations.length - 1] ?? null;
   const firstStation = project?.stations[0] ?? null;
@@ -315,6 +319,30 @@ function HauteurLaserTool({ project, updateProject }: { project: Project; update
     });
   }
 
+  function handlePadClick(val: string) {
+    setCalcInput((prev) => prev + val);
+  }
+  function handlePadClear() {
+    setCalcInput("");
+  }
+  function handlePadBackspace() {
+    setCalcInput((prev) => prev.slice(0, -1));
+  }
+  function handlePadValidate() {
+    const n = parseNum(calcInput);
+    if (n == null) return;
+    setCalcValues([...calcValues, n]);
+    setCalcInput("");
+  }
+  function resetCalcValues() {
+    setCalcValues([]);
+    setCalcInput("");
+  }
+
+  const calcMoyenne = calcValues.length > 0
+    ? (calcValues.reduce((a, b) => a + b, 0) / calcValues.length)
+    : null;
+
   return (
     <div className="space-y-6">
       {/* En-tête chantier */}
@@ -335,13 +363,100 @@ function HauteurLaserTool({ project, updateProject }: { project: Project; update
           <div className="text-lg font-bold">{project.clientName}</div>
           <div className="text-md text-gray-600">{project.projectName}</div>
         </div>
-        <button
-          className="px-4 py-2 rounded-xl bg-black text-white"
-          onClick={() => setShowReleve((v) => !v)}
-        >
-          Relevé de cotes
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="px-4 py-2 rounded-xl bg-black text-white"
+            onClick={() => setShowReleve((v) => !v)}
+          >
+            Relevé de cotes
+          </button>
+          <button
+            className="px-4 py-2 rounded-xl bg-blue-700 text-white"
+            onClick={() => setShowCalculatrice((v) => !v)}
+          >
+            Calculatrice moyenne
+          </button>
+        </div>
       </div>
+      {showCalculatrice && (
+        <div className="p-3 rounded-xl border border-gray-200 mb-4 max-w-xs">
+          <div className="font-semibold mb-2">Calculatrice de moyenne</div>
+          <div className="mb-2">
+            <input
+              className="border rounded-xl px-3 py-2 w-full text-right text-lg"
+              value={calcInput}
+              placeholder="Saisir une valeur"
+              readOnly
+            />
+          </div>
+          {/* Pavé numérique classique */}
+          <div className="grid grid-cols-3 gap-2 mb-2">
+            {/* Ligne 1 */}
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("7")}>7</button>
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("8")}>8</button>
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("9")}>9</button>
+            {/* Ligne 2 */}
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("4")}>4</button>
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("5")}>5</button>
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("6")}>6</button>
+            {/* Ligne 3 */}
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("1")}>1</button>
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("2")}>2</button>
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("3")}>3</button>
+            {/* Ligne 4 */}
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick("0")}>0</button>
+            <button className="px-4 py-3 rounded-xl bg-gray-100 text-lg" onClick={() => handlePadClick(".")}>.</button>
+            <span></span>
+          </div>
+          <div className="flex gap-2 mb-2">
+            <button
+              className="px-3 py-2 rounded-xl bg-gray-200"
+              onClick={handlePadBackspace}
+              disabled={calcInput.length === 0}
+            >
+              ⌫
+            </button>
+            <button
+              className="px-3 py-2 rounded-xl bg-gray-200"
+              onClick={handlePadClear}
+              disabled={calcInput.length === 0}
+            >
+              C
+            </button>
+            <button
+              className="px-3 py-2 rounded-xl bg-black text-white"
+              onClick={handlePadValidate}
+              disabled={calcInput.trim() === ""}
+            >
+              Valider
+            </button>
+            <button
+              className="px-3 py-2 rounded-xl bg-gray-200"
+              onClick={resetCalcValues}
+              disabled={calcValues.length === 0}
+            >
+              Réinitialiser
+            </button>
+          </div>
+          {calcValues.length > 0 && (
+            <div className="mb-2">
+              <div className="text-sm text-gray-600">Valeurs saisies :</div>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {calcValues.map((v, i) => (
+                  <span key={i} className="px-2 py-1 bg-gray-100 rounded">{v}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="mt-2 font-bold">
+            Moyenne :{" "}
+            {calcMoyenne != null
+              ? calcMoyenne.toFixed(2)
+              : <span className="text-gray-400">-</span>
+            }
+          </div>
+        </div>
+      )}
       {showReleve && (
         <>
           {/* Meta (sans client/chantier) */}
