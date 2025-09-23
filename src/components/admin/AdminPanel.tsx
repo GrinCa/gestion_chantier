@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { set as idbSet } from "idb-keyval";
-import { updateUserTools } from "../api/users";
+import { updateUserTools } from "../../api/users";
 
 /*
   Composant AdminPanel :
@@ -17,12 +17,12 @@ type User = {
   tools?: string[];
 };
 
-// Liste des outils disponibles (uniquement pour les users, pas pour les admins)
+// Liste des outils disponibles
 const TOOL_LIST = [
   { key: "releve", label: "Outil Relevé de cotes" },
-  // { key: "calculatrice", label: "Outil Calculatrice moyenne" }, // supprimé pour l'admin
+  { key: "calculatrice", label: "Outil Calculatrice moyenne" },
   { key: "export", label: "Outil Export CSV" },
-  // Ajoute ici d'autres outils utilisateur si besoin
+  // Ajoute ici d'autres outils si besoin
 ];
 
 export function AdminPanel({
@@ -59,8 +59,8 @@ export function AdminPanel({
   // Export CSV utilisateurs
   function exportUsersCSV() {
     const header = ["Identifiant", "Rôle"];
-    const rows = users.map(u => [u.username, u.role]);
-    const csv = [header, ...rows].map(r => r.join(";")).join("\n");
+    const rows = users.map((u) => [u.username, u.role]);
+    const csv = [header, ...rows].map((r) => r.join(";")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -74,13 +74,13 @@ export function AdminPanel({
 
   // Modification des droits outils pour chaque utilisateur
   async function handleToolChange(username: string, tool: string, checked: boolean) {
-    const user = users.find(u => u.username === username);
+    const user = users.find((u) => u.username === username);
     if (!user) return;
     let newTools = user.tools ?? [];
     if (checked) {
       if (!newTools.includes(tool)) newTools = [...newTools, tool];
     } else {
-      newTools = newTools.filter(t => t !== tool);
+      newTools = newTools.filter((t) => t !== tool);
     }
     // Correction : utilise idbSet au lieu de set
     await idbSet(`user:${username}`, { ...user, tools: newTools });
@@ -107,13 +107,13 @@ export function AdminPanel({
             </tr>
           </thead>
           <tbody>
-            {users.map(u => (
+            {users.map((u) => (
               <tr key={u.username} className="border-b">
                 <td className="py-2">{u.username}</td>
                 <td>
                   <select
                     value={u.role}
-                    onChange={e => onChangeRole(u.username, e.target.value as "admin" | "user")}
+                    onChange={(e) => onChangeRole(u.username, e.target.value as "admin" | "user")}
                     disabled={u.username === currentUser}
                     className="border rounded px-2 py-1"
                   >
@@ -125,13 +125,13 @@ export function AdminPanel({
                   {/* N'affiche les outils que pour les users */}
                   {u.role === "user" ? (
                     <div className="flex flex-col gap-1">
-                      {TOOL_LIST.map(tool => (
+                      {TOOL_LIST.map((tool) => (
                         <label key={tool.key} className="flex items-center gap-1">
                           <input
                             type="checkbox"
                             checked={u.tools?.includes(tool.key) ?? false}
                             disabled={u.username === currentUser}
-                            onChange={e => handleToolChange(u.username, tool.key, e.target.checked)}
+                            onChange={(e) => handleToolChange(u.username, tool.key, e.target.checked)}
                           />
                           <span>{tool.label}</span>
                         </label>
@@ -187,7 +187,9 @@ export function AdminPanel({
           <h2 className="font-semibold mb-2">Logs d'activité :</h2>
           <ul className="text-left text-xs bg-gray-50 border rounded p-2">
             {logs.map((log, i) => (
-              <li key={i} className="mb-1">{log}</li>
+              <li key={i} className="mb-1">
+                {log}
+              </li>
             ))}
           </ul>
         </div>
@@ -195,4 +197,3 @@ export function AdminPanel({
     </div>
   );
 }
-

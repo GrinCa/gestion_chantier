@@ -9,7 +9,12 @@ import React, { useState } from "react";
   - Ajoute un bouton retour en haut si la prop onBack est fournie.
 */
 
-export function OutilCalculatriceMoyenne({ onBack }: { onBack?: () => void }) {
+// Définition explicite des props
+type OutilCalculatriceMoyenneProps = {
+  onBack?: () => void;
+};
+
+export function OutilCalculatriceMoyenne({ onBack }: OutilCalculatriceMoyenneProps) {
   // Saisie courante
   const [input, setInput] = useState("");
   // Liste des valeurs ajoutées
@@ -74,18 +79,21 @@ export function OutilCalculatriceMoyenne({ onBack }: { onBack?: () => void }) {
 
   return (
     <div className="p-4 rounded-xl border bg-white shadow max-w-lg mx-auto">
-      {/* Bouton retour si demandé */}
+      <h2 className="text-xl font-bold mb-3">Calculatrice Statistique</h2>
+
       {onBack && (
-        <div className="w-full flex justify-end mb-2">
+        <div className="mb-4">
           <button
-            className="px-4 py-2 rounded bg-gray-200 font-semibold"
             onClick={onBack}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m6 0l-3-3m3 3l-3 3" />
+            </svg>
             Retour
           </button>
         </div>
       )}
-      <h2 className="text-xl font-bold mb-3">Calculatrice Statistique</h2>
 
       <div className="mb-3">
         <input
@@ -199,4 +207,3 @@ export function OutilCalculatriceMoyenne({ onBack }: { onBack?: () => void }) {
     </div>
   );
 }
-

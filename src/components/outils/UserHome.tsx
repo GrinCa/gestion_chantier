@@ -6,10 +6,9 @@ import React, { useState } from "react";
   - Permet d'ajouter, supprimer, réinitialiser les valeurs.
   - Affiche les statistiques calculées (moyenne, min, max, écart-type).
   - Les valeurs peuvent être supprimées individuellement via les pills.
-  - Ajoute un bouton retour en haut si la prop onBack est fournie.
 */
 
-export function OutilCalculatriceMoyenne({ onBack }: { onBack?: () => void }) {
+export function OutilCalculatriceMoyenne() {
   // Saisie courante
   const [input, setInput] = useState("");
   // Liste des valeurs ajoutées
@@ -74,17 +73,6 @@ export function OutilCalculatriceMoyenne({ onBack }: { onBack?: () => void }) {
 
   return (
     <div className="p-4 rounded-xl border bg-white shadow max-w-lg mx-auto">
-      {/* Bouton retour si demandé */}
-      {onBack && (
-        <div className="w-full flex justify-end mb-2">
-          <button
-            className="px-4 py-2 rounded bg-gray-200 font-semibold"
-            onClick={onBack}
-          >
-            Retour
-          </button>
-        </div>
-      )}
       <h2 className="text-xl font-bold mb-3">Calculatrice Statistique</h2>
 
       <div className="mb-3">
@@ -200,3 +188,40 @@ export function OutilCalculatriceMoyenne({ onBack }: { onBack?: () => void }) {
   );
 }
 
+export function UserHome({
+  username,
+  role,
+  userTools,
+  onLogout,
+  onOpenCalculatrice,
+  onOpenAdmin,
+}: {
+  username: string;
+  role: "admin" | "user";
+  userTools: string[];
+  onLogout: () => void;
+  onOpenCalculatrice: () => void;
+  onOpenAdmin: () => void;
+}) {
+  return (
+    <div>
+      <h1>Bienvenue, {username}!</h1>
+      <p>Votre rôle : {role}</p>
+
+      <div>
+        <h2>Outils disponibles :</h2>
+        <ul>
+          {userTools.map((tool) => (
+            <li key={tool}>{tool}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <button onClick={onOpenCalculatrice}>Ouvrir la calculatrice</button>
+        {role === "admin" && <button onClick={onOpenAdmin}>Admin Panel</button>}
+        <button onClick={onLogout}>Se déconnecter</button>
+      </div>
+    </div>
+  );
+}
