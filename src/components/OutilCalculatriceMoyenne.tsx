@@ -168,6 +168,13 @@ export function OutilCalculatriceMoyenne() {
           <span className="font-semibold">Max :</span> {max != null ? max : "-"}
         </div>
       </div>
+
+      {/* Affichage du résultat sous forme de bouton uniquement */}
+      {moyenne != null && (
+        <button className="px-4 py-2 rounded bg-green-100 text-green-900 font-bold w-full mt-4">
+          {moyenne.toFixed(4)}
+        </button>
+      )}
     </div>
   );
 }

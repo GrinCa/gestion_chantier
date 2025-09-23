@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { set as idbSet } from "idb-keyval"; // Correction : import 'set' sous le nom 'idbSet'
+import { updateUserTools } from "../api/users";
 
 type User = {
   username: string;
@@ -75,6 +76,12 @@ export function AdminPanel({
     // Correction : utilise idbSet au lieu de set
     await idbSet(`user:${username}`, { ...user, tools: newTools });
     onRefresh();
+  }
+
+  function handleToolsChange(username: string, newTools: string[]) {
+    updateUserTools(username, newTools).then(() => {
+      if (onRefresh) onRefresh();
+    });
   }
 
   return (
@@ -170,12 +177,6 @@ export function AdminPanel({
             ))}
           </ul>
         </div>
-        <button
-          className="px-4 py-2 rounded bg-gray-200"
-          onClick={onBack}
-        >
-          Retour accueil
-        </button>
       </div>
     </div>
   );

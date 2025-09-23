@@ -13,9 +13,19 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { set as idbSet, get, del, keys } from "idb-keyval";
 import { AdminPanel } from "./components/AdminPanel";
 import { OutilCalculatriceMoyenne } from "./components/OutilCalculatriceMoyenne";
+import {
+  saveUser,
+  findUser,
+  userExists,
+  isFirstUser,
+  getAllUsers,
+  deleteUser,
+  updateUserRole,
+  getWhitelist,
+  addToWhitelist
+} from "./api/users";
 
 // --- Types ---
 /**
@@ -31,71 +41,6 @@ type User = {
   role: "admin" | "user";
   tools?: string[];
 };
-
-// --- Fonctions de persistance utilisateur ---
-/**
- * saveUser : ajoute ou modifie un utilisateur dans la base locale
- */
-async function saveUser(user: User) {
-  await idbSet(`user:${user.username}`, user);
-}
-
-/**
- * findUser : retrouve un utilisateur par identifiant et mot de passe
- */
-async function findUser(username: string, password: string): Promise<User | undefined> {
-  const user = await get(`user:${username}`);
-  if (user && user.password === password) return user;
-  return undefined;
-}
-
-/**
- * userExists : vérifie si un utilisateur existe déjà
- */
-async function userExists(username: string): Promise<boolean> {
-  const user = await get(`user:${username}`);
-  return !!user;
-}
-
-/**
- * isFirstUser : détermine si le premier utilisateur admin existe
- */
-async function isFirstUser(): Promise<boolean> {
-  const admin = await get("user:admin");
-  return !admin;
-}
-
-/**
- * getAllUsers : récupère tous les utilisateurs de la base locale
- */
-async function getAllUsers(): Promise<User[]> {
-  const allKeys = await keys();
-  const userKeys = allKeys.filter(k => typeof k === "string" && k.startsWith("user:"));
-  const users: User[] = [];
-  for (const k of userKeys) {
-    const user = await get(k as string);
-    if (user) users.push(user);
-  }
-  return users;
-}
-
-/**
- * deleteUser : supprime un utilisateur
- */
-async function deleteUser(username: string) {
-  await del(`user:${username}`);
-}
-
-/**
- * updateUserRole : modifie le rôle d'un utilisateur
- */
-async function updateUserRole(username: string, role: "admin" | "user") {
-  const user = await get(`user:${username}`);
-  if (user) {
-    user.role = role;
-    await idbSet(`user:${username}`, user);
-  }
-}
 
 // --- Composant principal ---
 export default function App() {
@@ -114,12 +59,46 @@ export default function App() {
   // --- States pour l'utilisateur courant ---
   const [userTools, setUserTools] = useState<string[]>([]);
 
+  // --- Whitelist ---
+  const [whitelist, setWhitelist] = useState<string[]>([]);
+  const [refreshWhitelist, setRefreshWhitelist] = useState(0);
+
+  // Ajout pour double confirmation du mot de passe lors de la création de compte
+  const [showRegisterPrompt, setShowRegisterPrompt] = useState(false);
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerPasswordConfirm, setRegisterPasswordConfirm] = useState("");
+
+  useEffect(() => {
+    getWhitelist().then(setWhitelist);
+  }, [refreshWhitelist]);
+
+  // --- Ajout à la whitelist (admin) ---
+  const [newWhitelistUser, setNewWhitelistUser] = useState("");
+  async function handleAddWhitelist(e: React.FormEvent) {
+    e.preventDefault();
+    if (newWhitelistUser.trim() === "") return;
+    await addToWhitelist(newWhitelistUser.trim());
+    setNewWhitelistUser("");
+    setRefreshWhitelist(r => r + 1);
+  }
+
   // --- Effet : recharge la liste des utilisateurs en mode admin ---
   useEffect(() => {
     if (role === "admin" && step === "admin") {
       getAllUsers().then(setUsers);
     }
   }, [role, step, refreshUsers]);
+
+  // --- Effet : bouton retour navigateur en mode admin ---
+  useEffect(() => {
+    if (step === "admin" && role === "admin") {
+      const handlePopState = () => setStep("home");
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
+    }
+    // Nettoie l'effet si on quitte le mode admin
+    return undefined;
+  }, [step, role]);
 
   // --- Authentification ---
   async function handleLogin(e: React.FormEvent) {
@@ -129,23 +108,46 @@ export default function App() {
       return;
     }
     setLoading(true);
-    const user = await findUser(username, password);
-    setLoading(false);
-    if (user) {
-      setRole(user.role);
-      setUserTools(user.tools ?? []);
-      setStep("home");
-      setError("");
-    } else {
-      setError("Identifiants invalides.");
+    try {
+      const user = await findUser(username, password);
+      setLoading(false);
+      if (user) {
+        setRole(user.role);
+        setUserTools(user.tools ?? []);
+        setStep("home");
+        setError("");
+      } else {
+        // Si l'utilisateur n'existe pas, propose la création du compte
+        if (await userExists(username)) {
+          setError("Identifiants invalides.");
+        } else {
+          setShowRegisterPrompt(true);
+          setError("");
+        }
+      }
+    } catch (err: any) {
+      setLoading(false);
+      if (err?.status === 403 || err?.message?.includes("non autorisé")) {
+        setError("Identifiant non autorisé. Veuillez contacter l'administrateur.");
+      } else {
+        setError("Erreur de connexion au serveur.");
+      }
     }
   }
 
-  // --- Inscription ---
+  // --- Inscription avec double confirmation du mot de passe ---
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    if (username.trim() === "" || password.trim() === "") {
-      setError("Identifiant et mot de passe requis.");
+    if (username.trim() === "" || registerPassword.trim() === "" || registerPasswordConfirm.trim() === "") {
+      setError("Identifiant et les deux champs mot de passe sont requis.");
+      return;
+    }
+    if (registerPassword !== registerPasswordConfirm) {
+      setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+    if (!whitelist.includes(username.trim())) {
+      setError("Identifiant non autorisé. Veuillez contacter l'administrateur.");
       return;
     }
     setLoading(true);
@@ -154,7 +156,6 @@ export default function App() {
       setError("Identifiant déjà utilisé.");
       return;
     }
-    // Définition du rôle et des outils par défaut
     let newRole: "admin" | "user" = "user";
     let defaultTools: string[] = [];
     if (await isFirstUser() && username === "admin") {
@@ -163,12 +164,15 @@ export default function App() {
     } else {
       defaultTools = ["releve", "calculatrice"];
     }
-    await saveUser({ username, password, role: newRole, tools: defaultTools });
+    await saveUser({ username, password: registerPassword, role: newRole, tools: defaultTools });
     setLoading(false);
     setStep("login");
     setError("Utilisateur créé, vous pouvez vous connecter.");
     setUsername("");
     setPassword("");
+    setRegisterPassword("");
+    setRegisterPasswordConfirm("");
+    setShowRegisterPrompt(false);
   }
 
   // --- Actions admin ---
@@ -288,18 +292,62 @@ export default function App() {
     );
   }
 
-  // --- Interface admin ---
   if (step === "admin" && role === "admin") {
     return (
-      <AdminPanel
-        users={users}
-        currentUser={username}
-        onDeleteUser={handleDeleteUser}
-        onChangeRole={handleChangeRole}
-        onRefresh={() => setRefreshUsers(r => r + 1)}
-        onBack={() => setStep("home")}
-        // Les droits outils sont modifiables dans AdminPanel
-      />
+      <>
+        {/* Bouton retour accueil en haut */}
+        <div className="w-full flex justify-end mb-4">
+          <button
+            className="px-4 py-2 rounded bg-gray-200 font-semibold"
+            onClick={() => {
+              setStep("home");
+              window.history.pushState({}, "", "/");
+            }}
+          >
+            Retour accueil
+          </button>
+        </div>
+        <AdminPanel
+          users={users}
+          currentUser={username}
+          onDeleteUser={handleDeleteUser}
+          onChangeRole={handleChangeRole}
+          onRefresh={() => setRefreshUsers(r => r + 1)}
+          onBack={() => setStep("home")}
+        />
+        {/* Ajout whitelist */}
+        <div className="bg-white p-4 rounded-xl shadow w-full max-w-md mx-auto mt-6">
+          <h2 className="text-lg font-bold mb-2">Whitelist des identifiants autorisés</h2>
+          <form className="flex gap-2 mb-2" onSubmit={handleAddWhitelist}>
+            <input
+              className="border rounded px-2 py-1 flex-1"
+              value={newWhitelistUser}
+              onChange={e => setNewWhitelistUser(e.target.value)}
+              placeholder="Nouvel identifiant"
+            />
+            <button className="bg-blue-600 text-white px-3 py-1 rounded" type="submit">
+              Ajouter
+            </button>
+          </form>
+          <ul className="text-sm mb-2">
+            {whitelist.map(u => {
+              const exists = users.some(user => user.username === u);
+              return (
+                <li key={u} className="py-0.5 flex items-center gap-2">
+                  <span>{u}</span>
+                  <span style={{ marginLeft: "0.5em" }}>
+                    {exists ? (
+                      <span className="text-green-600 text-xs font-semibold">Compte créé</span>
+                    ) : (
+                      <span className="text-red-600 text-xs font-semibold">Pas de compte</span>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </>
     );
   }
 
