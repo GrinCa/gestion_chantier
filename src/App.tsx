@@ -2,17 +2,15 @@
  * Carnet de Niveaux Laser - Application React
  * -------------------------------------------
  * Point d'entrée principal de l'application.
- * Gère le routage entre les différentes vues (login, register, admin, calculatrice, home).
+ * Gère le routage entre les différentes vues (login, register, user, admin).
  * Centralise l'authentification et la gestion des états globaux utilisateur.
  */
 
 import React, { useState, useEffect } from "react";
 // Import admin view
 import { AdminView } from "./components/admin/AdminView";
-// Import calculatrice route
-import { CalculatriceRoute } from "./components/outils/calculatrice/CalculatriceRoute";
-// Import user home
-import { UserHome } from "./components/outils/UserHome";
+// Import user interface
+import { UserView } from "./components/user/UserView";
 import {
   saveUser,
   findUser,
@@ -34,7 +32,7 @@ type User = {
 export default function App() {
   // --- States globaux ---
   // Gère le routage principal de l'application
-  const [step, setStep] = useState<"login" | "home" | "register" | "admin" | "calculatrice">("login");
+  const [step, setStep] = useState<"login" | "register" | "user" | "admin">("login");
   // Identifiant et mot de passe pour login/register
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -62,6 +60,10 @@ export default function App() {
   const [registerPasswordConfirm, setRegisterPasswordConfirm] = useState("");
 
   // --- Authentification ---
+  // Affichage/masquage des mots de passe (login et inscription)
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showRegisterPasswordConfirm, setShowRegisterPasswordConfirm] = useState(false);
   // Gère la connexion utilisateur
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -76,7 +78,7 @@ export default function App() {
       if (user) {
         setRole(user.role);
         setUserTools(user.tools ?? []);
-        setStep("home");
+        setStep("user");
         setError("");
       } else {
         // Si l'utilisateur n'existe pas, propose la création du compte
@@ -115,7 +117,7 @@ export default function App() {
     setLoading(true);
     if (await userExists(username)) {
       setLoading(false);
-      setError("Identifiant déjà utilisé.");
+      setError("Ce nom d'utilisateur existe déjà. Veuillez en choisir un autre.");
       return;
     }
     let newRole: "admin" | "user" = "user";
@@ -167,19 +169,31 @@ export default function App() {
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Mot de passe</label>
-            <input
-              className="w-full border rounded px-3 py-2"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                className="w-full border rounded px-3 py-2 pr-10"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
           {error && <div className="text-red-600 mb-2">{error}</div>}
           <button
             className="w-full py-2 rounded bg-black text-white font-bold"
             type="submit"
+            disabled={username.trim() === "" || password.trim() === "" || loading}
           >
-            Se connecter
+            {loading ? "Connexion..." : "Se connecter"}
           </button>
           <button
             className="w-full py-2 rounded bg-gray-200 mt-2"
@@ -219,21 +233,43 @@ export default function App() {
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Mot de passe</label>
-            <input
-              className="w-full border rounded px-3 py-2"
-              type="password"
-              value={registerPassword}
-              onChange={e => setRegisterPassword(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                className="w-full border rounded px-3 py-2 pr-10"
+                type={showRegisterPassword ? "text" : "password"}
+                value={registerPassword}
+                onChange={e => setRegisterPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                onClick={() => setShowRegisterPassword(v => !v)}
+                aria-label={showRegisterPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showRegisterPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Confirmation du mot de passe</label>
-            <input
-              className="w-full border rounded px-3 py-2"
-              type="password"
-              value={registerPasswordConfirm}
-              onChange={e => setRegisterPasswordConfirm(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                className="w-full border rounded px-3 py-2 pr-10"
+                type={showRegisterPasswordConfirm ? "text" : "password"}
+                value={registerPasswordConfirm}
+                onChange={e => setRegisterPasswordConfirm(e.target.value)}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                onClick={() => setShowRegisterPasswordConfirm(v => !v)}
+                aria-label={showRegisterPasswordConfirm ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showRegisterPasswordConfirm ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
           {error && <div className="text-red-600 mb-2">{error}</div>}
           <button
@@ -259,30 +295,27 @@ export default function App() {
     return (
       <AdminView
         currentUser={username}
-        onBack={() => setStep("home")}
+        onBack={async () => {
+          // Recharge les droits outils de l'utilisateur courant après retour admin
+          const res = await fetch(`http://localhost:3001/users/${username}`);
+          if (res.ok) {
+            const user = await res.json();
+            setUserTools(user.tools ?? []);
+          }
+          setStep("user");
+        }}
       />
     );
   }
 
-  if (step === "calculatrice") {
-    // Vue calculatrice (statistiques, pavé numérique)
+  if (step === "user") {
+    // Vue principale utilisateur (symétrique à AdminView)
     return (
-      <CalculatriceRoute
-        userTools={userTools}
-        onBack={() => setStep("home")}
-      />
-    );
-  }
-
-  if (step === "home") {
-    // Vue d'accueil utilisateur (outils, déconnexion, accès admin)
-    return (
-      <UserHome
+      <UserView
         username={username}
         role={role}
         userTools={userTools}
         onLogout={() => setStep("login")}
-        onOpenCalculatrice={() => setStep("calculatrice")}
         onOpenAdmin={() => setStep("admin")}
       />
     );

@@ -5,7 +5,8 @@ import {
   deleteUser,
   updateUserRole,
   getWhitelist,
-  addToWhitelist
+  addToWhitelist,
+  deleteFromWhitelist
 } from "../../api/users";
 import type { User } from "../../api/users"; // Import du type User séparément
 
@@ -84,7 +85,10 @@ export function AdminView({ currentUser, onBack }: { currentUser: string; onBack
           currentUser={currentUser}
           onDeleteUser={handleDeleteUser}
           onChangeRole={handleChangeRole}
-          onRefresh={() => {}}
+          onRefresh={async () => {
+            const refreshed = await getAllUsers();
+            setUsers(refreshed);
+          }}
           onBack={onBack}
         />
         {/* Whitelist des identifiants autorisés */}
@@ -96,7 +100,14 @@ export function AdminView({ currentUser, onBack }: { currentUser: string; onBack
                 <span className="font-medium">{username}</span>
                 <button
                   className="px-3 py-1 rounded bg-red-100 text-red-700"
-                  onClick={() => handleDeleteUser(username)}
+                  onClick={async () => {
+                    if (window.confirm(`Retirer ${username} de la whitelist ? L'utilisateur sera aussi supprimé.`)) {
+                      await deleteFromWhitelist(username);
+                      await deleteUser(username);
+                      setWhitelist(prev => prev.filter(u => u !== username));
+                      setUsers(prev => prev.filter(u => u.username !== username));
+                    }
+                  }}
                 >
                   Supprimer
                 </button>

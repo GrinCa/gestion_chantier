@@ -67,3 +67,41 @@ export default defineConfig([
   },
 ])
 ```
+
+Pour lancer l'API backend Node.js, tu dois exécuter une commande du type :
+  node <nom_du_fichier_backend>.js
+
+Mais il faut d'abord identifier le fichier principal de ton backend (souvent nommé `server.js`, `index.js`, `app.js` ou similaire).
+
+Étapes :
+1. Va dans le dossier du backend (ex : `api`, `backend`, ou la racine si tout est mélangé).
+2. Cherche un fichier comme `server.js`, `index.js`, `app.js` ou regarde dans le fichier `package.json` la propriété `"main"` ou les scripts `"start"`/`"dev"`.
+3. Lance la commande :
+   ```
+   node server.js
+   ```
+   ou
+   ```
+   node app.js
+   ```
+   ou
+   ```
+   npm start
+   ```
+   selon ce que tu trouves.
+
+Si tu ne sais pas quel fichier utiliser :
+- Liste les fichiers JS à la racine ou dans le dossier backend.
+- Ouvre le fichier qui contient le code d'initialisation du serveur (souvent avec `express()`, `app.listen(...)`, etc.).
+- Utilise ce nom de fichier dans la commande `node`.
+
+Exemple :
+```
+node server.js
+```
+ou
+```
+npm start
+```
+
+Si tu veux que je t'aide à identifier le bon fichier, donne-moi la liste des fichiers JS présents à la racine ou dans le dossier backend.

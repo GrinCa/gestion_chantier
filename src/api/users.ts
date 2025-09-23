@@ -1,3 +1,7 @@
+// Supprime un identifiant de la whitelist
+export async function deleteFromWhitelist(username: string) {
+  await fetch(`${API_URL}/whitelist/${username}`, { method: "DELETE" });
+}
 /**
  * Fonctions d'accès à l'API backend pour la gestion des utilisateurs et de la whitelist.
  */

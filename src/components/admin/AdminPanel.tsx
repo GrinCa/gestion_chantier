@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { set as idbSet } from "idb-keyval";
 import { updateUserTools } from "../../api/users";
 
 /*
@@ -82,8 +81,8 @@ export function AdminPanel({
     } else {
       newTools = newTools.filter((t) => t !== tool);
     }
-    // Correction : utilise idbSet au lieu de set
-    await idbSet(`user:${username}`, { ...user, tools: newTools });
+    // Envoie la modification au backend
+    await updateUserTools(username, newTools);
     onRefresh();
   }
 

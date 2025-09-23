@@ -3,9 +3,11 @@ import cors from "cors";
 import sqlite3 from "sqlite3";
 import bodyParser from "body-parser";
 
+
+// ...existing code...
+
 // sqlite3.verbose() doit être appelé sur le module importé
 const db = new sqlite3.Database("./users.db");
-
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -25,13 +27,17 @@ db.run(`
   CREATE TABLE IF NOT EXISTS whitelist (
     username TEXT PRIMARY KEY
   )
-`);
-
-// Ajoute automatiquement "admin" à la whitelist si absent
-db.run(
-  "INSERT OR IGNORE INTO whitelist (username) VALUES (?)",
-  ["admin"]
-);
+`, err => {
+  if (err) {
+    console.error("Erreur création table whitelist:", err);
+  } else {
+    // Ajoute automatiquement "admin" à la whitelist si absent
+    db.run(
+      "INSERT OR IGNORE INTO whitelist (username) VALUES (?)",
+      ["admin"]
+    );
+  }
+});
 
 // Liste tous les utilisateurs
 app.get("/users", (req, res) => {
@@ -47,7 +53,8 @@ app.get("/users", (req, res) => {
 
 // Vérifie existence utilisateur
 app.get("/users/:username", (req, res) => {
-  db.get("SELECT * FROM users WHERE username = ?", [req.params.username], (err, row) => {
+  const username = req.params.username.toLowerCase();
+  db.get("SELECT * FROM users WHERE username = ?", [username], (err, row) => {
     if (err) {
       console.error("Erreur SQLite:", err);
       return res.status(500).json({ error: "Erreur serveur" });
@@ -74,7 +81,8 @@ app.get("/whitelist", (req, res) => {
 
 // Ajout whitelist
 app.post("/whitelist", (req, res) => {
-  const { username } = req.body;
+  let { username } = req.body;
+  username = username.toLowerCase();
   db.run(
     "INSERT OR IGNORE INTO whitelist (username) VALUES (?)",
     [username],
@@ -90,7 +98,8 @@ app.post("/whitelist", (req, res) => {
 
 // Ajoute ou modifie utilisateur
 app.post("/users", (req, res) => {
-  const { username, password, role, tools } = req.body;
+  let { username, password, role, tools } = req.body;
+  username = username.toLowerCase();
   db.run(
     "INSERT OR REPLACE INTO users (username, password, role, tools) VALUES (?, ?, ?, ?)",
     [username, password, role, JSON.stringify(tools || [])],
@@ -106,7 +115,8 @@ app.post("/users", (req, res) => {
 
 // Supprime utilisateur
 app.delete("/users/:username", (req, res) => {
-  db.run("DELETE FROM users WHERE username = ?", [req.params.username], err => {
+  const username = req.params.username.toLowerCase();
+  db.run("DELETE FROM users WHERE username = ?", [username], err => {
     if (err) {
       console.error("Erreur SQLite:", err);
       return res.status(500).json({ error: "Erreur serveur" });
@@ -117,9 +127,10 @@ app.delete("/users/:username", (req, res) => {
 
 // Modifie rôle utilisateur
 app.put("/users/:username/role", (req, res) => {
+  const username = req.params.username.toLowerCase();
   db.run(
     "UPDATE users SET role = ? WHERE username = ?",
-    [req.body.role, req.params.username],
+    [req.body.role, username],
     err => {
       if (err) {
         console.error("Erreur SQLite:", err);
@@ -132,9 +143,10 @@ app.put("/users/:username/role", (req, res) => {
 
 // Modifie les outils utilisateur
 app.put("/users/:username/tools", (req, res) => {
+  const username = req.params.username.toLowerCase();
   db.run(
     "UPDATE users SET tools = ? WHERE username = ?",
-    [JSON.stringify(req.body.tools || []), req.params.username],
+    [JSON.stringify(req.body.tools || []), username],
     err => {
       if (err) {
         console.error("Erreur SQLite:", err);
@@ -147,7 +159,8 @@ app.put("/users/:username/tools", (req, res) => {
 
 // Authentification
 app.post("/login", (req, res) => {
-  const { username, password } = req.body;
+  let { username, password } = req.body;
+  username = username.toLowerCase();
   // Vérifie d'abord la whitelist
   db.get(
     "SELECT username FROM whitelist WHERE username = ?",
