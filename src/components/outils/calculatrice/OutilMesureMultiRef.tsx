@@ -6,85 +6,163 @@ export interface Mesure {
   raw: number;
   isRef: boolean;
   createdAt: number;
+  sectionId: string;  // Lien vers la section parente
+}
+
+export interface Section {
+  id: string;
+  label: string;
+  mesures: Mesure[];
+  createdAt: number;
 }
 
 export interface GroupeMesures {
   id: string;
   label: string;
-  mesures: Mesure[];
-  refToPrevId?: string | null;
-  refToNextId?: string | null;
+  sections: Section[];  // Remplace mesures par sections
+  refToPrevId?: string | null;  // ID de mesure (across all sections)
+  refToNextId?: string | null;  // ID de mesure (across all sections)
   storedRelOffset?: number | null;
 }
 
 interface PersistShapeV1 { version: 1; groups: any[] }
-interface PersistShapeV2 { version: 2; groups: GroupeMesures[] }
-type PersistAny = PersistShapeV1 | PersistShapeV2;
+interface PersistShapeV2 { version: 2; groups: any[] } // Ancien format avec mesures directes
+interface PersistShapeV3 { version: 3; groups: GroupeMesures[] } // Nouveau format avec sections
+type PersistAny = PersistShapeV1 | PersistShapeV2 | PersistShapeV3;
 
 // Utilitaires
 function uuid() { 
   return (crypto as any).randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2); 
 }
 
-const STORAGE_KEY = 'outil-multi-ref-v2';
+const STORAGE_KEY = 'outil-multi-ref-v3';
 
 export const OutilMesureMultiRef: React.FC = () => {
   // État initial
   const [groups, setGroups] = useState<GroupeMesures[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
+      if (!raw) {
+        // Essayer de migrer depuis v2
+        const oldRaw = localStorage.getItem('outil-multi-ref-v2');
+        if (oldRaw) {
+          const oldParsed = JSON.parse(oldRaw);
+          if (oldParsed?.version === 2) {
+            localStorage.removeItem('outil-multi-ref-v2'); // Nettoyer l'ancien
+            return migrateFromV2(oldParsed.groups || []);
+          }
+        }
+        return [];
+      }
       const parsed: PersistAny = JSON.parse(raw);
       if (!parsed || !('version' in parsed)) return [];
-      if (parsed.version === 2) {
+      
+      if (parsed.version === 3) {
         return Array.isArray(parsed.groups) ? parsed.groups : [];
       }
+      if (parsed.version === 2) {
+        return migrateFromV2(parsed.groups || []);
+      }
       if (parsed.version === 1) {
-        return (parsed.groups || []).map((g: any, idx: number): GroupeMesures => {
-          const ref = Array.isArray(g.mesures) ? g.mesures.find((m: any) => m.isRef) : null;
-          return {
-            id: g.id || uuid(),
-            label: g.label || `Position ${idx+1}`,
-            mesures: Array.isArray(g.mesures) ? g.mesures.map((m: any) => ({
-              id: m.id || uuid(),
-              raw: m.raw ?? 0,
-              isRef: !!m.isRef,
-              createdAt: m.createdAt || Date.now()
-            })) : [],
-            refToPrevId: ref ? ref.id : null,
-            refToNextId: ref ? ref.id : null,
-            storedRelOffset: idx === 0 ? 0 : null
-          };
-        });
+        return migrateFromV1(parsed.groups || []);
       }
       return [];
     } catch { return []; }
   });
   
+  // Fonctions de migration
+  function migrateFromV1(oldGroups: any[]): GroupeMesures[] {
+    return oldGroups.map((g: any, idx: number): GroupeMesures => {
+      const ref = Array.isArray(g.mesures) ? g.mesures.find((m: any) => m.isRef) : null;
+      const defaultSection: Section = {
+        id: uuid(),
+        label: 'Général',
+        mesures: Array.isArray(g.mesures) ? g.mesures.map((m: any) => ({
+          id: m.id || uuid(),
+          raw: m.raw ?? 0,
+          isRef: !!m.isRef,
+          createdAt: m.createdAt || Date.now(),
+          sectionId: uuid() // Sera réassigné après
+        })) : [],
+        createdAt: Date.now()
+      };
+      // Réassigner les sectionId
+      defaultSection.mesures.forEach(m => m.sectionId = defaultSection.id);
+      
+      return {
+        id: g.id || uuid(),
+        label: g.label || `Position ${idx+1}`,
+        sections: [defaultSection],
+        refToPrevId: ref ? ref.id : null,
+        refToNextId: ref ? ref.id : null,
+        storedRelOffset: idx === 0 ? 0 : null
+      };
+    });
+  }
+  
+  function migrateFromV2(oldGroups: any[]): GroupeMesures[] {
+    return oldGroups.map((g: any): GroupeMesures => {
+      const defaultSection: Section = {
+        id: uuid(),
+        label: 'Général',
+        mesures: Array.isArray(g.mesures) ? g.mesures.map((m: any) => ({
+          id: m.id || uuid(),
+          raw: m.raw ?? 0,
+          isRef: !!m.isRef,
+          createdAt: m.createdAt || Date.now(),
+          sectionId: uuid() // Sera réassigné après
+        })) : [],
+        createdAt: Date.now()
+      };
+      // Réassigner les sectionId
+      defaultSection.mesures.forEach(m => m.sectionId = defaultSection.id);
+      
+      return {
+        id: g.id || uuid(),
+        label: g.label || 'Position',
+        sections: [defaultSection],
+        refToPrevId: g.refToPrevId || null,
+        refToNextId: g.refToNextId || null,
+        storedRelOffset: g.storedRelOffset ?? null
+      };
+    });
+  }
+  
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(groups[0]?.id || null);
+  const [currentSectionId, setCurrentSectionId] = useState<string | null>(groups[0]?.sections[0]?.id || null);
   const [input, setInput] = useState('');
 
   useEffect(() => {
-    const data: PersistShapeV2 = { version: 2, groups };
+    const data: PersistShapeV3 = { version: 3, groups };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [groups]);
 
   const currentGroup = groups.find(g => g.id === currentGroupId) || null;
+  const currentSection = currentGroup?.sections.find(s => s.id === currentSectionId) || null;
 
   // Fonctions de gestion des groupes
   function addGroup() {
     const label = prompt('Nom de la position ?', `Position ${groups.length + 1}`);
     if (!label) return;
+    const sectionId = crypto.randomUUID();
+    const defaultSection: Section = {
+      id: sectionId,
+      label: 'Section 1',
+      mesures: [],
+      createdAt: Date.now()
+    };
+    
     const g: GroupeMesures = { 
       id: uuid(), 
       label, 
-      mesures: [], 
+      sections: [defaultSection], 
       refToPrevId: null, 
       refToNextId: null, 
       storedRelOffset: groups.length === 0 ? 0 : null 
     };
     setGroups(prev => [...prev, g]);
     setCurrentGroupId(g.id);
+    setCurrentSectionId(sectionId);
   }
   
   function deleteGroup(id: string) {
@@ -97,6 +175,46 @@ export const OutilMesureMultiRef: React.FC = () => {
     if (!confirm('Tout supprimer ?')) return;
     setGroups([]);
     setCurrentGroupId(null);
+    setCurrentSectionId(null);
+  }
+
+  function addSection(groupId: string) {
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    const label = prompt('Nom de la section ?', `Section ${group.sections.length + 1}`);
+    if (!label) return;
+    
+    const newSection: Section = {
+      id: crypto.randomUUID(),
+      label,
+      mesures: [],
+      createdAt: Date.now()
+    };
+    
+    setGroups(prev => prev.map(g => 
+      g.id === groupId 
+        ? { ...g, sections: [...g.sections, newSection] }
+        : g
+    ));
+    
+    setCurrentSectionId(newSection.id);
+  }
+
+  function deleteSection(groupId: string, sectionId: string) {
+    if (!confirm('Supprimer cette section et ses mesures ?')) return;
+    
+    setGroups(prev => prev.map(g => 
+      g.id === groupId 
+        ? { ...g, sections: g.sections.filter(s => s.id !== sectionId) }
+        : g
+    ));
+    
+    if (currentSectionId === sectionId) {
+      const group = groups.find(g => g.id === groupId);
+      const remainingSections = group?.sections.filter(s => s.id !== sectionId) || [];
+      setCurrentSectionId(remainingSections[0]?.id || null);
+    }
   }
 
   // Fonctions de gestion des mesures
@@ -110,14 +228,54 @@ export const OutilMesureMultiRef: React.FC = () => {
     if (!currentGroup) return;
     const n = parseInput(input);
     if (n == null) return;
-    const m: Mesure = { id: uuid(), raw: n, isRef: false, createdAt: Date.now() };
-    setGroups(prev => prev.map(g => g.id === currentGroup.id ? { ...g, mesures: [...g.mesures, m] } : g));
+    const m: Mesure = { 
+      id: uuid(), 
+      raw: n, 
+      isRef: false, 
+      createdAt: Date.now(),
+      sectionId: currentSectionId!
+    };
+    setGroups(prev => prev.map(g => 
+      g.id === currentGroup.id 
+        ? { 
+            ...g, 
+            sections: g.sections.map(s => 
+              s.id === currentSectionId 
+                ? { ...s, mesures: [...s.mesures, m] }
+                : s
+            )
+          }
+        : g
+    ));
     setInput('');
   }
   
   function deleteMesure(groupId: string, mesureId: string) {
     if (!confirm('Supprimer cette mesure ?')) return;
-    setGroups(prev => prev.map(g => g.id === groupId ? { ...g, mesures: g.mesures.filter(m => m.id !== mesureId) } : g));
+    setGroups(prev => prev.map(g => 
+      g.id === groupId 
+        ? { 
+            ...g, 
+            sections: g.sections.map(s => ({
+              ...s,
+              mesures: s.mesures.filter(m => m.id !== mesureId)
+            }))
+          }
+        : g
+    ));
+  }
+
+  // Fonctions utilitaires pour travailler avec les sections
+  function findMesureInGroup(group: GroupeMesures, mesureId: string): Mesure | null {
+    for (const section of group.sections) {
+      const mesure = section.mesures.find(m => m.id === mesureId);
+      if (mesure) return mesure;
+    }
+    return null;
+  }
+
+  function getAllMesuresFromGroup(group: GroupeMesures): Mesure[] {
+    return group.sections.flatMap(section => section.mesures);
   }
 
   // Recalcul de la chaîne
@@ -128,8 +286,8 @@ export const OutilMesureMultiRef: React.FC = () => {
       const prevG = result[i-1];
       const curG = result[i];
       
-      const prevRefToNext = prevG.refToNextId ? prevG.mesures.find(m => m.id === prevG.refToNextId) : null;
-      const curRefToPrev = curG.refToPrevId ? curG.mesures.find(m => m.id === curG.refToPrevId) : null;
+      const prevRefToNext = prevG.refToNextId ? findMesureInGroup(prevG, prevG.refToNextId) : null;
+      const curRefToPrev = curG.refToPrevId ? findMesureInGroup(curG, curG.refToPrevId) : null;
       
       if (prevRefToNext && curRefToPrev) {
         curG.storedRelOffset = prevRefToNext.raw - curRefToPrev.raw;
@@ -170,13 +328,13 @@ export const OutilMesureMultiRef: React.FC = () => {
   // Calculs
   function refToPrevOfGroup(g: GroupeMesures): number | null {
     if (!g.refToPrevId) return null;
-    const r = g.mesures.find(m => m.id === g.refToPrevId);
+    const r = g.refToPrevId ? findMesureInGroup(g, g.refToPrevId) : null;
     return r ? r.raw : null;
   }
 
   function refToNextOfGroup(g: GroupeMesures): number | null {
     if (!g.refToNextId) return null;
-    const r = g.mesures.find(m => m.id === g.refToNextId);
+    const r = g.refToNextId ? findMesureInGroup(g, g.refToNextId) : null;
     return r ? r.raw : null;
   }
 
@@ -210,8 +368,10 @@ export const OutilMesureMultiRef: React.FC = () => {
   groups.forEach((g) => {
     const off = globalOffsetOfGroup(g);
     if (off == null) return;
-    g.mesures.forEach(m => {
-      flattenedGlobal.push(m.raw + off);
+    g.sections.forEach(section => {
+      section.mesures.forEach(m => {
+        flattenedGlobal.push(m.raw + off);
+      });
     });
   });
 
@@ -332,7 +492,7 @@ export const OutilMesureMultiRef: React.FC = () => {
 
       {/* Grille améliorée des positions */}
       {groups.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {groups.map((g, idx) => {
             const isCurrent = g.id === currentGroupId;
             const globalOff = globalOffsetOfGroup(g);
@@ -361,13 +521,22 @@ export const OutilMesureMultiRef: React.FC = () => {
                   >
                     {g.label}
                   </button>
-                  <button 
-                    onClick={()=>deleteGroup(g.id)} 
-                    className="text-red-500 hover:text-red-700 text-sm p-1 hover:bg-red-50 rounded" 
-                    title="Supprimer cette position"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={()=>addSection(g.id)} 
+                      className="text-blue-500 hover:text-blue-700 text-xs p-1 hover:bg-blue-50 rounded font-medium" 
+                      title="Ajouter une section"
+                    >
+                      + Section
+                    </button>
+                    <button 
+                      onClick={()=>deleteGroup(g.id)} 
+                      className="text-red-500 hover:text-red-700 text-sm p-1 hover:bg-red-50 rounded" 
+                      title="Supprimer cette position"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="bg-gray-50 rounded-lg p-3 mb-3 text-xs">
@@ -387,63 +556,103 @@ export const OutilMesureMultiRef: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {g.mesures.length === 0 && (
-                    <div className="text-center text-gray-400 py-6 text-sm italic">
-                      Aucune mesure
-                    </div>
-                  )}
-                  {g.mesures.slice().reverse().map(m => {
-                    const gv = globalValue(m.raw, g);
-                    const isRefToPrev = g.refToPrevId === m.id;
-                    const isRefToNext = g.refToNextId === m.id;
-                    return (
-                      <div 
-                        key={m.id} 
-                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                          (isRefToPrev || isRefToNext)
-                            ? 'bg-amber-50 border-amber-200 shadow-sm'
-                            : 'bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-mono text-base font-semibold">{m.raw}</span>
-                          {gv != null && <span className="text-xs text-blue-600 font-medium">= {gv}</span>}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={()=>toggleRefToPrev(g.id, m.id)} 
-                            className={`text-lg px-2 py-1 rounded transition-colors ${
-                              isRefToPrev 
-                                ? 'text-blue-700 bg-blue-100' 
-                                : 'text-blue-400 hover:text-blue-600 hover:bg-blue-50'
-                            }`} 
-                            title="Référence vers position précédente"
-                          >
-                            {isRefToPrev ? '◀' : '◁'}
-                          </button>
-                          <button 
-                            onClick={()=>toggleRefToNext(g.id, m.id)} 
-                            className={`text-lg px-2 py-1 rounded transition-colors ${
-                              isRefToNext 
-                                ? 'text-green-700 bg-green-100' 
-                                : 'text-green-400 hover:text-green-600 hover:bg-green-50'
-                            }`} 
-                            title="Référence vers position suivante"
-                          >
-                            {isRefToNext ? '▶' : '▷'}
-                          </button>
-                          <button 
-                            onClick={()=>deleteMesure(g.id, m.id)} 
-                            className="text-red-400 hover:text-red-600 text-sm ml-1 hover:bg-red-50 px-2 py-1 rounded transition-colors" 
-                            title="Supprimer cette mesure"
-                          >
-                            ✕
-                          </button>
-                        </div>
+                <div className="flex flex-row gap-3 overflow-x-auto pb-2" style={{ 
+                  display: 'flex', 
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  flexWrap: 'nowrap'
+                }}>
+                  {g.sections.map(section => (
+                      <div key={section.id} className="bg-white border border-gray-200 rounded-lg p-2" style={{ 
+                        minWidth: '200px', 
+                        flexShrink: 0,
+                        display: 'inline-block',
+                        verticalAlign: 'top'
+                      }}>
+                        <div className={`flex items-center justify-between text-xs font-semibold px-2 py-1 rounded mb-2 ${
+                          section.id === currentSectionId && g.id === currentGroupId
+                            ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                            : 'bg-gray-50 text-gray-600'
+                        }`}>
+                        <button 
+                          onClick={() => {
+                            setCurrentGroupId(g.id);
+                            setCurrentSectionId(section.id);
+                          }}
+                          className="flex-1 text-left hover:text-blue-600"
+                          title="Sélectionner cette section pour ajouter des mesures"
+                        >
+                          {section.label}
+                        </button>
+                        <button 
+                          onClick={() => deleteSection(g.id, section.id)}
+                          className="text-red-400 hover:text-red-600 text-xs ml-2 p-1"
+                          title="Supprimer cette section"
+                        >
+                          ✕
+                        </button>
                       </div>
-                    );
-                  })}
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {section.mesures.length === 0 ? (
+                          <div className="text-center text-gray-400 py-3 text-xs italic">
+                            Aucune mesure
+                          </div>
+                        ) : (
+                          section.mesures.slice().reverse().map(m => {
+                          const gv = globalValue(m.raw, g);
+                          const isRefToPrev = g.refToPrevId === m.id;
+                          const isRefToNext = g.refToNextId === m.id;
+                          return (
+                            <div 
+                              key={m.id} 
+                              className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
+                                (isRefToPrev || isRefToNext)
+                                  ? 'bg-amber-50 border-amber-200 shadow-sm'
+                                  : 'bg-gray-50 border-gray-200'
+                              }`}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-mono text-sm font-semibold">{m.raw}</span>
+                                {gv != null && <span className="text-xs text-blue-600 font-medium">= {gv}</span>}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button 
+                                  onClick={()=>toggleRefToPrev(g.id, m.id)} 
+                                  className={`text-sm px-1 py-0.5 rounded transition-colors ${
+                                    isRefToPrev 
+                                      ? 'text-blue-700 bg-blue-100' 
+                                      : 'text-blue-400 hover:text-blue-600 hover:bg-blue-50'
+                                  }`} 
+                                  title="Référence vers position précédente"
+                                >
+                                  {isRefToPrev ? '◀' : '◁'}
+                                </button>
+                                <button 
+                                  onClick={()=>toggleRefToNext(g.id, m.id)} 
+                                  className={`text-sm px-1 py-0.5 rounded transition-colors ${
+                                    isRefToNext 
+                                      ? 'text-green-700 bg-green-100' 
+                                      : 'text-green-400 hover:text-green-600 hover:bg-green-50'
+                                  }`} 
+                                  title="Référence vers position suivante"
+                                >
+                                  {isRefToNext ? '▶' : '▷'}
+                                </button>
+                                <button 
+                                  onClick={()=>deleteMesure(g.id, m.id)} 
+                                  className="text-red-400 hover:text-red-600 text-xs hover:bg-red-50 px-1 py-0.5 rounded transition-colors" 
+                                  title="Supprimer cette mesure"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             );
