@@ -1,24 +1,35 @@
 import React, { useState } from "react";
+import OutilMesureMultiRef from "./OutilMesureMultiRef";
 
-/*
-  Composant OutilCalculatriceMoyenne :
-  - Affiche un pavé numérique pour saisir des valeurs.
-  - Permet d'ajouter, supprimer, réinitialiser les valeurs.
-  - Affiche les statistiques calculées (moyenne, min, max, écart-type).
-  - Les valeurs peuvent être supprimées individuellement via les pills.
-  - Ajoute un bouton retour en haut si la prop onBack est fournie.
-*/
-
-// Définition explicite des props
-type OutilCalculatriceMoyenneProps = {
-  onBack?: () => void;
-};
+// Composant calculatrice statistique simple (version sans système de prise de cotes)
+type OutilCalculatriceMoyenneProps = { onBack?: () => void };
 
 export function OutilCalculatriceMoyenne({ onBack }: OutilCalculatriceMoyenneProps) {
-  // Saisie courante
-  const [input, setInput] = useState("");
-  // Liste des valeurs ajoutées
-  const [values, setValues] = useState<number[]>([]);
+  // mode = 'stat' | 'multi'
+  const [mode, setMode] = useState<'stat'|'multi'>('stat');
+  const STORAGE_KEY = 'outil-calculatrice-moyenne';
+  // Initialisation depuis localStorage
+  const [input, setInput] = useState(() => {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      return typeof data.input === 'string' ? data.input : '';
+    } catch {
+      return '';
+    }
+  });
+  const [values, setValues] = useState<number[]>(() => {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      return Array.isArray(data.values) ? data.values : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Sauvegarde à chaque changement
+  React.useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ input, values }));
+  }, [input, values]);
 
   // Parse la saisie utilisateur en nombre
   function parseInput(str: string): number | null {
@@ -39,15 +50,17 @@ export function OutilCalculatriceMoyenne({ onBack }: OutilCalculatriceMoyennePro
     setInput("");
   }
 
-  // Réinitialise toutes les valeurs
+  // Réinitialise toutes les valeurs avec confirmation
   function handleReset() {
-    setValues([]);
-    setInput("");
+    if (window.confirm("Voulez-vous vraiment réinitialiser toutes les valeurs ?")) {
+      setValues([]);
+      setInput("");
+    }
   }
 
   // Supprime le dernier caractère de la saisie
   function handleBackspace() {
-    setInput((s) => s.slice(0, -1));
+  setInput((s: string) => s.slice(0, -1));
   }
 
   // Gère le clic sur le pavé numérique ou les boutons d'action
@@ -57,12 +70,14 @@ export function OutilCalculatriceMoyenne({ onBack }: OutilCalculatriceMoyennePro
     if (key === "Valider") return handleValidate();
     if (key === "Reset") return handleReset();
     // pour éviter plusieurs séparateurs successifs
-    setInput((prev) => prev + key);
+  setInput((prev: string) => prev + key);
   }
 
-  // Supprime une valeur de la liste
+  // Supprime une valeur de la liste avec confirmation
   function removeValueAt(index: number) {
-    setValues((prev) => prev.filter((_, i) => i !== index));
+    if (window.confirm("Supprimer cette valeur ?")) {
+      setValues((prev) => prev.filter((_, i) => i !== index));
+    }
   }
 
   // Calcul des statistiques
@@ -74,12 +89,33 @@ export function OutilCalculatriceMoyenne({ onBack }: OutilCalculatriceMoyennePro
       ? Math.sqrt(values.reduce((acc, v) => acc + Math.pow(v - (moyenne ?? 0), 2), 0) / (values.length - 1))
       : null;
 
-  // Pavé numérique 3x4
-  const padKeys = ["7","8","9","4","5","6","1","2","3","0",",","."];
+  // Pavé numérique 3x4 (lignes)
+  const padRows = [["7","8","9"],["4","5","6"],["1","2","3"],["0",",", "."]];
 
   return (
-    <div className="p-4 rounded-xl border bg-white shadow max-w-lg mx-auto">
-      <h2 className="text-xl font-bold mb-3">Calculatrice Statistique</h2>
+    <div className="p-4 rounded-xl border bg-white shadow max-w-5xl mx-auto">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h2 className="text-xl font-bold">{mode === 'stat' ? 'Calculatrice Statistique' : 'Mesures multi-références'}</h2>
+        <div className="flex gap-2 text-sm">
+          <button
+            onClick={() => setMode('stat')}
+            className={`px-3 py-1 rounded-lg border ${mode==='stat' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 hover:bg-gray-200 border-gray-300'}`}
+          >Stat</button>
+          <button
+            onClick={() => setMode('multi')}
+            className={`px-3 py-1 rounded-lg border ${mode==='multi' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 hover:bg-gray-200 border-gray-300'}`}
+          >Multi-ref</button>
+        </div>
+      </div>
+
+      {mode === 'multi' && (
+        <div className="mt-2">
+          <OutilMesureMultiRef />
+        </div>
+      )}
+
+      {mode === 'stat' && (
+        <>
 
       {onBack && (
         <div className="mb-4">
@@ -107,21 +143,23 @@ export function OutilCalculatriceMoyenne({ onBack }: OutilCalculatriceMoyennePro
 
       {/* pad 3x4 + colonne d'actions */}
       <div className="flex gap-4 mb-4 items-stretch">
-        {/* Numeric pad 3x4 */}
-        <div className="grid grid-cols-3 gap-2 w-fit">
-          {padKeys.map((k) => (
-            <button
-              key={k}
-              type="button"
-              className="w-16 h-12 rounded-lg bg-gray-100 hover:bg-gray-200 text-lg font-medium"
-              onClick={() => handlePadClick(k)}
-            >
-              {k}
-            </button>
+        <div className="flex flex-col gap-3 w-fit">
+          {padRows.map((row, i) => (
+            <div key={i} className="flex gap-3">
+              {row.map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  className="rounded-xl bg-gray-100 hover:bg-gray-200 font-bold"
+                  style={{ width: '96px', height: '80px', fontSize: '2.25rem' }}
+                  onClick={() => handlePadClick(k)}
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
           ))}
         </div>
-
-        {/* colonne d'actions */}
         <div className="flex flex-col gap-2 w-28">
           <button
             type="button"
@@ -129,55 +167,68 @@ export function OutilCalculatriceMoyenne({ onBack }: OutilCalculatriceMoyennePro
             onClick={handleBackspace}
             disabled={input.length === 0}
             title="Backspace"
-          >
-            ⌫
-          </button>
+          >⌫</button>
           <button
             type="button"
             className="w-full h-12 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold"
             onClick={handleClear}
             disabled={input.length === 0}
-          >
-            C
-          </button>
+          >C</button>
           <button
             type="button"
-            className="w-full h-12 rounded-lg bg-black text-white font-bold"
+            className="w-full h-12 rounded-lg bg-green-500 hover:bg-green-600 text-white font-bold flex items-center justify-center text-2xl"
             onClick={handleValidate}
             disabled={input.trim() === ""}
-          >
-            Valider
-          </button>
+            title="Valider"
+          >✅</button>
           <button
             type="button"
-            className="w-full h-12 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold"
+            className="w-full h-12 rounded-lg bg-gray-200 hover:bg-red-300 font-semibold flex items-center justify-center text-2xl"
             onClick={handleReset}
             disabled={values.length === 0}
-          >
-            Reset
-          </button>
+            title="Réinitialiser"
+          >❌</button>
         </div>
       </div>
 
       {/* Valeurs séparées en lecture simple */}
       {values.length > 0 && (
         <div className="mb-3">
-          <div className="text-sm text-gray-600 mb-1">Valeurs (séparées) :</div>
-          <div className="mb-2 text-sm text-gray-800 break-words">{values.join(" ")}</div>
-
-          {/* pills : flex wrap avec overflow horizontal possible */}
-          <div className="flex gap-3 p-2 bg-gray-50 rounded border overflow-x-auto">
+          {/* pills : flex wrap pour organisation intelligente et taille réduite */}
+          <div
+            className="p-2 bg-gray-50 rounded border min-h-[40px]"
+            style={{
+              display: 'grid',
+              gap: '8px',
+              gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
+              /* Responsive columns: 2 on mobile, 4 on tablet, 6 on desktop */
+            }}
+          >
+            <style>{`
+              @media (max-width: 640px) {
+                .calc-values-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+              }
+              @media (min-width: 641px) and (max-width: 1024px) {
+                .calc-values-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+              }
+              @media (min-width: 1025px) {
+                .calc-values-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+              }
+            `}</style>
+          <div className="calc-values-grid" style={{ display: 'contents' }}>
             {values.map((v, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => removeValueAt(i)}
                 title="Cliquez pour supprimer"
-                className="flex-none px-3 py-1 bg-gray-200 rounded-md font-mono text-base hover:bg-red-100"
+                className="bg-gray-200 rounded font-mono hover:bg-red-100 w-full"
+                style={{ fontSize: '0.75rem', padding: '2px 6px', height: '28px' }}
               >
                 {v}
               </button>
             ))}
+          </div>
           </div>
         </div>
       )}
@@ -203,6 +254,8 @@ export function OutilCalculatriceMoyenne({ onBack }: OutilCalculatriceMoyennePro
         <button className="px-4 py-2 rounded bg-green-100 text-green-900 font-bold w-full mt-4">
           {moyenne.toFixed(4)}
         </button>
+      )}
+      </>
       )}
     </div>
   );
