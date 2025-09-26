@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 // Labels prédéfinis pour les mesures spécifiques
 const LABELS_PREDEFINIS = [
-  "Baie vitrée",
   "Porte",
+  "Baie vitree",
   "Fenêtre", 
   "Cloison",
   "Mur porteur",
@@ -175,6 +175,9 @@ export const OutilMesureMultiRef: React.FC = () => {
   const [longPressTimer, setLongPressTimer] = useState<number | null>(null);
   const [isLongPressTriggered, setIsLongPressTriggered] = useState(false);
   const [selectedMesureForHighlight, setSelectedMesureForHighlight] = useState<string | null>(null);
+  const [statisticsReferenceId, setStatisticsReferenceId] = useState<string | null>(null);
+  const [candidateReferenceId, setCandidateReferenceId] = useState<string | null>(null); // Mesure candidate pour devenir référence
+  const [pendingLabels, setPendingLabels] = useState<Record<string, string>>({}); // Stocke les labels en cours de modification
 
   // Fonctions pour le long press
   const handleLongPressStart = (groupId: string, sectionId: string) => {
@@ -381,7 +384,32 @@ export const OutilMesureMultiRef: React.FC = () => {
   }
   
   function addMesure() {
-    if (!currentGroup) return;
+    if (!currentGroup) {
+      alert("Aucune position sélectionnée !\n\nVeuillez d'abord sélectionner une position pour y ajouter des mesures.");
+      return;
+    }
+    
+    if (!currentSectionId) {
+      alert("Aucune section sélectionnée !\n\nVeuillez d'abord sélectionner une section pour y ajouter des mesures.");
+      return;
+    }
+    
+    // Vérifier que la section courante appartient bien à la position courante
+    const currentSectionBelongsToCurrentGroup = currentGroup.sections.some(s => s.id === currentSectionId);
+    if (!currentSectionBelongsToCurrentGroup) {
+      alert(`Impossible d'ajouter une mesure !\n\nLa section sélectionnée n'appartient pas à la position courante "${currentGroup.label}".\n\nVeuillez d'abord sélectionner une section de la position courante.`);
+      return;
+    }
+    
+    // Vérifier que la position courante est bien la dernière position (la plus récente)
+    const lastGroup = groups[groups.length - 1];
+    if (!lastGroup || currentGroup.id !== lastGroup.id) {
+      const currentIndex = groups.findIndex(g => g.id === currentGroup.id) + 1;
+      const lastIndex = groups.length;
+      alert(`Impossible d'ajouter une mesure !\n\nVous ne pouvez ajouter des mesures qu'à la dernière position créée.\n\nPosition courante : "${currentGroup.label}" (position ${currentIndex})\nDernière position : "${lastGroup.label}" (position ${lastIndex})\n\nSupprimez d'abord les positions suivantes ou sélectionnez la dernière position.`);
+      return;
+    }
+    
     const n = parseInput(input);
     if (n == null) return;
     const m: Mesure = { 
@@ -536,7 +564,7 @@ export const OutilMesureMultiRef: React.FC = () => {
     for (let i = 0; i <= idx; i++) {
       const g = groups[i];
       if (i === 0) {
-        if (!g.refToPrevId) return null;
+        // La première position a toujours un offset de 0 (référence absolue)
         continue;
       }
       if (g.storedRelOffset == null) return null;
@@ -591,7 +619,7 @@ export const OutilMesureMultiRef: React.FC = () => {
   });
 
   // Pavé numérique
-  const padRows = [["7","8","9"],["4","5","6"],["1","2","3"],["0","."]];
+  const padRows = [["7","8","9"],["4","5","6"],["1","2","3"],["0",".","C"]];
   function handlePad(key: string){
     if(key==='⌫'){ setInput(s=>s.slice(0,-1)); return; }
     if(key==='C'){ setInput(''); return; }
@@ -603,28 +631,26 @@ export const OutilMesureMultiRef: React.FC = () => {
       {/* En-tête */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-xl font-bold">Mesures multi-références</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={addGroup} 
-            className="px-3 py-1 text-sm rounded transition-colors bg-blue-600 text-white hover:bg-blue-700"
-            title={(() => {
-              if (groups.length === 0) return 'Créer la première position';
-              const lastGroup = groups[groups.length - 1];
-              return lastGroup.refToNextId 
-                ? 'Créer une nouvelle position'
-                : 'Cliquez pour plus d\'informations sur la création de positions';
-            })()}
-          >
-            + Position
-          </button>
-          <button 
-            onClick={clearAll} 
-            disabled={!groups.length} 
-            className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
-          >
-            Tout
-          </button>
-        </div>
+        <button 
+          onClick={addGroup} 
+          className="px-3 py-1 text-sm rounded transition-colors bg-blue-600 text-white hover:bg-blue-700"
+          title={(() => {
+            if (groups.length === 0) return 'Créer la première position';
+            const lastGroup = groups[groups.length - 1];
+            return lastGroup.refToNextId 
+              ? 'Créer une nouvelle position'
+              : 'Cliquez pour plus d\'informations sur la création de positions';
+          })()}
+        >
+          + Position
+        </button>
+        <button 
+          onClick={clearAll} 
+          disabled={!groups.length} 
+          className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
+        >
+          Supprimer
+        </button>
       </div>
 
       {/* Zone de saisie en haut avec pavé numérique */}
@@ -646,50 +672,52 @@ export const OutilMesureMultiRef: React.FC = () => {
             />
           </div>
           
-          <div className="flex gap-6 items-start flex-wrap">
-            {/* Pavé numérique en premier */}
-            <div className="flex flex-col gap-2">
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', width: '100%' }}>
+            {/* Pavé numérique centré */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {padRows.map((row,i)=>(
-                <div key={i} className="flex gap-2">
+                <div key={i} style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                   {row.map(k=> (
                     <button 
                       key={k} 
-                      className="rounded-lg bg-white hover:bg-blue-100 font-bold border border-blue-200 shadow-sm transition-colors" 
-                      style={{width:'80px',height:'70px',fontSize:'2.5rem'}} 
+                      style={{
+                        width: '120px',
+                        height: '90px',
+                        fontSize: '3rem',
+                        borderRadius: '12px',
+                        backgroundColor: k === 'C' ? '#e5e7eb' : '#ffffff',
+                        border: k === 'C' ? '3px solid #9ca3af' : '3px solid #60a5fa',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                        transition: 'all 0.2s ease',
+                        cursor: 'pointer',
+                        color: '#1f2937',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = k === 'C' ? '#d1d5db' : '#dbeafe'}
+                      onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = k === 'C' ? '#e5e7eb' : '#ffffff'}
                       onClick={()=>handlePad(k)}
                     >
                       {k}
                     </button>
                   ))}
-                  {i===0 && (
-                    <button 
-                      className="rounded-lg bg-gray-200 hover:bg-gray-300 font-bold border shadow-sm transition-colors" 
-                      style={{width:'80px',height:'70px',fontSize:'2.2rem'}} 
-                      onClick={()=>handlePad('⌫')}
-                    >
-                      ⌫
-                    </button>
-                  )}
                 </div>
               ))}
-              <div className="flex gap-2">
-                <button 
-                  className="rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold border shadow-sm transition-colors" 
-                  style={{width:'80px',height:'60px',fontSize:'1.8rem'}} 
-                  onClick={()=>handlePad('C')}
-                >
-                  C
-                </button>
+              
+              {/* Bouton Ajouter centré en bas */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
                 <button 
                   style={{
-                    width:'150px',
-                    height:'50px',
-                    fontSize:'1.1rem',
+                    width:'200px',
+                    height:'70px',
+                    fontSize:'1.4rem',
                     backgroundColor: input.trim() ? '#22c55e' : '#e5e7eb',
                     color: input.trim() ? '#ffffff' : '#9ca3af',
-                    border: input.trim() ? '2px solid #16a34a' : '2px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontWeight: '600',
+                    border: input.trim() ? '3px solid #16a34a' : '3px solid #d1d5db',
+                    borderRadius: '12px',
+                    fontWeight: '700',
                     transition: 'all 0.2s ease',
                     cursor: input.trim() ? 'pointer' : 'not-allowed',
                     boxShadow: input.trim() ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
@@ -701,8 +729,6 @@ export const OutilMesureMultiRef: React.FC = () => {
                 </button>
               </div>
             </div>
-            
-
           </div>
         </div>
       )}
@@ -786,56 +812,72 @@ export const OutilMesureMultiRef: React.FC = () => {
 
                 
                 <div className="flex flex-col gap-3">
-                  {g.sections.map(section => (
-                      <div key={section.id} className="bg-white rounded-lg p-2 w-full" style={{ 
-                        border: section.id === currentSectionId && g.id === currentGroupId
-                          ? '2px solid #10b981' // Bordure verte épaisse pour la section active
-                          : '2px solid #d1d5db', // Bordure grise épaisse pour les sections inactives
-                        boxShadow: section.id === currentSectionId && g.id === currentGroupId
-                          ? '0 0 0 1px rgba(16, 185, 129, 0.2)'
-                          : '0 1px 2px rgba(0, 0, 0, 0.05)'
-                      }}>
+                  {g.sections.map((section, sectionIndex) => (
+                      <div 
+                        key={section.id} 
+                        className="rounded-lg w-full" 
+                        style={{ 
+                          backgroundColor: section.id === currentSectionId && g.id === currentGroupId
+                            ? '#f0fdf4' // Fond vert très clair pour section active
+                            : '#ffffff', // Fond blanc pour sections inactives
+                          border: section.id === currentSectionId && g.id === currentGroupId
+                            ? '3px solid #22c55e' // Bordure verte épaisse pour la section active
+                            : '2px solid #e5e7eb', // Bordure grise pour les sections inactives
+                          boxShadow: section.id === currentSectionId && g.id === currentGroupId
+                            ? '0 4px 12px rgba(34, 197, 94, 0.15)' // Ombre verte pour section active
+                            : '0 2px 4px rgba(0, 0, 0, 0.05)'
+                        }}
+                      >
+                        {/* En-tête de section avec design amélioré */}
                         <div 
-                          className="flex items-center justify-between text-xs font-semibold px-2 py-1 rounded mb-2"
+                          className="flex items-center justify-between text-sm font-bold px-3 py-2 mb-2" 
                           style={{
                             backgroundColor: section.id === currentSectionId && g.id === currentGroupId
-                              ? '#dcfce7' // Fond vert clair pour section active
-                              : '#f9fafb', // Fond gris clair pour sections inactives
-                            color: section.id === currentSectionId && g.id === currentGroupId
-                              ? '#166534' // Texte vert foncé pour section active
-                              : '#4b5563', // Texte gris pour sections inactives
-                            border: section.id === currentSectionId && g.id === currentGroupId
-                              ? '1px solid #10b981' // Bordure verte pour section active
-                              : '1px solid #d1d5db' // Bordure grise pour sections inactives
+                              ? '#22c55e' // Fond vert vif pour section active
+                              : '#6b7280', // Fond gris pour sections inactives
+                            color: '#ffffff', // Texte blanc pour tous
+                            borderRadius: section.id === currentSectionId && g.id === currentGroupId
+                              ? '6px 6px 0 0' // Coins arrondis haut pour section active
+                              : '4px 4px 0 0' // Coins arrondis plus subtils pour sections inactives
                           }}
                         >
-                        <button 
-                          onClick={() => handleSectionClick(g.id, section.id)}
-                          onMouseDown={() => handleLongPressStart(g.id, section.id)}
-                          onMouseUp={handleLongPressEnd}
-                          onMouseLeave={handleLongPressEnd}
-                          onTouchStart={() => handleLongPressStart(g.id, section.id)}
-                          onTouchEnd={handleLongPressEnd}
-                          onTouchCancel={handleLongPressEnd}
-                          className="flex-1 text-left hover:text-blue-600"
-                          title="Clic: sélectionner | Appui long: renommer la section"
-                        >
-                          {section.label}
-                        </button>
-                        {/* Bouton supprimer - apparaît seulement si cette section est sélectionnée */}
-                        {showDeleteSection === section.id && (
-                          <button 
-                            onClick={() => {
-                              deleteSection(g.id, section.id);
-                              setShowDeleteSection(null); // Cacher après suppression
-                            }}
-                            className="text-red-400 hover:text-red-600 text-xs ml-2 p-1"
-                            title="Supprimer cette section"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
+                          <div className="flex items-center gap-2">
+                            {/* Icône de section */}
+                            <span className="text-lg">
+                              {section.id === currentSectionId && g.id === currentGroupId ? '📂' : '📁'}
+                            </span>
+                            <button 
+                              onClick={() => handleSectionClick(g.id, section.id)}
+                              onMouseDown={() => handleLongPressStart(g.id, section.id)}
+                              onMouseUp={handleLongPressEnd}
+                              onMouseLeave={handleLongPressEnd}
+                              onTouchStart={() => handleLongPressStart(g.id, section.id)}
+                              onTouchEnd={handleLongPressEnd}
+                              onTouchCancel={handleLongPressEnd}
+                              className="flex-1 text-left hover:underline font-medium text-white"
+                              title="Clic: sélectionner | Appui long: renommer la section"
+                            >
+                              {section.label === `Section ${sectionIndex + 1}` ? 'Section' : section.label}
+                            </button>
+                          </div>
+                          {/* Bouton supprimer - apparaît seulement si cette section est sélectionnée */}
+                          {showDeleteSection === section.id && (
+                            <button 
+                              onClick={() => {
+                                deleteSection(g.id, section.id);
+                                setShowDeleteSection(null); // Cacher après suppression
+                              }}
+                              className="text-red-200 hover:text-white text-xs ml-2 p-1 hover:bg-red-500 rounded"
+                              title="Supprimer cette section"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                        
+                        {/* Contenu de la section avec padding */}
+                        <div className="p-3">
+
                       
                       {/* Zone de contrôle fixe - apparaît quand une mesure est sélectionnée */}
                       {showRefButtons && section.mesures.some(m => m.id === showRefButtons) && (
@@ -1059,6 +1101,7 @@ export const OutilMesureMultiRef: React.FC = () => {
                           );
                           })
                         )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1069,69 +1112,7 @@ export const OutilMesureMultiRef: React.FC = () => {
         </div>
       )}
 
-      {/* Section des mesures épinglées */}
-      {(() => {
-        const mesuresEpinglees = groups.flatMap(g => 
-          g.sections.flatMap(s => 
-            s.mesures.filter(m => m.label).map(m => ({
-              ...m,
-              groupLabel: g.label,
-              sectionLabel: s.label,
-              groupId: g.id
-            }))
-          )
-        );
-        
-        if (mesuresEpinglees.length === 0) return null;
-        
-        return (
-          <div 
-            className="mt-6 p-6 rounded-xl bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 shadow-sm"
-            style={{
-              border: '3px solid #a855f7', // Bordure violette épaisse
-              boxShadow: '0 0 0 1px rgba(168, 85, 247, 0.2)' // Ombre violette
-            }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-xl text-purple-800">📌 Mesures épinglées</h3>
-              <div className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-600 shadow-sm">
-                {mesuresEpinglees.length} mesure{mesuresEpinglees.length > 1 ? 's' : ''}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mesuresEpinglees.map(m => {
-                const gv = globalValue(m.raw, groups.find(g => g.id === m.groupId)!);
-                return (
-                  <div key={m.id} className="bg-white p-4 rounded-lg shadow-sm border border-purple-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-purple-700">{m.label}</span>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        (m.includeInStats ?? true) 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {(m.includeInStats ?? true) ? 'Exclure' : 'Inclure'}
-                      </span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800 font-mono mb-1">
-                      {m.raw}
-                    </div>
-                    {gv != null && (
-                      <div className="text-sm text-blue-600 font-medium">
-                        Global: {gv}
-                      </div>
-                    )}
-                    <div className="text-xs text-gray-500 mt-2">
-                      {m.groupLabel} → {m.sectionLabel}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
+
 
       {/* Section des valeurs globales améliorée */}
       <div 
@@ -1165,21 +1146,40 @@ export const OutilMesureMultiRef: React.FC = () => {
                   <th className="border border-green-200 px-3 py-2 text-left text-xs font-semibold text-green-800">Section</th>
                   <th className="border border-green-200 px-3 py-2 text-left text-xs font-semibold text-green-800">Mesure brute</th>
                   <th className="border border-green-200 px-3 py-2 text-left text-xs font-semibold text-green-800">Valeur globale</th>
-                  <th className="border border-green-200 px-3 py-2 text-left text-xs font-semibold text-green-800">Label</th>
+                  <th className="border border-green-200 px-3 py-2 text-left text-xs font-semibold text-green-800">Label (éditable)</th>
                   <th className="border border-green-200 px-3 py-2 text-center text-xs font-semibold text-green-800">Statut</th>
+                  <th className="border border-green-200 px-3 py-2 text-center text-xs font-semibold text-green-800">Référence</th>
                 </tr>
               </thead>
               <tbody>
                 {flattenedGlobal.map((mesure, i) => {
                   const isHighlighted = selectedMesureForHighlight === mesure.mesureId;
+                  const isReference = statisticsReferenceId === mesure.mesureId;
                   return (
                     <tr 
                       key={i} 
-                      className="transition-colors"
+                      className="transition-colors cursor-pointer"
                       style={{
-                        backgroundColor: isHighlighted ? '#fef9e7' : 'transparent', // Jaune très clair pour surlignage
-                        boxShadow: isHighlighted ? '0 0 0 2px #3b82f6' : 'none', // Bordure bleue pour surlignage
-                        outline: isHighlighted ? '1px solid #2563eb' : 'none' // Contour bleu plus discret
+                        backgroundColor: isReference
+                          ? '#f3e8ff' // Fond violet clair pour la référence
+                          : isHighlighted 
+                            ? '#fef9e7' // Jaune très clair pour surlignage
+                            : 'transparent',
+                        boxShadow: isReference
+                          ? '0 0 0 3px #8b5cf6' // Bordure violette épaisse pour la référence
+                          : isHighlighted 
+                            ? '0 0 0 2px #3b82f6' // Bordure bleue pour surlignage
+                            : 'none',
+                        outline: isReference
+                          ? '2px solid #7c3aed' // Contour violet pour la référence
+                          : isHighlighted 
+                            ? '1px solid #2563eb' // Contour bleu plus discret
+                            : 'none'
+                      }}
+                      onClick={() => {
+                        // Clic normal pour illuminer le bouton de mesure correspondant
+                        setSelectedMesureForHighlight(mesure.mesureId);
+                        setShowRefButtons(mesure.mesureId);
                       }}
                       onMouseEnter={(e) => {
                         if (!isHighlighted) {
@@ -1191,6 +1191,7 @@ export const OutilMesureMultiRef: React.FC = () => {
                           e.currentTarget.style.backgroundColor = 'transparent';
                         }
                       }}
+                      title="Clic: illuminer la mesure correspondante"
                     >
                       <td 
                         className="border border-green-200 px-3 py-2 text-xs"
@@ -1226,21 +1227,167 @@ export const OutilMesureMultiRef: React.FC = () => {
                       >
                         {mesure.globalValue}
                       </td>
-                      <td className="border border-green-200 px-3 py-2 text-xs">
-                        {mesure.label && (
-                          <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">
-                            📌 {mesure.label}
-                          </span>
-                        )}
+                      <td 
+                        className="border border-green-200 px-2 py-2 text-xs" 
+                        onClick={(e) => e.stopPropagation()} // Empêcher le clic de remonter
+                      >
+                        {(() => {
+                          const pendingValue = pendingLabels[mesure.mesureId];
+                          const hasPendingChanges = pendingValue !== undefined;
+                          const hasExistingLabel = mesure.label && mesure.label.trim() !== '';
+                          const currentValue = hasPendingChanges ? pendingValue : (mesure.label || '');
+                          
+                          return (
+                            <div className="flex flex-col gap-2">
+                              {/* Ligne combinée : saisie + bouton approprié */}
+                              <div className="flex gap-1">
+                                {/* Champ de saisie manuelle */}
+                                <input
+                                  type="text"
+                                  id={`label-input-${mesure.mesureId}`}
+                                  name={`label-${mesure.mesureId}`}
+                                  value={currentValue}
+                                  onChange={(e) => {
+                                    const newLabel = e.target.value;
+                                    // Marquer comme modification en cours
+                                    setPendingLabels(prev => ({
+                                      ...prev,
+                                      [mesure.mesureId]: newLabel
+                                    }));
+                                  }}
+                                  placeholder="Label..."
+                                  className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded-l focus:border-purple-500 focus:outline-none"
+                                  style={{ minWidth: '80px' }}
+                                />
+                                
+                                {/* Bouton approprié selon l'état */}
+                                {hasPendingChanges ? (
+                                  // Bouton de validation vert (plus petit)
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Valider les modifications
+                                      const finalLabel = (pendingLabels[mesure.mesureId] || '').trim();
+                                      setMesureLabel(mesure.groupId, mesure.mesureId, finalLabel || null);
+                                      // Supprimer de la liste des modifications en cours
+                                      setPendingLabels(prev => {
+                                        const updated = { ...prev };
+                                        delete updated[mesure.mesureId];
+                                        return updated;
+                                      });
+                                    }}
+                                    className="px-1 py-1 text-xs bg-green-500 text-white rounded-r hover:bg-green-600 transition-colors"
+                                    style={{ width: '24px', fontSize: '10px' }}
+                                    title="Valider le label"
+                                  >
+                                    ✓
+                                  </button>
+                                ) : hasExistingLabel ? (
+                                  // Bouton croix pour supprimer le label existant
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setMesureLabel(mesure.groupId, mesure.mesureId, null);
+                                    }}
+                                    className="px-1 py-1 text-xs bg-red-500 text-white rounded-r hover:bg-red-600 transition-colors"
+                                    style={{ width: '24px', fontSize: '10px' }}
+                                    title="Supprimer le label"
+                                  >
+                                    ✕
+                                  </button>
+                                ) : (
+                                  // Menu déroulant compact (seulement si pas de label)
+                                  <select
+                                    value=""
+                                    onChange={(e) => {
+                                      const selectedValue = e.target.value;
+                                      if (selectedValue) {
+                                        // Marquer comme modification en cours même pour les prédéfinis
+                                        setPendingLabels(prev => ({
+                                          ...prev,
+                                          [mesure.mesureId]: selectedValue
+                                        }));
+                                      }
+                                    }}
+                                    className="px-1 py-1 text-xs border border-gray-300 rounded-r focus:border-purple-500 focus:outline-none bg-white"
+                                    style={{ width: '24px', textAlign: 'center', fontSize: '10px' }}
+                                    title="Choisir un label prédéfini"
+                                  >
+                                    <option value="">📋</option>
+                                    {LABELS_PREDEFINIS.map((label) => (
+                                      <option key={label} value={label}>
+                                        {label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="border border-green-200 px-3 py-2 text-center">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          mesure.includeInStats 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          {mesure.includeInStats ? '✓' : '✗'}
-                        </span>
+                        <div className="flex items-center justify-center gap-1 flex-wrap">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMesureInStats(mesure.groupId, mesure.mesureId);
+                            }}
+                            className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer hover:opacity-80 ${
+                              mesure.includeInStats 
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            }`}
+                            title={mesure.includeInStats 
+                              ? 'Cliquer pour exclure des statistiques' 
+                              : 'Cliquer pour inclure dans les statistiques'
+                            }
+                          >
+                            {mesure.includeInStats ? '✓' : '✗'}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="border border-green-200 px-3 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {/* Case à cocher pour candidater comme référence */}
+                          <input
+                            type="checkbox"
+                            checked={candidateReferenceId === mesure.mesureId}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              if (e.target.checked) {
+                                setCandidateReferenceId(mesure.mesureId);
+                              } else {
+                                setCandidateReferenceId(null);
+                              }
+                            }}
+                            className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
+                            title="Sélectionner comme référence"
+                          />
+                          
+                          {/* Bouton de validation (apparaît seulement si cette mesure est candidate) */}
+                          {candidateReferenceId === mesure.mesureId && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Valider la référence (écrase l'ancienne)
+                                setStatisticsReferenceId(candidateReferenceId);
+                                setCandidateReferenceId(null); // Réinitialiser le candidat
+                              }}
+                              className="px-2 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+                              title="Confirmer comme référence"
+                            >
+                              ✓
+                            </button>
+                          )}
+                          
+                          {/* Indicateur de référence active */}
+                          {statisticsReferenceId === mesure.mesureId && (
+                            <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded font-medium">
+                              REF
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1250,6 +1397,205 @@ export const OutilMesureMultiRef: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Section des statistiques */}
+      {(() => {
+        // Filtrer les mesures incluses dans les statistiques
+        const statsData = flattenedGlobal.filter(m => m.includeInStats);
+        
+        if (statsData.length === 0) return null;
+
+        // Calculer les statistiques
+        const globalValues = statsData.map(m => m.globalValue);
+        const moyenne = globalValues.reduce((sum, val) => sum + val, 0) / globalValues.length;
+        const min = Math.min(...globalValues);
+        const max = Math.max(...globalValues);
+        const etendue = max - min;
+        
+        // Calculer le mode (valeur la plus fréquente)
+        const frequency = globalValues.reduce((acc, val) => {
+          acc[val] = (acc[val] || 0) + 1;
+          return acc;
+        }, {} as Record<number, number>);
+        const maxFreq = Math.max(...Object.values(frequency));
+        const modes = Object.keys(frequency).filter(key => frequency[Number(key)] === maxFreq).map(Number);
+        
+        // Référence statistique - peut provenir de TOUTES les mesures, pas seulement celles incluses dans les stats
+        const referenceValue = statisticsReferenceId 
+          ? flattenedGlobal.find(m => m.mesureId === statisticsReferenceId)?.globalValue ?? null
+          : null;
+
+        // Recalculer avec référence si définie
+        // Formule: valeur_finale = v_globale - v_ref (la référence devient le point zéro)
+        const refValue = referenceValue ?? 0; // Valeur de sécurité
+        const adjustedValues = referenceValue !== null 
+          ? globalValues.map(val => val - refValue)
+          : globalValues;
+        
+        const adjustedMoyenne = referenceValue !== null 
+          ? moyenne - refValue 
+          : moyenne;
+        const adjustedMin = referenceValue !== null 
+          ? min - refValue 
+          : min;
+        const adjustedMax = referenceValue !== null 
+          ? max - refValue 
+          : max;
+
+        return (
+          <div 
+            className="mt-6 p-6 rounded-xl bg-gradient-to-br from-purple-50 via-indigo-50 to-purple-50 shadow-sm"
+            style={{
+              border: '3px solid #7c3aed', // Bordure violette épaisse
+              boxShadow: '0 0 0 1px rgba(124, 58, 237, 0.2)' // Ombre violette
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-xl text-purple-800">📊 Statistiques des valeurs globales</h3>
+              <div className="flex items-center gap-4">
+                <div className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-600 shadow-sm">
+                  {statsData.length} valeurs incluses
+                </div>
+                
+
+
+                {referenceValue !== null && (() => {
+                  // Trouver les détails de la mesure de référence parmi TOUTES les mesures
+                  const refMesureDetails = flattenedGlobal.find(m => m.mesureId === statisticsReferenceId);
+                  const refMesureIndex = flattenedGlobal.findIndex(m => m.mesureId === statisticsReferenceId) + 1;
+                  
+                  return (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-purple-700">Référence:</span>
+                      <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                        <span className="font-mono font-bold">#{refMesureIndex}</span>
+                        <span className="text-purple-600">|</span>
+                        <span className="font-mono">{referenceValue}</span>
+                        {refMesureDetails && (
+                          <>
+                            <span className="text-purple-600">|</span>
+                            <span className="font-medium">{refMesureDetails.groupLabel}</span>
+                            <span className="text-purple-600">→</span>
+                            <span className="font-medium">{refMesureDetails.sectionLabel}</span>
+                            {refMesureDetails.label && (
+                              <>
+                                <span className="text-purple-600">|</span>
+                                <span className="text-purple-700">📌{refMesureDetails.label}</span>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => setStatisticsReferenceId(null)}
+                        className="text-purple-600 hover:text-purple-800 text-xs hover:bg-purple-50 rounded px-1"
+                        title={`Supprimer la référence #${refMesureIndex} (${referenceValue})`}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-purple-200 overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gradient-to-r from-purple-100 via-indigo-100 to-purple-100">
+                    <th className="px-8 py-4 text-left text-sm font-bold text-purple-800 border-b border-purple-200">
+                      📊 Statistique
+                    </th>
+                    <th className="px-8 py-4 text-center text-sm font-bold text-purple-800 border-b border-purple-200">
+                      Valeur
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Moyenne */}
+                  <tr className="hover:bg-purple-50 transition-colors">
+                    <td className="px-8 py-6 border-b border-gray-100">
+                      <span className="font-semibold text-purple-700 text-lg">Moyenne</span>
+                    </td>
+                    <td className="px-8 py-6 border-b border-gray-100 text-center">
+                      <span className="text-3xl font-bold text-purple-800 font-mono">
+                        {adjustedMoyenne.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Minimum */}
+                  <tr className="hover:bg-blue-50 transition-colors">
+                    <td className="px-8 py-6 border-b border-gray-100">
+                      <span className="font-semibold text-blue-700 text-lg">Minimum</span>
+                    </td>
+                    <td className="px-8 py-6 border-b border-gray-100 text-center">
+                      <span className="text-3xl font-bold text-blue-800 font-mono">
+                        {adjustedMin.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Maximum */}
+                  <tr className="hover:bg-red-50 transition-colors">
+                    <td className="px-8 py-6 border-b border-gray-100">
+                      <span className="font-semibold text-red-700 text-lg">Maximum</span>
+                    </td>
+                    <td className="px-8 py-6 border-b border-gray-100 text-center">
+                      <span className="text-3xl font-bold text-red-800 font-mono">
+                        {adjustedMax.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Étendue */}
+                  <tr className="hover:bg-green-50 transition-colors">
+                    <td className="px-8 py-6 border-b border-gray-100">
+                      <span className="font-semibold text-green-700 text-lg">Étendue</span>
+                    </td>
+                    <td className="px-8 py-6 border-b border-gray-100 text-center">
+                      <span className="text-3xl font-bold text-green-800 font-mono">
+                        {etendue.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Mode */}
+                  <tr className="hover:bg-orange-50 transition-colors">
+                    <td className="px-8 py-6">
+                      <span className="font-semibold text-orange-700 text-lg">Mode</span>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <span className="text-3xl font-bold text-orange-800 font-mono">
+                        {modes.length === globalValues.length 
+                          ? "—"
+                          : modes.map(mode => 
+                              referenceValue !== null 
+                                ? (mode - refValue).toFixed(2)
+                                : mode.toFixed(2)
+                            ).join(", ")
+                        }
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {statsData.length < flattenedGlobal.length && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="text-xs text-yellow-800">
+                  ⚠️ {flattenedGlobal.length - statsData.length} mesure(s) exclue(s) des calculs statistiques
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 text-xs text-gray-500">
+              💡 <strong>Astuce:</strong> Cochez la case "Référence" d'une mesure puis cliquez sur ✓ pour la définir comme point de référence statistique
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
