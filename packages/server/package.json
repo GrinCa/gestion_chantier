@@ -1,0 +1,25 @@
+{
+  "name": "@gestion-chantier/server",
+  "version": "1.0.0",
+  "description": "Universal API Server for Gestion Chantier",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.6",
+    "body-parser": "^1.20.2"
+  },
+  "keywords": [
+    "express",
+    "sqlite",
+    "api",
+    "universal"
+  ],
+  "author": "Gestion Chantier",
+  "license": "MIT"
+}
