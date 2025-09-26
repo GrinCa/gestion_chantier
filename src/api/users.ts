@@ -13,7 +13,7 @@ export type User = {
   tools?: string[];
 };
 
-const API_URL = "http://localhost:3001"; // à adapter selon config serveur
+const API_URL = "http://192.168.1.12:3001"; // Remplace XX par ton IP WiFi2
 
 // Ajoute ou modifie un utilisateur
 export async function saveUser(user: User) {

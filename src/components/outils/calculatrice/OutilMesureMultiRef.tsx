@@ -225,18 +225,36 @@ export const OutilMesureMultiRef: React.FC = () => {
 
   // Fonctions de gestion des groupes
   function addGroup() {
+    console.log('🔵 addGroup called, groups.length:', groups.length);
+    
     // Vérifier qu'il y a une référence ↓ dans la dernière position (sauf pour la première position)
     if (groups.length > 0) {
       const lastGroup = groups[groups.length - 1];
+      console.log('🔵 lastGroup.refToNextId:', lastGroup.refToNextId);
       if (!lastGroup.refToNextId) {
+        console.log('🔴 Blocked: no refToNextId in last group');
         alert(`Impossible de créer une nouvelle position !\n\nPour créer une nouvelle position, vous devez d'abord :\n1. Sélectionner une mesure dans la position "${lastGroup.label}"\n2. Cliquer sur la flèche ↓ pour en faire une référence vers le bas\n\nCela permettra d'établir la continuité entre les positions.`);
         return;
       }
     }
     
     const label = prompt('Nom de la position ?', `Position ${groups.length + 1}`);
-    if (!label) return;
-    const sectionId = crypto.randomUUID();
+    console.log('🔵 prompt result:', label);
+    if (!label) {
+      console.log('🔴 Canceled: no label provided');
+      return;
+    }
+    
+    let sectionId;
+    try {
+      sectionId = crypto.randomUUID();
+      console.log('🔵 sectionId generated:', sectionId);
+    } catch (e) {
+      console.error('🔴 Error generating sectionId:', e);
+      sectionId = Math.random().toString(36).slice(2);
+      console.log('🔵 fallback sectionId:', sectionId);
+    }
+    
     const defaultSection: Section = {
       id: sectionId,
       label: 'Section 1',
@@ -244,17 +262,27 @@ export const OutilMesureMultiRef: React.FC = () => {
       createdAt: Date.now()
     };
     
+    const groupId = uuid();
+    console.log('🔵 groupId generated:', groupId);
+    
     const g: GroupeMesures = { 
-      id: uuid(), 
+      id: groupId, 
       label, 
       sections: [defaultSection], 
       refToPrevId: null, 
       refToNextId: null, 
       storedRelOffset: groups.length === 0 ? 0 : null 
     };
-    setGroups(prev => [...prev, g]);
+    
+    console.log('🔵 New group object:', g);
+    setGroups(prev => {
+      const newGroups = [...prev, g];
+      console.log('🔵 New groups array length:', newGroups.length);
+      return newGroups;
+    });
     setCurrentGroupId(g.id);
     setCurrentSectionId(sectionId);
+    console.log('🔵 addGroup completed');
   }
   
   function deleteGroup(id: string) {
@@ -666,7 +694,8 @@ export const OutilMesureMultiRef: React.FC = () => {
             <h3 className="font-semibold text-blue-900">Saisie pour {currentGroup.label}</h3>
             <input 
               readOnly 
-              className="border rounded-lg px-3 py-2 text-right font-mono text-lg bg-white flex-1 max-w-xs" 
+              className="border rounded-lg px-6 py-4 text-right font-mono text-2xl bg-white flex-1" 
+              style={{ minWidth: '320px', maxWidth: '480px' }}
               value={input} 
               placeholder="Nouvelle mesure" 
             />
@@ -681,14 +710,14 @@ export const OutilMesureMultiRef: React.FC = () => {
                     <button 
                       key={k} 
                       style={{
-                        width: '120px',
-                        height: '90px',
-                        fontSize: '3rem',
-                        borderRadius: '12px',
+                        width: '180',
+                        height: '180px',
+                        fontSize: '3.5rem',
+                        borderRadius: '16px',
                         backgroundColor: k === 'C' ? '#e5e7eb' : '#ffffff',
                         border: k === 'C' ? '3px solid #9ca3af' : '3px solid #60a5fa',
                         fontWeight: 'bold',
-                        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.18)',
                         transition: 'all 0.2s ease',
                         cursor: 'pointer',
                         color: '#1f2937',

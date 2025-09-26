@@ -1,3 +1,6 @@
+  // --- Mode d'authentification sans mot de passe ---
+  // Pour activer/désactiver facilement ce mode, changez la valeur ci-dessous :
+  const AUTH_SANS_MDP = true; // Mettre false pour désactiver
 /**
  * Carnet de Niveaux Laser - Application React
  * -------------------------------------------
@@ -67,8 +70,38 @@ export default function App() {
   // Gère la connexion utilisateur
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (username.trim() === "" || password.trim() === "") {
-      setError("Identifiant et mot de passe requis.");
+    if (username.trim() === "") {
+      setError("Identifiant requis.");
+      return;
+    }
+    if (AUTH_SANS_MDP) {
+      setLoading(true);
+      try {
+        // Auth sans mot de passe : on ignore le champ password
+        const user = await findUser(username, "");
+        setLoading(false);
+        if (user) {
+          setRole(user.role);
+          setUserTools(user.tools ?? []);
+          setStep("user");
+          setError("");
+        } else {
+          if (await userExists(username)) {
+            setError("Identifiant invalide.");
+          } else {
+            setShowRegisterPrompt(true);
+            setError("");
+          }
+        }
+      } catch (err: any) {
+        setLoading(false);
+        setError("Erreur de connexion au serveur.");
+      }
+      return;
+    }
+    // Auth classique avec mot de passe
+    if (password.trim() === "") {
+      setError("Mot de passe requis.");
       return;
     }
     setLoading(true);
@@ -167,33 +200,35 @@ export default function App() {
               autoFocus
             />
           </div>
-          <div className="mb-3">
-            <label className="block text-sm font-medium mb-1">Mot de passe</label>
-            <div className="relative">
-              <input
-                className="w-full border rounded px-3 py-2 pr-10"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                onClick={() => setShowPassword(v => !v)}
-                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-              >
-                {showPassword ? "🙈" : "👁️"}
-              </button>
+          {!AUTH_SANS_MDP && (
+            <div className="mb-3">
+              <label className="block text-sm font-medium mb-1">Mot de passe</label>
+              <div className="relative">
+                <input
+                  className="w-full border rounded px-3 py-2 pr-10"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                  onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
           {error && <div className="text-red-600 mb-2">{error}</div>}
           <button
             className="w-full py-2 rounded bg-black text-white font-bold"
             type="submit"
-            disabled={username.trim() === "" || password.trim() === "" || loading}
+            disabled={username.trim() === "" || (!AUTH_SANS_MDP && password.trim() === "") || loading}
           >
-            {loading ? "Connexion..." : "Se connecter"}
+            {loading ? "Connexion..." : AUTH_SANS_MDP ? "Connexion sans mot de passe" : "Se connecter"}
           </button>
           <button
             className="w-full py-2 rounded bg-gray-200 mt-2"

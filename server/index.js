@@ -1,10 +1,11 @@
+// --- Mode d'authentification sans mot de passe ---
+// Pour activer/désactiver facilement ce mode, changez la valeur ci-dessous :
+const AUTH_SANS_MDP = true; // Mettre false pour désactiver
 import express from "express";
 import cors from "cors";
 import sqlite3 from "sqlite3";
 import bodyParser from "body-parser";
 
-
-// ...existing code...
 
 // sqlite3.verbose() doit être appelé sur le module importé
 const db = new sqlite3.Database("./users.db");
@@ -174,7 +175,27 @@ app.post("/login", (req, res) => {
         // Identifiant non autorisé
         return res.status(403).json({ error: "Identifiant non autorisé" });
       }
-      // Si autorisé, vérifie le mot de passe
+      if (AUTH_SANS_MDP) {
+        // Auth sans mot de passe : on ignore le champ password
+        db.get(
+          "SELECT * FROM users WHERE username = ?",
+          [username],
+          (err, row) => {
+            if (err) {
+              console.error("Erreur SQLite:", err);
+              return res.status(500).json({ error: "Erreur serveur" });
+            }
+            if (row) {
+              row.tools = row.tools ? JSON.parse(row.tools) : [];
+              res.json(row);
+            } else {
+              res.status(401).send();
+            }
+          }
+        );
+        return;
+      }
+      // Auth classique avec mot de passe
       db.get(
         "SELECT * FROM users WHERE username = ? AND password = ?",
         [username, password],

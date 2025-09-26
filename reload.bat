@@ -38,6 +38,7 @@ pause
 goto MENU
 
 :DEV
-call npm run dev
+rem Mode dev accessible depuis mobile (écoute sur toutes interfaces)
+call npm run dev -- --host
 pause
 goto MENU
