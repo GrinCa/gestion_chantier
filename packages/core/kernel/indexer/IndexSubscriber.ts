@@ -14,7 +14,7 @@ export class IndexSubscriber {
   attach() {
     this.bus.on('created', (e) => this.handle(e.entityType, e.entityId));
     this.bus.on('updated', (e) => this.handle(e.entityType, e.entityId));
-    // deletion plus tard
+    this.bus.on('deleted', (e) => this.handleDeletion(e.entityType, e.entityId));
   }
 
   private async handle(entityType: string, id: string) {
@@ -25,6 +25,15 @@ export class IndexSubscriber {
       await this.indexer.index(res);
     } catch (err) {
       console.warn('[IndexSubscriber] index error', err);
+    }
+  }
+
+  private async handleDeletion(entityType: string, id: string) {
+    if (entityType !== 'resource') return;
+    try {
+      await this.indexer.remove(id);
+    } catch (err) {
+      console.warn('[IndexSubscriber] remove error', err);
     }
   }
 }

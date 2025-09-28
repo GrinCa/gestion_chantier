@@ -223,6 +223,7 @@ Phase 3 (Extensibilité):
  - [x] ToolExecution log ✅ (`kernel/services/ToolExecutionService.ts` + tool.executed event)
 - [x] Indexer naïf ✅ (`kernel/indexer/*` + events resource.*)
 - [ ] Sync status enrichi
+ - [x] Suppression + events resource.deleted + désindexation ✅ (ResourceService.delete + IndexSubscriber)
 
 Phase 4 (Fonctionnel):
 - [ ] Attachment storage abstraction
@@ -231,6 +232,7 @@ Phase 4 (Fonctionnel):
 
 Phase 5 (Qualité):
 - [ ] Metrics + health endpoint
+  - [x] MetricsService basique (events, tool exec, index size) ✅ (`kernel/services/MetricsService.ts` + metrics-selftest)
 - [ ] Jeu de données test charge
 
 Phase 6 (Scaling):

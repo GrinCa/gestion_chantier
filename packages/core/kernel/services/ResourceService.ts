@@ -77,6 +77,19 @@ export class ResourceService {
     return updated;
   }
 
+  /**
+   * Supprime une resource et émet un événement `resource.deleted`.
+   * Retourne la resource supprimée (snapshot) pour usage éventuel.
+   */
+  async delete(id: string, origin?: string): Promise<Resource | null> {
+    const existing = await this.repo.get(id);
+    if (!existing) return null;
+    await this.repo.delete(id);
+    const ts = this.now();
+    await this.emit('resource', existing.id, 'deleted', { previousVersion: existing.version }, ts, origin || existing.origin, existing.version);
+    return existing;
+  }
+
   private async emit(entityType: string, entityId: string, operation: string, payload: any, timestamp: number, actor?: string, version?: number) {
     const evt: DomainEvent = { id: this.id(), entityType, entityId, operation, timestamp, payload, actor, version };
     try { await this.events.emit(evt); } catch (e) { console.warn('[ResourceService] event emit failed', e); }

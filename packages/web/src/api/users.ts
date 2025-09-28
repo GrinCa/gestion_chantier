@@ -92,8 +92,9 @@ export type User = {
   tools?: string[];
 };
 
-// Configuration API URL dynamique
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+// Configuration API URL centralisée
+import { getApiUrl } from "@gestion-chantier/core";
+const API_URL = getApiUrl();
 
 // Ajoute ou modifie un utilisateur
 export async function saveUser(user: User) {

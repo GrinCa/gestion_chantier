@@ -24,6 +24,8 @@ import {
   getWhitelist,
   type Projet
 } from "./api/users";
+// Import configuration centralisée
+import { getApiUrl } from "@gestion-chantier/core";
 
 // --- Types ---
 // Structure d'un utilisateur (voir aussi src/api/users.ts)
@@ -346,7 +348,7 @@ export default function App() {
         currentUser={username}
         onBack={async () => {
           // Recharge les droits outils de l'utilisateur courant après retour admin
-          const res = await fetch(`http://localhost:3001/users/${username}`);
+          const res = await fetch(`${getApiUrl()}/users/${username}`);
           if (res.ok) {
             const user = await res.json();
             setUserTools(user.tools ?? []);

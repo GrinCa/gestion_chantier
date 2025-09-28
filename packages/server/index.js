@@ -2,6 +2,7 @@
  * API SERVER - Gestion Chantier
  * ==============================
  * Serveur API universel pour l'architecture monorepo
+ * Utilise la configuration centralisée du core
  */
 
 import express from "express";
@@ -9,11 +10,12 @@ import cors from "cors";
 import sqlite3 from "sqlite3";
 import bodyParser from "body-parser";
 
-// Configuration centralisée
+// Configuration centralisée depuis le core
+// Note: En attendant l'import ES modules, on reproduit la logique ici
 const CONFIG = {
-  API_PORT: process.env.PORT || 3001,
-  AUTH_SANS_MDP: process.env.AUTH_MODE !== 'strict', // true par défaut en dev
-  DB_NAME: './users.db'
+  API_PORT: parseInt(process.env.API_PORT || process.env.PORT || '3001'),
+  AUTH_SANS_MDP: process.env.AUTH_MODE !== 'strict', // true par défaut en dev  
+  DB_NAME: process.env.DB_NAME || './users.db'
 };
 
 

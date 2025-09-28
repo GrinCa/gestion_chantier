@@ -48,11 +48,12 @@ export function AdminPanel({
     localStorage.setItem("companyName", e.target.value);
   }
 
-  // Logs d'activité simulés (à remplacer par de vrais logs si besoin)
+  // Logs d'activité simulés (focalisés sur la gestion utilisateurs et outils)
   const logs = [
     "Utilisateur admin a modifié le rôle de julien.",
-    "Utilisateur julien a créé un chantier.",
+    "Utilisateur admin a configuré les outils pour marie.",
     "Utilisateur admin a supprimé l'utilisateur test.",
+    "Utilisateur admin a ajouté paul à la whitelist.",
   ];
 
   // Export CSV utilisateurs

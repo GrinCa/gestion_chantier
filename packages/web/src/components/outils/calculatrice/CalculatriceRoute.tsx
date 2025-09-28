@@ -67,6 +67,7 @@ export function CalculatriceRoute({
           </button>
         </div>
 
+        {/* Affichage projet uniquement pour un utilisateur final */}
         {selectedProject && (
           <div className="text-sm text-gray-600">
             Projet: <span className="font-medium">{selectedProject.nom}</span>
@@ -103,6 +104,7 @@ export function CalculatriceRoute({
           <div className="bg-white p-6 rounded-xl shadow w-full max-w-md">
             <OutilCalculatriceMoyenne 
               selectedProject={selectedProject}
+              // Désactive la sélection de projet si l'utilisateur connecté est admin (il ne gère pas les projets ici)
               onSelectProject={onSelectProject}
               onShowProjectManager={onShowProjectManager}
               onBack={onBack} 
