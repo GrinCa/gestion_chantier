@@ -121,10 +121,18 @@ Uniquement quand un pattern durable change (architecture, workflow, dette priori
 
 ## 13. Fin de Session (Préparer la Reprise)
 Avant de quitter une session active, générer un bloc de handoff:
-1. Lancer `node scripts/prepare-handoff.mjs`.
-2. Compléter manuellement les champs `ProposedDeliverable` et `Risks`.
-3. Coller le bloc final dans le dernier message ou le sauvegarder dans la description PR si ouverte.
-4. Ne pas effectuer de changements de code après génération (sinon régénérer).
+Option manuelle (fine):
+  1. `node scripts/prepare-handoff.mjs`
+  2. Compléter ProposedDeliverable + Risks.
+  3. Coller le bloc final.
+
+Option automatisée (recommandée):
+  1. `node scripts/save-session.mjs`
+     - Commit autosave si changes
+     - Génère handoff + suggestion deliverable (TD-001)
+     - Produit snippet démarrage prochaine session
+     - Écrit `handbook/LAST-HANDOFF.md`
+  2. Copier le snippet "NEXT SESSION" dans le dernier message.
 
 Format produit exemple:
 ```
