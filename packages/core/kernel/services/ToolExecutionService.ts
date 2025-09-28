@@ -37,7 +37,22 @@ export class ToolExecutionService {
     const started = Date.now();
     let output: O;
     try {
+      // Validation entrée si schéma présent (simple detection .parse ou .safeParse pour Zod-like)
+      if (tool.inputSchema) {
+        if (typeof tool.inputSchema.parse === 'function') {
+          input = tool.inputSchema.parse(input);
+        } else if (typeof tool.inputSchema.safeParse === 'function') {
+          const r = tool.inputSchema.safeParse(input); if (!r.success) throw new Error('Input validation failed'); input = r.data;
+        }
+      }
       output = await tool.execute(input, ctx);
+      if (tool.outputSchema) {
+        if (typeof tool.outputSchema.parse === 'function') {
+          output = tool.outputSchema.parse(output);
+        } else if (typeof tool.outputSchema.safeParse === 'function') {
+          const r = tool.outputSchema.safeParse(output); if (!r.success) throw new Error('Output validation failed'); output = r.data;
+        }
+      }
     } catch (err: any) {
       await this.emit('tool', key, 'failed', { error: err?.message || String(err) }, started, ctx.currentUser() || undefined);
       throw err;

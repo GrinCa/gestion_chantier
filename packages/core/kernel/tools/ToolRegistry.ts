@@ -31,6 +31,8 @@ export interface ToolDefinition<I = any, O = any> {
   execute(input: I, ctx: ToolContext): Promise<O>; // Coeur métier
   description?: string;                       // Aide / doc courte
   tags?: string[];                            // Classification libre
+  inputSchema?: any;                          // Optionnel (ex: Zod schema)
+  outputSchema?: any;                         // Optionnel (ex: Zod schema)
 }
 
 export class ToolRegistry {
