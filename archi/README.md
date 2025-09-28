@@ -16,7 +16,7 @@ This folder contains meta-architecture, governance and self-test artifacts enabl
 ## Quick Start Validation
 
 1. Run the conflict self-test (should print PASS):
-   - ts-node archi/scripts/conflict-selftest.ts
+   - ts-node handbook/scripts/conflict-selftest.ts
 2. Inspect MANIFEST.json if adding / renaming modules; keep name + file stable.
 3. When adding a service: update MANIFEST.json + ARCHITECTURE.md + maybe GLOSSARY.md.
 4. Record any non-trivial design choice in DECISIONS.md (new ADR section at top).
@@ -116,13 +116,13 @@ Recommandation: `handbook` ou `platform-docs` (clairement distinct des docs prod
 1. Choisir le nouveau nom (ex: `handbook`).
 2. Renommer dossier: `git mv archi handbook`.
 3. Mettre à jour références dans:
-   - `pr-automation.config.json` patterns (`archi/**` → `handbook/**`).
+   - `pr-automation.config.json` patterns (déjà migré vers `handbook/**`).
    - Scripts PR (`scripts/create-pr.mjs`, `scripts/update-pr.mjs`).
-   - Tous les `.md` internes (rechercher `archi/`).
+   - Tous les `.md` internes (ancien préfixe `archi/` remplacé par `handbook/`).
    - README racine si référence.
 4. Mettre à jour instructions dans `HANDFOFF.md` / `CONTRIBUTING-LLM.md` (chemins).
 5. Commit: `chore(docs): rename archi -> handbook`.
-6. Lancer recherche finale pour `archi/` — doit retourner 0 occurrences.
+6. Lancer recherche finale pour `archi/` — doit retourner 0 occurrences (post-migration effectuée).
 
 ### Transition Temporaire
 Pendant 1–2 commits, accepter références anciennes dans communications; éviter double dossier.

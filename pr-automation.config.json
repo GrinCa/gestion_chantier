@@ -1,7 +1,7 @@
 {
   "language": "fr",
   "categories": [
-  { "name": "docs", "patterns": ["handbook/**", "archi/**", "**/*.md"] },
+  { "name": "docs", "patterns": ["handbook/**", "**/*.md"] },
     { "name": "scripts", "patterns": ["scripts/**"] },
     { "name": "server", "patterns": ["server/**"] },
     { "name": "frontend", "patterns": ["src/**", "public/**"] },
@@ -10,7 +10,7 @@
   "highlights": [
     { "patterns": ["**/*fts*", "**/*MATCH*", "**/*sqlite*"], "message": "Recherche plein texte / SQLite FTS modifiée" },
     { "patterns": ["scripts/create-pr.mjs", "scripts/update-pr.mjs"], "message": "Outillage PR modifié" },
-  { "patterns": ["handbook/**", "archi/**", "**/*.md"], "message": "Documentation mise à jour" }
+  { "patterns": ["handbook/**", "**/*.md"], "message": "Documentation mise à jour" }
   ],
   "riskRules": {
     "highRiskIfAdditionsOver": 800,

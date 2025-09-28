@@ -33,7 +33,7 @@ Règles:
 1. Créer branche: `git checkout -b feat/nom-clair` depuis `main` à jour.
 2. Implémenter + ajouter self-test (ou étendre un existant).
 3. `npm run selftest:all --workspace=packages/core` (ou ciblé via futur changed-selftests).
-4. Mettre à jour `archi/TEST-MATRIX.md` et/ou `archi/TODO.md` si surface couverte change.
+4. Mettre à jour `handbook/TEST-MATRIX.md` et/ou `handbook/TODO.md` si surface couverte change.
 5. Commit atomique.
 6. Push + PR (review rapide: <400 lignes diff ideal).
 7. Rebase sur main si plus de 2 jours passent / conflits apparaissent.

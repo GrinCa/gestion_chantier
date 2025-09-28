@@ -8,11 +8,11 @@ These rules are optimized for automated + human collaboration across EVERY packa
 3. Emit events for domain state changes; never silently mutate critical state.
 4. Keep patches minimal: only touch what the task requires.
 5. Prefer additive migrations over destructive rewrites.
-6. Update `archi/TODO.md` & Changelog Anchor after meaningful changes.
+6. Update `handbook/TODO.md` & Changelog Anchor after meaningful changes.
 
 ## 2. Patch Workflow (Agent)
-1. Read `archi/ARCHITECTURE.md` sections 1–6.
-2. Read `archi/TODO.md` and select one pending task.
+1. Read `handbook/ARCHITECTURE.md` sections 1–6.
+2. Read `handbook/TODO.md` and select one pending task.
 3. Prepare a tiny plan (list of files to touch + expected events/tests).
 4. Apply patch using diff tool (avoid mass formatting).
 5. Immediately stage & commit the logical change (atomic commit: feature OR doc OR test) using conventional message (feat|fix|docs|chore|refactor|test). Ne pas accumuler de multiples changements non liés dans un seul commit.
@@ -79,7 +79,7 @@ DataEngine | `data-engine/index.ts` | kernel-selftest, bridge-selftest |
 Web hook/component | `packages/web/src/...` | (future) web-smoke-selftest |
 Mobile screen/hook | `packages/mobile/src/...` | (future) mobile-smoke-selftest |
 Server route | `packages/server/index.js` or handlers | (future) server-selftest |
-Docs only | `archi/*.md` | none (lint if introduced) |
+Docs only | `handbook/*.md` | none (lint if introduced) |
 
 Automation Roadmap:
 1. Script `scripts/changed-selftests.mjs` : map git diff → recommended selftests.
@@ -88,7 +88,7 @@ Automation Roadmap:
 4. Badge coverage (futur Istanbul / vitest integration).
 
 ## 7. Repository Etiquette (Global)
-- N’ajoute pas de dépendance externe sans justification (archi/DECISIONS.md si structurante).
+- N’ajoute pas de dépendance externe sans justification (handbook/DECISIONS.md si structurante).
 - Pas de version majeure de lib sans vérifier scripts de build des autres packages.
 - SQLite : forward-only; toute altération de schéma → script de migration.
 - InMemory vs SQLite doivent rester isomorphes pour tests.
@@ -126,7 +126,7 @@ Post-Change Actions:
 | Core | Optimistic Lock | ✅ | resource.conflict emitted |
 | Core | SQLite Filters & Pagination | ✅ | Basic LIKE; FTS planned |
 | Core | Export Manifest | ✅ | Add hash + incremental v2 |
-| Core | Conflict Self-Test | ✅ | `archi/scripts/conflict-selftest.ts` |
+| Core | Conflict Self-Test | ✅ | `handbook/scripts/conflict-selftest.ts` |
 | Core | Workspace Key Migration | ❌ | Dual-read strategy pending |
 | Web | Smoke Rendering Tests | ❌ | Add minimal mount test |
 | Mobile | Hook/Screen Selftest | ❌ | Add Expo logic test harness |

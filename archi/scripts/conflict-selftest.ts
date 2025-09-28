@@ -1,7 +1,7 @@
 /**
  * Conflict Self-Test Script
  * Goal: Validate optimistic locking + conflict event emission.
- * Usage: ts-node archi/scripts/conflict-selftest.ts
+ * Usage: ts-node handbook/scripts/conflict-selftest.ts
  */
 
 import { EventEmitter } from 'events';
