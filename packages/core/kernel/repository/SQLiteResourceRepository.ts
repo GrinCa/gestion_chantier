@@ -74,6 +74,8 @@ export class SQLiteResourceRepository implements ResourceRepository {
     const q = query || {};
     const where: string[] = ['workspace_id = ?'];
     const params: any[] = [workspaceId];
+    let useFts = false;
+    let ftsTerm: string | undefined;
 
     // Filter by types
     if (q.types && q.types.length) {
@@ -106,11 +108,17 @@ export class SQLiteResourceRepository implements ResourceRepository {
       }
     }
 
-    // Simple full-text fallback (LIKE on payload/metadata)
+    // Decide if we will run FTS path
     if (q.fullText) {
-      where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
-      const like = `%${q.fullText}%`;
-      params.push(like, like, like);
+      if (this.ftsReady) {
+        useFts = true;
+        ftsTerm = q.fullText;
+      } else {
+        // Fallback LIKE on payload/metadata/type
+        where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
+        const like = `%${q.fullText}%`;
+        params.push(like, like, like);
+      }
     }
 
     const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
@@ -124,18 +132,47 @@ export class SQLiteResourceRepository implements ResourceRepository {
         }).join(',')
       : 'ORDER BY updated_at DESC';
 
-    const sqlData = `SELECT * FROM resources ${whereClause} ${orderClause} LIMIT ? OFFSET ?`;
-    const sqlCount = `SELECT COUNT(*) as c FROM resources ${whereClause}`;
+    let sqlData: string;
+    let sqlCount: string;
+    if (useFts && ftsTerm) {
+      // Basic scoring: count occurrences of term in FTS content via length replace trick
+      // We join FTS table to main resources.
+      sqlCount = `SELECT COUNT(*) as c FROM resources r JOIN resources_fts f ON f.id=r.id WHERE r.workspace_id=? AND f.content MATCH ?`;
+      // order by computed score desc then updated_at desc
+      sqlData = `SELECT r.*, ((length(f.content) - length(replace(lower(f.content), lower(?), '')))/length(?)) as score
+                 FROM resources r JOIN resources_fts f ON f.id=r.id
+                 WHERE r.workspace_id=? AND f.content MATCH ?
+                 ${orderClause.includes('updated_at') ? '' : ''}
+                 ORDER BY score DESC, r.updated_at DESC
+                 LIMIT ? OFFSET ?`;
+    } else {
+      sqlData = `SELECT * FROM resources ${whereClause} ${orderClause} LIMIT ? OFFSET ?`;
+      sqlCount = `SELECT COUNT(*) as c FROM resources ${whereClause}`;
+    }
 
     return new Promise((resolve, reject) => {
-      this.db.get(sqlCount, params, (cerr, crow: any) => {
-        if (cerr) return reject(cerr);
-        this.db.all(sqlData, [...params, limit, offset], (err, rows) => {
-          if (err) return reject(err);
-          const data = rows.map(r => this.rowToResource(r));
-          resolve({ data, total: crow?.c ?? data.length });
+      if (useFts && ftsTerm) {
+        // For FTS path we have separate param ordering
+        const countParams = [workspaceId, ftsTerm];
+        this.db.get(sqlCount, countParams, (cerr, crow: any) => {
+          if (cerr) return reject(cerr);
+          const dataParams = [ftsTerm, ftsTerm, workspaceId, ftsTerm, limit, offset];
+          this.db.all(sqlData, dataParams, (err, rows:any[]) => {
+            if (err) return reject(err);
+            const data = rows.map(r => this.rowToResource(r));
+            resolve({ data, total: crow?.c ?? data.length });
+          });
         });
-      });
+      } else {
+        this.db.get(sqlCount, params, (cerr, crow: any) => {
+          if (cerr) return reject(cerr);
+          this.db.all(sqlData, [...params, limit, offset], (err, rows) => {
+            if (err) return reject(err);
+            const data = rows.map(r => this.rowToResource(r));
+            resolve({ data, total: crow?.c ?? data.length });
+          });
+        });
+      }
     });
   }
   async save(resource: Resource): Promise<Resource> {
