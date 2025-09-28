@@ -27,10 +27,11 @@ Résumé Section 2: Base de persistance stable (schema v2), indices critiques en
 - [x] Ajouter script self-test conflits (`handbook/scripts/conflict-selftest.ts`)
 
 ## 4. Auth & Access Policy
-- [ ] Étendre `AccessPolicy` pour supporter rôles (owner, editor, reader)
-- [ ] Ajouter vérification par action (create/update/delete/export)
-- [ ] Émettre event `access.denied` (optionnel métriques)
-- [ ] Mettre en place tests d’accès
+- [x] Étendre `AccessPolicy` pour supporter rôles (owner, editor, reader)
+- [x] Ajouter vérification par action (create/update/delete/export/migration/tool)
+- [x] Émettre event `access.denied` (via InstrumentedAccessPolicy)
+- [x] Mettre en place tests d’accès (role-based + denied instrumentation)
+	- [ ] Intégrer métriques futures sur refus (Section 7 Observabilité)
 
 ## 5. Index & Recherche
 - [ ] Ajouter scoring simple (compte occurrences champ texte)
