@@ -1,10 +1,14 @@
 # Roadmap Technique (Transition Lite → Solide)
 
-## 1. Terminologie & Dépréciations
+## 1. Terminologie & Dépréciations (CONCLU)
 - [x] Ajouter JSDoc `@deprecated` sur les méthodes wrappers Project (createProject, getProject, getUserProjects)
 - [x] Ajouter JSDoc `@deprecated` sur les hooks alias (`useProjects`, `useProject`, `useProjectData`, mobile équivalents)
-- [~] Remplacer progressivement `project_id` dans les types/query par `workspace_id` (types & DataEngine faits; reste hooks web/mobile + requêtes serveur)
-- [~] Mettre à jour toutes les docs (mobile README fait, reste README root + web) avec la table de migration Project → Workspace
+- [x] Introduction du champ canonical `workspace_id` dans le core (types + DataEngine) avec miroir `project_id` legacy
+- [x] Mise à jour doc mobile (table migration Project → Workspace)
+- [x] Base de compat (queryData accepte workspace_id ou project_id)
+- [ ] NOTE: Finalisation (suppression totale de project_id + docs root & web) suivie dans Section 12
+
+Résumé: Phase 1 de migration terminée (noyau). Le reste est scindé en tâches granulaires (voir Section 12) pour éviter un big-bang et permettre validation incrémentale.
 
 ## 2. Persistence & Repository
 - [x] Étendre `SQLiteResourceRepository` : filtres (owner, type, updated_at range)
@@ -101,6 +105,24 @@ Cocher au fur et à mesure ; garder commits atomiques `feat(core): ...`, `chore(
 - TD-003 Auto labels PR
 - TD-004 Metrics latence repo
 - TD-005 Gate lint/tests (partiellement amorcé: tests OK, lint manquant)
+
+## 12. Migration Workspace (Phase 2+)
+- [ ] Web: Mettre à jour hooks (`useDataEngine`, `useCalculatrice`) pour accepter `workspaceId` prop & émettre warning si `projectId` utilisé
+- [ ] Web: Remplacer partout les objets query `{ project_id: ... }` par `{ workspace_id: ... }` (garder mapping interne si server encore /projects)
+- [ ] Mobile: Mettre à jour `useMobileDataEngine` & écrans (CalculatriceScreen) pour paramètre `workspaceId` + alias deprecated
+- [ ] Server: Introduire endpoints `/workspaces/*` parallèles aux `/projects/*` (ou redirection interne) + réponse incluant `workspace_id`
+- [ ] Core: Ajouter test unitaire `queryData({ workspace_id })` (sans project_id) pour garantir support complet
+- [ ] Script audit: scanner repo pour usages restants de `project_id` hors compat (exclusion dist/ & TODO)
+- [ ] Docs: Mettre à jour README root + README web avec table migration & note de dépréciation finale
+- [ ] LLM-ENTRYPOINT / ARCHITECTURE: retirer mention de dual naming une fois UI & server migrés
+- [ ] Retirer generation miroir `project_id` dans `createData` (n'écrire plus que `workspace_id`)
+- [ ] Supprimer wrappers createProject/getProject/getUserProjects (coordonné avec Section 8 Nettoyage Legacy)
+- [ ] Supprimer champ `project_id` des types (breaking change majeure) + changelog
+- [ ] Ajouter test négatif: importer données ne contenant que `project_id` → migration automatique ou erreur contrôlée
+
+Notes Migration:
+- Stratégie safe: d'abord lecture double, puis écriture simple (`workspace_id`), enfin retrait wrappers.
+- Le script audit déclencheur pour planifier le commit de suppression finale.
 
 ## Incidents / Bugs Temporaires
 - (vide) – reporter ici avant création issue externe.
