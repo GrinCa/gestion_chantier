@@ -14,3 +14,4 @@ export * from './domain/Resource.js';
 export * from './repository/ResourceRepository.js';
 export * from './KernelContext.js';
 export * from './bridge/DataEngineBridge.js';
+export * from './services/ResourceService.js';

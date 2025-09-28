@@ -214,8 +214,9 @@ Phase 2 (Structuration):
 - [x] Repository + QueryOptions implémentés ✅ (`kernel/repository/ResourceRepository.ts` InMemory)
 - [x] KernelContext (fabrique contextes) ✅ (`kernel/KernelContext.ts`)
 - [x] Bridge DataEngine -> ResourceRepository (écoute events) ✅ (`kernel/bridge/DataEngineBridge.ts`)
+- [x] ResourceService création + update + versioning ✅ (`kernel/services/ResourceService.ts`)
 - [ ] Validation (Zod) + premières migrations
-- [ ] Versionnement simple (Resource.version)
+- [x] Versionnement simple (Resource.version) ✅ (incrémente dans ResourceService)
 
 Phase 3 (Extensibilité):
 - [ ] ToolExecution log
