@@ -64,10 +64,16 @@ Phase 2 (CONCLU hors optionnel):
 
 Résumé: Phase 1 + Phase 2 (hors option p50/p99) livrées : repo latency, exports, imports, migrations, accessDenied, eventErrors, endpoints `/ _obs /metrics` & `/ _obs /health`. Reste uniquement l'amélioration facultative (histogrammes ou percentiles supplémentaires). Section 7 peut être traitée comme close fonctionnellement.
 
-## 8. Nettoyage Legacy
-- [ ] Remplacer toutes les chaînes `project:` storage par `workspace:` avec phase de lecture double
-- [ ] Script de migration des clés (scan & rewrite)
-- [ ] Retirer wrappers deprecated (milestone future v2)
+## 8. Nettoyage Legacy (CONCLU)
+- [x] Wrapper compat `wrapDataEngineWorkspaceCompat` (écriture single `workspace:` + fallback lecture `project:` + miroir auto)
+- [x] Export module + intégration `createWebDataEngine`
+- [x] Ajout dual-field dans hooks (`workspace_id` + `project_id` transitoire)
+- [x] Test unitaire `workspace-key-compat.test.ts` (compte fallback + miroir)
+- [x] Ajustement DataEngine: support workspace_id prioritaire + message d'erreur explicite
+- [x] Mise à jour TODO & documentation interne (plan retrait)
+- [ ] (Différé Section 12) Retrait final wrappers / suppression champ `project_id`
+
+Résumé Section 8: Phase de compatibilité clé terminée. Aucune écriture nouvelle sous préfixe `project:`. Les lectures legacy sont comptées et miroir vers `workspace:`. La suppression définitive (breaking) sera orchestrée en Section 12.
 
 ## 9. DevX & Sécurité
 - [ ] ESLint rule custom pour détecter usage `createProject` hors core
