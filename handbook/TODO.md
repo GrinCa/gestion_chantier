@@ -52,6 +52,7 @@
 - [ ] ESLint rule custom pour détecter usage `createProject` hors core
 - [ ] Ajout d’un mode strict (feature flag) désactivant wrappers
 - [ ] Vérification taille export avant création (limite configurable)
+- [ ] Script guard: échouer si dossier `archi/` réapparaît (lint CI) (post-nettoyage 2025-09-28)
 
 ## 10. Tests & Qualité
 - [ ] Ajout test unitaire sur MigrationService (cas: aucune migration, échec, dépendance)
@@ -70,6 +71,7 @@
 - [ ] Métriques latence repository (wrap + metrics-selftest extension)
 - [ ] OpenAPI (ou doc minimal) pour endpoints server (futur swagger)
 - [ ] ESLint rule usage wrappers dépréciés (createProject etc.)
+- [ ] Ajout check CI anti-réintroduction dossier legacy `archi/` (double avec script guard)
 
 
 ---
