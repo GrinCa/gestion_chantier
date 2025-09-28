@@ -217,6 +217,7 @@ Phase 2 (Structuration):
 - [x] ResourceService création + update + versioning ✅ (`kernel/services/ResourceService.ts`)
 - [ ] Validation (Zod) + premières migrations
 - [x] Versionnement simple (Resource.version) ✅ (incrémente dans ResourceService)
+ - [x] MigrationService basique + migration note v1->v2 (category) ✅
 
 Phase 3 (Extensibilité):
  - [x] ToolExecution log ✅ (`kernel/services/ToolExecutionService.ts` + tool.executed event)

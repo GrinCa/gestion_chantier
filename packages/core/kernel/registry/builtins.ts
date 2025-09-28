@@ -32,15 +32,28 @@ globalDataTypeRegistry.register({
 // Note textuelle courte, tags optionnels.
 globalDataTypeRegistry.register({
   type: 'note',
-  schemaVersion: 1,
+  // Passons la version du schéma à 2 pour simuler une évolution (ajout 'category')
+  schemaVersion: 2,
   schema: z.object({
     text: z.string().min(1),
-    tags: z.array(z.string()).optional()
+    tags: z.array(z.string()).optional(),
+    category: z.string().optional()
   }),
+  migrate(value: any, fromVersion: number) {
+    let v = { ...value };
+    if (fromVersion < 2) {
+      // Règle simple: si tag 'important' présent -> category = 'important'
+      if (Array.isArray(v.tags) && v.tags.includes('important')) {
+        v.category = 'important';
+      }
+    }
+    return v;
+  },
   indexStrategy(value: any) {
     return {
       text: value.text.slice(0, 200),
-      tags: Array.isArray(value.tags) ? value.tags.join(',') : null
+      tags: Array.isArray(value.tags) ? value.tags.join(',') : null,
+      category: value.category || null
     };
   }
 });
