@@ -26,6 +26,8 @@ export * from './kernel/bootstrap/KernelBootstrap.js';
 export * from './kernel/services/ExportService.js';
 export * from './kernel/indexer/Indexer.js';
 export * from './kernel/indexer/IndexSubscriber.js';
+// SQLite repository remplacé par stub explicite côté browser
+export * from './kernel/repository/SQLiteResourceRepository.browser.js';
 
 export { ensureBrowserEnvironment } from './runtime/env-guard.js';
 export const RUNTIME_TARGET = 'browser';

@@ -26,7 +26,8 @@
     "./tools-registry": "./dist/tools-registry/index.js"
   },
   "scripts": {
-  "build": "tsc",
+  "build": "tsc && node ./scripts/build-cjs.mjs",
+  "browser-surface-selftest": "node dist/scripts/browser-surface-selftest.js",
   "dev": "tsc --watch",
   "validate-config": "node --loader ts-node/esm ./scripts/validate-config.ts",
   "kernel-selftest": "node dist/scripts/kernel-selftest.js",
