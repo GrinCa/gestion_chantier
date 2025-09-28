@@ -6,9 +6,7 @@
 - [x] Introduction du champ canonical `workspace_id` dans le core (types + DataEngine) avec miroir `project_id` legacy
 - [x] Mise à jour doc mobile (table migration Project → Workspace)
 - [x] Base de compat (queryData accepte workspace_id ou project_id)
-- [ ] NOTE: Finalisation (suppression totale de project_id + docs root & web) suivie dans Section 12
-
-Résumé: Phase 1 de migration terminée (noyau). Le reste est scindé en tâches granulaires (voir Section 12) pour éviter un big-bang et permettre validation incrémentale.
+Résumé: Migration terminologie stabilisée (toutes les actions prévues pour cette section sont faites). Les étapes destructives finales (suppression wrappers / champ `project_id`, docs root & web) sont entièrement tracées dans Section 12 et n'appartiennent plus à cette section. Section 1 est **définitivement close**.
 
 ## 2. Persistence & Repository (CONCLU Phase 1)
 - [x] Étendre `SQLiteResourceRepository` : filtres (owner, type, updated_at range)
