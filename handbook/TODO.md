@@ -40,10 +40,12 @@ Section 5 CONCLU (phase actuelle). Améliorations futures (highlight, FTS avanc�
 
 ## 6. Export & Sauvegarde
 - [x] Ajouter manifest export (metadata.json : date, count, types, version)
-- [ ] Export chunked (fichiers rotatifs après N lignes)
-- [ ] Export incrémental (since timestamp)
+- [x] Export chunked (fichiers rotatifs après N lignes) via `exportWorkspaceChunked`
+- [x] Export incrémental (since timestamp) via `exportWorkspaceIncremental`
 - [ ] Validation de ré-import (esquisse futur ImportService)
 	- [x] Séparation surface ExportService browser/node (stub navigateur)
+
+Section 6 partiellement conclue (manque seulement la validation de ré-import). Les deux modes (chunked + incremental) sont testés.
 
 ## 7. Observabilité
 - [ ] Ajouter latence moyenne repository (wrap CRUD timed)
