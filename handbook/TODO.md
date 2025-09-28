@@ -83,12 +83,14 @@ Résumé Section 8: Phase de compatibilité clé terminée. Aucune écriture nou
 
 Notes: Une fois la limite export ajoutée, Section 9 pourra être marquée close. Possibles améliorations futures : rule ESLint séparée en plugin dédié, reporting métrique sur violations strict mode.
 
-## 10. Tests & Qualité
+## 10. Tests & Qualité (CONCLU Phase actuelle)
 - [x] Initial test suite (repository, dual export, sqlite stub, export stub, access policy)
-- [x] Ajout test unitaire sur MigrationService (cas: aucune migration, migration de 2 resources)
-- [ ] Test intégration Export + Reindex + Migration enchaînés
-- [ ] Test chargement massif (1000 resources) métriques index
-	- [ ] Couverture sur Indexer scoring futur
+- [x] Ajout test unitaire MigrationService (aucune migration + migration de 2 resources)
+- [x] Test intégration Export + Migration (chaîne) (reindex implicite minimal)
+- [x] Test charge indexeur (1000 resources) + vérification recherche
+	- [ ] Couverture future scoring avancé (différé TD-002)
+
+Résumé: Couverture de base élargie (migrations, chaîne d'export, charge indexeur). Les évolutions scoring/FTS seront traitées plus tard. Section 10 considérée complète pour la vague actuelle.
 
 ## 11. Monorepo Extensions (Nouveaux Chantiers)
 - [ ] Script `changed-selftests.mjs` (analyse git diff → liste self-tests à exécuter)
