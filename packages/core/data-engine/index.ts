@@ -196,30 +196,27 @@ export class DataEngine {
     await this.storage.set(`data:${id}`, entry);
 
     // EXPÉRIMENTAL: si repository présent, créer une Resource miroir.
+    // Validation (toujours si type existant) – lance si invalide
+    try {
+      content = globalDataTypeRegistry.validate(dataType, content);
+    } catch (e: any) {
+      throw new Error(`Validation failed for type ${dataType}: ${e.message}`);
+    }
+
     if (this.resourceRepo) {
-      try {
-        // Validation unifiée (Zod ou custom) via registre
-        try {
-          content = globalDataTypeRegistry.validate(dataType, content);
-        } catch (e:any) {
-          throw new Error(`Validation failed for type ${dataType}: ${e.message}`);
-        }
-        const descriptor = globalDataTypeRegistry.get(dataType);
-        const resource: Resource = {
-          id: entry.id,
-          type: dataType,
-          workspaceId: projectId, // alias projet -> workspace (futur renommage)
-          createdAt: timestamp,
-          updatedAt: timestamp,
-          version: 1,
-          origin: toolOrigin,
-          payload: content,
-          schemaVersion: descriptor?.schemaVersion
-        };
-        await this.resourceRepo.save(resource);
-      } catch (err) {
-        console.warn('[DataEngine] resourceRepo mirror save failed', err);
-      }
+      const descriptor = globalDataTypeRegistry.get(dataType);
+      const resource: Resource = {
+        id: entry.id,
+        type: dataType,
+        workspaceId: projectId, // alias projet -> workspace (futur renommage)
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        version: 1,
+        origin: toolOrigin,
+        payload: content,
+        schemaVersion: descriptor?.schemaVersion
+      };
+      await this.resourceRepo.save(resource);
     }
     
     // Update project's updated_at
