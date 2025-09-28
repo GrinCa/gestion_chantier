@@ -21,7 +21,8 @@
     "link:core": "npm link --workspace=packages/core && npm link @gestion-chantier/core --workspace=packages/web && npm link @gestion-chantier/core --workspace=packages/mobile",
     "setup": "npm run install:all && npm run build:core && npm run link:core",
     "setup:mobile": "npm run setup && npm run dev:mobile",
-    "pr:create": "node scripts/create-pr.mjs"
+    "pr:create": "node scripts/create-pr.mjs",
+    "pr:update": "node scripts/update-pr.mjs"
   },
   "devDependencies": {
     "typescript": "~5.6.2"
