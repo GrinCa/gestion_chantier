@@ -38,14 +38,14 @@ Résumé Section 2: Base de persistance stable (schema v2), indices critiques en
 
 Section 5 CONCLU (phase actuelle). Améliorations futures (highlight, FTS avancé, ranking BM25) → TD-002.
 
-## 6. Export & Sauvegarde
+## 6. Export & Sauvegarde (CONCLU)
 - [x] Ajouter manifest export (metadata.json : date, count, types, version)
 - [x] Export chunked (fichiers rotatifs après N lignes) via `exportWorkspaceChunked`
 - [x] Export incrémental (since timestamp) via `exportWorkspaceIncremental`
-- [ ] Validation de ré-import (esquisse futur ImportService)
+- [x] Validation de ré-import (ImportService validateNdjson / validateChunked)
 	- [x] Séparation surface ExportService browser/node (stub navigateur)
 
-Section 6 partiellement conclue (manque seulement la validation de ré-import). Les deux modes (chunked + incremental) sont testés.
+Résumé: Pipeline export complet (simple, chunked, incremental) + validation structurée (count, types, duplicates, JSON). Prochaines évolutions futures (hash par chunk, signature, reprise partielle) pourront passer en dettes ou Section Observabilité.
 
 ## 7. Observabilité
 - [ ] Ajouter latence moyenne repository (wrap CRUD timed)
