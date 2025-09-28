@@ -16,6 +16,7 @@
     "dev": "tsc --watch",
     "kernel-selftest": "node --loader ts-node/esm ./scripts/kernel-selftest.ts",
     "repo-selftest": "node --loader ts-node/esm ./scripts/repository-selftest.ts",
+    "bridge-selftest": "node --loader ts-node/esm ./scripts/bridge-selftest.ts",
     "clean": "rm -rf dist *.js *.d.ts types/*.js types/*.d.ts data-engine/*.js data-engine/*.d.ts tools-registry/*.js tools-registry/*.d.ts"
   },
   "keywords": [

@@ -14,7 +14,17 @@ import type {
   UpdateInput,
   ApiResponse,
   SyncStatus
-} from '../types/index.js';// ===== STORAGE INTERFACES =====
+} from '../types/index.js';
+// Event system (optionnel) – noyau
+import type { DomainEvent } from '../kernel/events/DomainEvent.js';
+import { EventBus, NoopEventBus } from '../kernel/events/EventBus.js';
+// Experimental repository integration
+import type { ResourceRepository } from '../kernel/repository/ResourceRepository.js';
+import type { Resource } from '../kernel/domain/Resource.js';
+import { globalDataTypeRegistry } from '../kernel/registry/DataTypeRegistry.js';
+// NOTE: EventBus runtime exported via kernel/index, we rely on duck typing ; fallback no-op local if absent
+function getNoopBus(): EventBus { return NoopEventBus; }
+// ===== STORAGE INTERFACES =====
 
 export interface StorageAdapter {
   get(key: string): Promise<any>;
@@ -37,10 +47,14 @@ export class DataEngine {
   private network: NetworkAdapter;
   private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
   private pendingSync = new Set<string>();
+  private eventBus: EventBus;
+  private resourceRepo?: ResourceRepository; // expérimental
 
-  constructor(storage: StorageAdapter, network: NetworkAdapter) {
+  constructor(storage: StorageAdapter, network: NetworkAdapter, opts?: { eventBus?: EventBus; resourceRepo?: ResourceRepository }) {
     this.storage = storage;
     this.network = network;
+    this.eventBus = opts?.eventBus ?? getNoopBus();
+    this.resourceRepo = opts?.resourceRepo;
     
     // Auto-sync when coming online
     this.network.onlineStatusChanged((online) => {
@@ -73,6 +87,7 @@ export class DataEngine {
         if (response.success && response.data) {
           // Update with server response
           await this.storage.set(`project:${id}`, response.data);
+          await this.emitEvent('project', response.data.id, 'created', response.data, response.data.updated_at, project.owner as any);
           return response.data;
         }
       } catch (error) {
@@ -82,7 +97,8 @@ export class DataEngine {
     } else {
       this.pendingSync.add(`project:${id}`);
     }
-
+    // Emit local event (offline or pre-sync)
+    await this.emitEvent('project', newProject.id, 'created', newProject, newProject.updated_at, (project as any).owner);
     return newProject;
   }
 
@@ -178,12 +194,38 @@ export class DataEngine {
 
     // Save locally
     await this.storage.set(`data:${id}`, entry);
+
+    // EXPÉRIMENTAL: si repository présent, créer une Resource miroir.
+    if (this.resourceRepo) {
+      try {
+        const descriptor = globalDataTypeRegistry.get(dataType);
+        if (descriptor?.validate) {
+          // Valide le payload (content) avant insertion Resource
+            descriptor.validate(content);
+        }
+        const resource: Resource = {
+          id: entry.id,
+          type: dataType,
+          workspaceId: projectId, // alias projet -> workspace (futur renommage)
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          version: 1,
+          origin: toolOrigin,
+          payload: content,
+          schemaVersion: descriptor?.schemaVersion
+        };
+        await this.resourceRepo.save(resource);
+      } catch (err) {
+        console.warn('[DataEngine] resourceRepo mirror save failed', err);
+      }
+    }
     
     // Update project's updated_at
     const project = await this.getProject(projectId);
     if (project) {
       project.updated_at = timestamp;
       await this.storage.set(`project:${projectId}`, project);
+      await this.emitEvent('project', project.id, 'updated', { updated_at: project.updated_at }, project.updated_at);
     }
 
     // Try to sync
@@ -192,6 +234,7 @@ export class DataEngine {
         const response = await this.network.request<DataEntry>('POST', `/projects/${projectId}/data`, entry);
         if (response.success && response.data) {
           await this.storage.set(`data:${id}`, response.data);
+          await this.emitEvent('data', response.data.id, 'created', response.data, response.data.created_at, response.data.tool_origin);
           return response.data;
         }
       } catch (error) {
@@ -201,7 +244,7 @@ export class DataEngine {
     } else {
       this.pendingSync.add(`data:${id}`);
     }
-
+    await this.emitEvent('data', entry.id, 'created', entry, entry.created_at, toolOrigin);
     return entry;
   }
 
@@ -299,8 +342,14 @@ export class DataEngine {
 
         if (response?.success) {
           this.pendingSync.delete(key);
-          if (response.data) {
-            await this.storage.set(key, response.data);
+          const synced: any = response.data;
+          if (synced) {
+            await this.storage.set(key, synced);
+            if (key.startsWith('project:') && synced.id) {
+              await this.emitEvent('project', synced.id, 'synced', synced, synced.updated_at ?? Date.now());
+            } else if (key.startsWith('data:') && synced.id) {
+              await this.emitEvent('data', synced.id, 'synced', synced, synced.created_at ?? Date.now());
+            }
           }
         } else {
           failed.add(key);
@@ -337,6 +386,26 @@ export class DataEngine {
 
   private getNestedValue(obj: any, path: string): any {
     return path.split('.').reduce((current, key) => current?.[key], obj);
+  }
+
+  // ===== EVENT EMISSION =====
+  private async emitEvent(entityType: string, entityId: string, operation: string, payload: any, timestamp: number, actor?: string) {
+    try {
+      const evt: DomainEvent = {
+        id: this.generateId(),
+        entityType,
+        entityId,
+        operation,
+        timestamp,
+        payload,
+        actor
+      };
+      // @ts-ignore if eventBus has no emit signature at runtime fallback silent
+      await this.eventBus.emit(evt);
+    } catch (e) {
+      // Ne jamais faire échouer une écriture à cause de la couche d'observation
+      console.warn('[DataEngine] Event emission failed', e);
+    }
   }
 
   // ===== CLEANUP =====
