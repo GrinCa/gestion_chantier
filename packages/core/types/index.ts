@@ -25,7 +25,14 @@ export interface Workspace extends Project {}
 
 export interface DataEntry {
   id: string;
-  project_id: string;
+  /**
+   * Canonical workspace identifier (nouveau nom). Toujours présent.
+   */
+  workspace_id: string;
+  /**
+   * @deprecated Utiliser workspace_id. Conservé pour compat requêtes / projets legacy.
+   */
+  project_id?: string;
   data_type: string;           // "measurement", "media", "annotation", "relationship"
   content: Record<string, any>; // Flexible content structure
   tool_origin: string;         // Tool that created this data
@@ -132,7 +139,12 @@ export interface DataFilter {
 }
 
 export interface DataQuery {
-  project_id: string;
+  /**
+   * Canonical workspace id (nouveau). Au moins l'un de workspace_id / project_id doit être fourni.
+   */
+  workspace_id?: string;
+  /** @deprecated utiliser workspace_id */
+  project_id?: string;
   data_types?: string[];
   filters?: DataFilter[];
   sort?: { field: string; direction: "asc" | "desc" }[];

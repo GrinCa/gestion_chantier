@@ -3,7 +3,7 @@
 ## 1. Terminologie & Dépréciations
 - [x] Ajouter JSDoc `@deprecated` sur les méthodes wrappers Project (createProject, getProject, getUserProjects)
 - [x] Ajouter JSDoc `@deprecated` sur les hooks alias (`useProjects`, `useProject`, `useProjectData`, mobile équivalents)
-- [ ] Remplacer progressivement `project_id` dans les types/query par `workspace_id` (avec compat layer de lecture)
+- [~] Remplacer progressivement `project_id` dans les types/query par `workspace_id` (types & DataEngine faits; reste hooks web/mobile + requêtes serveur)
 - [~] Mettre à jour toutes les docs (mobile README fait, reste README root + web) avec la table de migration Project → Workspace
 
 ## 2. Persistence & Repository

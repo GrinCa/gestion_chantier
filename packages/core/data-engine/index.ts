@@ -217,7 +217,8 @@ export class DataEngine {
 
     const entry: DataEntry = {
       id,
-      project_id: projectId,
+      workspace_id: projectId,
+      project_id: projectId, // legacy mirror
       data_type: dataType,
       content: validated,
       tool_origin: toolOrigin,
@@ -273,7 +274,8 @@ export class DataEngine {
   }
 
   async queryData(query: DataQuery): Promise<QueryResult<DataEntry>> {
-    const { project_id } = query;
+    const project_id = query.workspace_id || query.project_id; // support the two during migration
+    if (!project_id) throw new Error('queryData: workspace_id (or legacy project_id) requis');
 
     // Try server first if online
     if (this.network.isOnline()) {
@@ -296,7 +298,9 @@ export class DataEngine {
   }
 
   private async queryLocalData(query: DataQuery): Promise<QueryResult<DataEntry>> {
-    const { project_id, data_types, filters, sort, limit = 100, offset = 0 } = query;
+    const project_id = query.workspace_id || query.project_id;
+    const { data_types, filters, sort, limit = 100, offset = 0 } = query;
+    if (!project_id) throw new Error('queryLocalData: workspace_id (ou legacy project_id) requis');
     
     const keys = await this.storage.keys();
     const dataKeys = keys.filter(key => key.startsWith('data:'));
@@ -304,7 +308,7 @@ export class DataEngine {
 
     for (const key of dataKeys) {
       const entry = await this.storage.get(key);
-      if (!entry || entry.project_id !== project_id) continue;
+  if (!entry || (entry.workspace_id || entry.project_id) !== project_id) continue;
       
       // Filter by data types
       if (data_types && !data_types.includes(entry.data_type)) continue;
