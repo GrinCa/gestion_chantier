@@ -27,9 +27,9 @@ steps.push({ label:'Build (workspaces)', cmd: 'npm run build --if-present' });
 if (process.env.PR_CHECK_INCLUDE_LINT === 'true') {
   steps.push({ label:'Lint', cmd: 'npm run lint' });
 }
-// Placeholder for tests (future integration) - currently none defined.
-if (process.env.PR_CHECK_INCLUDE_TESTS === 'true') {
-  steps.push({ label:'Tests', cmd: 'npm test' });
+// Core tests now available; run by default (can skip with PR_CHECK_SKIP_TESTS=true)
+if (process.env.PR_CHECK_SKIP_TESTS !== 'true') {
+  steps.push({ label:'Tests (core)', cmd: 'npm run test --workspace=packages/core' });
 }
 
 let allOk = true;
