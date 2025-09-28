@@ -219,7 +219,7 @@ Phase 2 (Structuration):
 - [x] Versionnement simple (Resource.version) ✅ (incrémente dans ResourceService)
 
 Phase 3 (Extensibilité):
-- [ ] ToolExecution log
+ - [x] ToolExecution log ✅ (`kernel/services/ToolExecutionService.ts` + tool.executed event)
 - [x] Indexer naïf ✅ (`kernel/indexer/*` + events resource.*)
 - [ ] Sync status enrichi
 

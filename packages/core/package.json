@@ -20,6 +20,7 @@
     "validation-selftest": "node --loader ts-node/esm ./scripts/validation-selftest.ts",
     "resource-service-selftest": "node --loader ts-node/esm ./scripts/resource-service-selftest.ts",
     "indexer-selftest": "node --loader ts-node/esm ./scripts/indexer-selftest.ts",
+  "tool-execution-selftest": "node --loader ts-node/esm ./scripts/tool-execution-selftest.ts",
     "clean": "rm -rf dist *.js *.d.ts types/*.js types/*.d.ts data-engine/*.js data-engine/*.d.ts tools-registry/*.js tools-registry/*.d.ts"
   },
   "keywords": [
