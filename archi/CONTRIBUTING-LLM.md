@@ -1,6 +1,6 @@
-# CONTRIBUTING (LLM-Aware Guidelines)
+# CONTRIBUTING (LLM-Aware Guidelines – Full Monorepo)
 
-These rules are optimized for automated + human collaboration.
+These rules are optimized for automated + human collaboration across EVERY package (`core`, `web`, `mobile`, `server`, future packages). Core a servi de référence; cette version généralise.
 
 ## 1. Core Principles
 1. Do not remove public APIs without a deprecation phase.
@@ -50,14 +50,38 @@ Use JSDoc:
 Maintain wrappers for at least one transitional iteration before removal.
 
 ## 6. Testing Guidance
-- Self-tests live in `packages/core/scripts/*-selftest.ts`.
-- New capability → add `xyz-selftest.ts` validating minimal success + 1 failure path.
-- If behavior is performance-sensitive, log metrics in the test output (not enforced yet).
+- Core self-tests: `packages/core/scripts/*-selftest.ts` (déjà en place).
+- Web UI tests (à introduire) : `packages/web/src/__selftests__/*.tsx` (smoke rendering + hook behavior) – minimal placeholder à créer avant changements UI majeurs.
+- Mobile tests (future) : `packages/mobile/src/__selftests__/*.tsx` (expo + logic sans dépendances réseau).
+- Server tests: `packages/server/tests/*.ts` (API contract & auth + error paths) – si absent, créer `server-selftest.ts` script minimal ping + user route.
+- Nouvelle capability → ajouter `xyz-selftest.ts` validant succès + 1 scénario d’échec.
+- Performance sensible : log métriques (p95) dans la sortie (tolérance actuelle: non bloquant).
 
-## 7. Repository Etiquette
-- Do not introduce external deps without explicit architectural justification.
-- Keep SQLite evolution forward-only; add migration scripts rather than altering schema retroactively.
-- Keep in-memory and SQLite repository implementations API-compatible.
+Test Mapping Convention (Fichier modifié → Tests à lancer avant commit):
+| Change Type | Examples | Run At Minimum |
+|-------------|----------|----------------|
+Core service logic | `ResourceService.ts`, `SQLiteResourceRepository.ts` | Related *-selftest + aggregate impacted (repo, migration, export) |
+Core schema / registry | `registry/builtins.ts` | validation-selftest, migration-selftest |
+Export / manifest | `ExportService.ts` | export-selftest, export-manifest-selftest |
+DataEngine | `data-engine/index.ts` | kernel-selftest, bridge-selftest |
+Web hook/component | `packages/web/src/...` | (future) web-smoke-selftest |
+Mobile screen/hook | `packages/mobile/src/...` | (future) mobile-smoke-selftest |
+Server route | `packages/server/index.js` or handlers | (future) server-selftest |
+Docs only | `archi/*.md` | none (lint if introduced) |
+
+Automation Roadmap:
+1. Script `scripts/changed-selftests.mjs` : map git diff → recommended selftests.
+2. Pre-commit hook (opt-in) : exécute mapping, bloque si échec.
+3. CI matrix: core fast tests (parallel) + web/mobile smoke + server contract.
+4. Badge coverage (futur Istanbul / vitest integration).
+
+## 7. Repository Etiquette (Global)
+- N’ajoute pas de dépendance externe sans justification (archi/DECISIONS.md si structurante).
+- Pas de version majeure de lib sans vérifier scripts de build des autres packages.
+- SQLite : forward-only; toute altération de schéma → script de migration.
+- InMemory vs SQLite doivent rester isomorphes pour tests.
+- Web/Mobile : éviter d’introduire du state global hors providers contrôlés.
+- Server : endpoints nouveaux → documenter param & output dans README ou future OpenAPI.
 
 ## 8. Large Changes
 For multi-step refactors (e.g., project_id → workspace_id):
@@ -84,14 +108,20 @@ Risks:
 Post-Change Actions:
 ```
 
-## 11. Support Matrix (Current Gaps)
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Optimistic Lock | ✅ | resource.conflict emitted |
-| SQLite Filters | ❌ | TODO (type, updated_at) |
-| Export Manifest | ✅ | manifest + test (hash future) |
-| Conflict Self-Test | ✅ | `archi/scripts/conflict-selftest.ts` |
-| Workspace Key Migration | ❌ | Needs dual-read plan |
+## 11. Support Matrix (Current Gaps – Monorepo)
+| Area | Feature | Status | Notes |
+|------|---------|--------|-------|
+| Core | Optimistic Lock | ✅ | resource.conflict emitted |
+| Core | SQLite Filters & Pagination | ✅ | Basic LIKE; FTS planned |
+| Core | Export Manifest | ✅ | Add hash + incremental v2 |
+| Core | Conflict Self-Test | ✅ | `archi/scripts/conflict-selftest.ts` |
+| Core | Workspace Key Migration | ❌ | Dual-read strategy pending |
+| Web | Smoke Rendering Tests | ❌ | Add minimal mount test |
+| Mobile | Hook/Screen Selftest | ❌ | Add Expo logic test harness |
+| Server | API Selftest | ❌ | Basic ping + CRUD route test |
+| DevX | changed-selftests script | ❌ | Automate mapping |
+| Observability | Repo latency metrics | ❌ | Wrap repository methods |
+| Security | Role-based AccessPolicy | ❌ | Extend policy + tests |
 
 ## 12. Escalation Path (LLM)
 If blocked:
@@ -102,3 +132,26 @@ If blocked:
 
 ---
 This document evolves—append meaningful policy changes instead of rewriting history.
+
+---
+## 13. Monorepo Atomic Commit Standard
+| Category | Prefix | Example |
+|----------|--------|---------|
+| Core feature | feat(core) | feat(core): add FTS virtual table |
+| Web UI | feat(web) | feat(web): workspace list hook |
+| Mobile | feat(mobile) | feat(mobile): add offline banner |
+| Server | feat(server) | feat(server): add /health endpoint |
+| Tests | test(core) | test(core): add reindex selftest |
+| Docs | docs(archi) | docs(archi): add FTS design notes |
+| Chore | chore(repo) | chore(repo): add changed-selftests script |
+| Refactor | refactor(core) | refactor(core): extract query builder |
+
+Rule: un commit = une intention claire; en cas de mélange code+doc, préférer deux commits consécutifs.
+
+---
+## 14. Future Enforcements (Planned)
+- Linter custom: interdiction d’appeler wrappers `createProject` hors compat layer.
+- Script de vérification MANIFEST vs fichiers réels (alerte en CI).
+- Génération automatique d’un `ARCHI-SUMMARY.md` pour onboarding rapide.
+- Ajout d’un test d’intégrité “event taxonomy” (tous les events émis listés dans ARCHITECTURE.md).
+
