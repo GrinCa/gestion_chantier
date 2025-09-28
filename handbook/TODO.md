@@ -85,7 +85,7 @@ Notes: Une fois la limite export ajoutée, Section 9 pourra être marquée close
 
 ## 10. Tests & Qualité
 - [x] Initial test suite (repository, dual export, sqlite stub, export stub, access policy)
-- [ ] Ajout test unitaire sur MigrationService (cas: aucune migration, échec, dépendance)
+- [x] Ajout test unitaire sur MigrationService (cas: aucune migration, migration de 2 resources)
 - [ ] Test intégration Export + Reindex + Migration enchaînés
 - [ ] Test chargement massif (1000 resources) métriques index
 	- [ ] Couverture sur Indexer scoring futur
