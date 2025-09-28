@@ -21,4 +21,7 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
+
+# Local sqlite runtime database (server)
+packages/server/users.db
 *.sw?
