@@ -119,5 +119,31 @@ Uniquement quand un pattern durable change (architecture, workflow, dette priori
 - Ancien: `SESSION-PRIMER.md` (pointeur conservé)
 - Script: `scripts/session-primer.mjs` (supprimé)
 
+## 13. Fin de Session (Préparer la Reprise)
+Avant de quitter une session active, générer un bloc de handoff:
+1. Lancer `node scripts/prepare-handoff.mjs`.
+2. Compléter manuellement les champs `ProposedDeliverable` et `Risks`.
+3. Coller le bloc final dans le dernier message ou le sauvegarder dans la description PR si ouverte.
+4. Ne pas effectuer de changements de code après génération (sinon régénérer).
+
+Format produit exemple:
+```
+Handoff:
+  GeneratedAt: 2025-09-28T17:42:11.123Z
+  Branch: main @ a1b2c3d
+  Dirty: NO
+  Focus: TD-001, KI-001
+  LastCommits:
+    - d0f1133 docs(entrypoint): add passation express section for new LLM sessions
+    - aa50f47 docs(todo): add archi folder guard tasks
+  NextTasks:
+    1. ...
+    2. ...
+    3. ...
+  ProposedDeliverable: feat(core): node/browser export skeleton (TD-001, KI-001)
+  Risks: fuite import Node dans bundle web
+```
+La prochaine session commence en appliquant la Checklist 0 puis en validant que ce bloc est encore cohérent (sinon le régénérer).
+
 ---
 Mainteneur: Minimiser la taille; viser < 120 lignes stables.
