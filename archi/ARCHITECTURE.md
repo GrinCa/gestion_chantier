@@ -222,55 +222,12 @@ Tout contributeur (humain ou LLM) doit utiliser le template PR standard lors de 
 *End of document.*
 
 ---
-## 21. Known Issue: Web Build Fails on Node-Specific Core Imports
+## 21. Known Issues Index
 
-Context:
-- After introducing the `pr:check` script (build gate), the web workspace build surfaced failures: Vite externalizes Node built-ins (`stream`, `fs`, `path`, `events`, `util`) and aborts when bundling code from `@gestion-chantier/core`.
-- The class `ExportService` currently imports `Readable` from `stream` (Node) purely for a streaming helper not required by the browser.
-- Future / experimental SQLite integration also pulls in `sqlite3` (native module) which is never browser-safe.
+Detailed descriptions were moved to `KNOWN-ISSUES.md` for maintainability.
 
-Symptoms Observed:
-1. Rollup/Vite error: `"Readable" is not exported by "__vite-browser-external"` (indicates a Node builtin path substitution).
-2. Multiple externalized module warnings (fs/path/events/util) followed by build failure.
-3. TypeScript strict mode messages (TS1484 / TS1294) appeared concurrently, giving the impression of a cascade; they are orthogonal (see below).
+| ID | Type | Title | Status |
+|----|------|-------|--------|
+| KI-001 | DEBT | Web build fails (Node-only imports in core) | ACCEPTED |
 
-Root Causes:
-- Lack of separation between browser-safe core (domain, repository interfaces, services without Node APIs) and Node-only adapters (export streaming, sqlite drivers, future file system features).
-- The web package compiles against the entire exported surface of `@gestion-chantier/core`.
-- Strict TypeScript base config (via `expo/tsconfig.base`) enabling `verbatimModuleSyntax` triggered required `import type` hygiene; parameter properties triggered TS1294 under composite/erasure mode.
-
-Deferred Resolution Plan (Phased):
-Phase 1 (Quick Mitigation - OPTIONAL, skipped for now): Remove or conditionally guard streaming method using lazy dynamic import inside `ExportService` so browser tree-shaking drops it.
-Phase 2 (Structural):
-  - Move Node-only constructs into `packages/core/node/` (e.g. `export/ExportService.node.ts`, `sqlite/SQLiteAdapter.ts`).
-  - Provide a lightweight `ExportService` browser stub exporting only serializable NDJSON (no streaming API) or omit entirely.
-  - Add conditional exports in `packages/core/package.json`:
-    ```json
-    {
-      "exports": {
-        ".": {
-          "browser": "./dist/browser/index.js",
-          "default": "./dist/node/index.js"
-        }
-      }
-    }
-    ```
-Phase 3 (Tooling Integration): Add a build step generating dual bundles (Node / Browser) & adjust Vite alias if needed.
-Phase 4 (Documentation & Tests): Self-test ensuring web build does not pull Node-only modules (CI guard).
-
-Interim Decision:
-- Issue documented; implementation deferred to keep focus on feature roadmap (FTS Phase 2, PR automation hardening). Build gate intentionally exposes the problem to prevent silent coupling.
-
-TypeScript Side Notes:
-- Errors TS1484 (type-only imports) resolved progressively by converting value-less imports to `import type`.
-- Errors TS1294 were mitigated by removing parameter property shorthand in service constructors.
-- The internal `erasableSyntaxOnly` mode is *not* configurable; adapting code is the correct solution.
-
-Action Items (Open):
-- [ ] Split node/browser surfaces (Phase 2).
-- [ ] Add conditional exports (Phase 2).
-- [ ] Provide browser stub or feature flag for streaming export.
-- [ ] Introduce build self-test: detect forbidden Node built-ins in browser bundle (regex on rollup output).
-- [ ] Re-enable streaming once isolated behind Node boundary.
-
-Status: ACCEPTED DEBT (tracked here; no immediate functional risk, only build coupling).
+See also: `TECH-DEBT.md` for structural / strategic debt register.
