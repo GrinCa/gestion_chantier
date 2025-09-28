@@ -29,7 +29,7 @@ Résumé Section 2: Base de persistance stable (schema v2), indices critiques en
 - [x] Ajouter vérification par action (create/update/delete/export/migration/tool)
 - [x] Émettre event `access.denied` (via InstrumentedAccessPolicy)
 - [x] Mettre en place tests d’accès (role-based + denied instrumentation)
-	- [ ] Intégrer métriques futures sur refus (Section 7 Observabilité)
+	- [x] Intégrer métriques futures sur refus (Section 7 Observabilité) → metrics.accessDenied implémenté
 
 ## 5. Index & Recherche
 - [x] Ajouter scoring simple (compte occurrences champ texte) + exposition `scores` (InMemory + fallback SQLite, FTS garde score futur dédié)
@@ -54,15 +54,15 @@ Résumé: Pipeline export complet (simple, chunked, incremental) + validation st
 - [x] Health enrichi (repositoryLatency, exports, accessDenied exposés) -> `HealthService.snapshot()`
 - [x] Test dédié `metrics-observability.test.ts`
 
-Phase 2 (en cours):
+Phase 2 (CONCLU hors optionnel):
 - [x] Import metrics (durée, resources, erreurs) + recordImport (MetricsService + HealthService.imports)
-- [ ] Hook MigrationService: compteur migrations exécutées + latence (recordMigration)
-- [ ] Ajouter recordMigration dans MetricsService + exposition health
-- [ ] Erreurs EventBus (compteur exceptions handlers) -> wrapper bus.emit try/catch + metrics.eventErrors
-- [ ] Endpoint CLI/HTTP `/health` & `/metrics` (implémentation server)
-- [ ] Histogrammes (buckets) optionnels (non critique) ou simple p50/p95/p99 extension
+- [x] Hook MigrationService: compteur migrations exécutées + latence (recordMigration)
+- [x] Ajouter recordMigration dans MetricsService + exposition health
+- [x] Erreurs EventBus (compteur exceptions handlers) -> wrapper bus.emit try/catch + metrics.eventErrors
+- [x] Endpoint CLI/HTTP `/health` & `/metrics` (implémentation server via `/_obs/health` & `/_obs/metrics` + TODO alias direct)
+- [ ] Histogrammes (buckets) optionnels / p50/p99 (différé – faible priorité)
 
-Résumé: Phase 1 Observabilité livrée (latence repo, exports, refus accès, health enrichi). Section considérée close pour la vague actuelle; sous-tâches avancées déplacées vers Phase 2.
+Résumé: Phase 1 + Phase 2 (hors option p50/p99) livrées : repo latency, exports, imports, migrations, accessDenied, eventErrors, endpoints `/ _obs /metrics` & `/ _obs /health`. Reste uniquement l'amélioration facultative (histogrammes ou percentiles supplémentaires). Section 7 peut être traitée comme close fonctionnellement.
 
 ## 8. Nettoyage Legacy
 - [ ] Remplacer toutes les chaînes `project:` storage par `workspace:` avec phase de lecture double
