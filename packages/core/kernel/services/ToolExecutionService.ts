@@ -6,6 +6,7 @@
  */
 import type { EventBus } from '../events/EventBus.js';
 import type { ToolRegistry, ToolContext, ToolDefinition } from '../tools/ToolRegistry.js';
+import type { AccessPolicy } from '../auth/AccessPolicy.js';
 import type { DomainEvent } from '../events/DomainEvent.js';
 
 export interface ToolExecutionResult<O = any> {
@@ -22,13 +23,16 @@ export interface ToolContextFactory {
 }
 
 export class ToolExecutionService {
-  constructor(private registry: ToolRegistry, private events: EventBus, private ctxFactory: ToolContextFactory) {}
+  constructor(private registry: ToolRegistry, private events: EventBus, private ctxFactory: ToolContextFactory, private policy?: AccessPolicy) {}
 
   private id() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
   async run<I = any, O = any>(key: string, input: I): Promise<ToolExecutionResult<O>> {
     const tool = this.registry.get<I, O>(key);
     if (!tool) throw new Error(`Tool not found: ${key}`);
+    if (this.policy && !(await this.policy.can('tool:execute', { toolKey: key }))) {
+      throw new Error('Access denied: tool:execute');
+    }
     const ctx = this.ctxFactory();
     const started = Date.now();
     let output: O;

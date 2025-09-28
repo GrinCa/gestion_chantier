@@ -9,6 +9,7 @@ import type { Resource } from '../domain/Resource.js';
 import type { ResourceRepository } from '../repository/ResourceRepository.js';
 import type { EventBus } from '../events/EventBus.js';
 import type { DomainEvent } from '../events/DomainEvent.js';
+import type { AccessPolicy } from '../auth/AccessPolicy.js';
 
 export interface ResourceCreateInput<T = any> {
   type: string;
@@ -25,12 +26,15 @@ export interface ResourceUpdateInput<T = any> {
 }
 
 export class ResourceService {
-  constructor(private repo: ResourceRepository, private events: EventBus) {}
+  constructor(private repo: ResourceRepository, private events: EventBus, private policy?: AccessPolicy) {}
 
   private now() { return Date.now(); }
   private id() { return this.now().toString(36) + Math.random().toString(36).slice(2); }
 
   async create<T = any>(input: ResourceCreateInput<T>): Promise<Resource<T>> {
+    if (this.policy && !(await this.policy.can('resource:create', { workspaceId: input.workspaceId, resourceType: input.type }))) {
+      throw new Error('Access denied: resource:create');
+    }
     const validated = globalDataTypeRegistry.validate(input.type, input.payload);
     const descriptor = globalDataTypeRegistry.get(input.type);
     const ts = this.now();
@@ -54,6 +58,9 @@ export class ResourceService {
   async update<T = any>(id: string, mutate: ResourceUpdateInput<T>): Promise<Resource<T>> {
     const existing = await this.repo.get(id) as Resource<T> | null;
     if (!existing) throw new Error(`Resource not found: ${id}`);
+    if (this.policy && !(await this.policy.can('resource:update', { workspaceId: existing.workspaceId, resourceType: existing.type }))) {
+      throw new Error('Access denied: resource:update');
+    }
     const descriptor = globalDataTypeRegistry.get(existing.type);
     let newPayload = existing.payload;
     if (mutate.payload) {
@@ -84,6 +91,9 @@ export class ResourceService {
   async delete(id: string, origin?: string): Promise<Resource | null> {
     const existing = await this.repo.get(id);
     if (!existing) return null;
+    if (this.policy && !(await this.policy.can('resource:delete', { workspaceId: existing.workspaceId, resourceType: existing.type }))) {
+      throw new Error('Access denied: resource:delete');
+    }
     await this.repo.delete(id);
     const ts = this.now();
     await this.emit('resource', existing.id, 'deleted', { previousVersion: existing.version }, ts, origin || existing.origin, existing.version);

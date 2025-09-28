@@ -7,18 +7,22 @@
 
 import { globalDataTypeRegistry } from './DataTypeRegistry.js';
 import { z } from 'zod';
+import { migrateMeasurementV2 } from './migrations/measurement_v2.js';
 
 // Type: measurement
 // Représente une mesure numérique simple avec métadonnées optionnelles.
 globalDataTypeRegistry.register({
   type: 'measurement',
-  schemaVersion: 1,
+  schemaVersion: 2,
   schema: z.object({
     value: z.number(),
     unit: z.string().optional(),
     label: z.string().optional(),
     meta: z.record(z.any()).optional()
   }),
+  migrate(value: any, fromVersion: number) {
+    return migrateMeasurementV2(value, fromVersion);
+  },
   indexStrategy(value: any) {
     return {
       value: value.value,
