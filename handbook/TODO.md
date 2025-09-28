@@ -32,7 +32,7 @@ Résumé Section 2: Base de persistance stable (schema v2), indices critiques en
 	- [ ] Intégrer métriques futures sur refus (Section 7 Observabilité)
 
 ## 5. Index & Recherche
-- [ ] Ajouter scoring simple (compte occurrences champ texte)
+- [x] Ajouter scoring simple (compte occurrences champ texte) + exposition `scores` (InMemory + fallback SQLite, FTS garde score futur dédié)
 - [ ] API query enrichie: `fullText`, `limit`, `cursor`
 - [x] Rebuilder index à partir du repository (script `reindex-selftest`) – méthode `rebuildFullTextIndex()` + self-test
 
