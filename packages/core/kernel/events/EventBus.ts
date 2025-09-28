@@ -18,10 +18,12 @@
  */
 
 import { DomainEvent, EventHandler } from './DomainEvent.js';
+import type { MetricsService } from '../services/MetricsService.js';
 
 export class EventBus {
   private handlers: Map<string, EventHandler[]> = new Map();
   private wildcardKey = '*';
+  constructor(private metrics?: MetricsService){ }
 
   /**
    * Enregistre un handler pour une opération spécifique (ex: 'created').
@@ -48,11 +50,11 @@ export class EventBus {
   async emit(event: DomainEvent) {
     const specific = this.handlers.get(event.operation) ?? [];
     for (const h of specific) {
-      await h(event);
+      try { await h(event); } catch (e) { this.metrics?.recordEventError?.(); }
     }
     const any = this.handlers.get(this.wildcardKey) ?? [];
     for (const h of any) {
-      await h(event);
+      try { await h(event); } catch (e) { this.metrics?.recordEventError?.(); }
     }
   }
 }
@@ -65,6 +67,7 @@ export class EventBus {
  * besoin d'observation mais qu'on veut conserver une signature uniforme.
  */
 export class NoopEventBusClass extends EventBus {
+  constructor(){ super(); }
   on() { /* noop */ }
   onAny() { /* noop */ }
   async emit() { /* noop */ }

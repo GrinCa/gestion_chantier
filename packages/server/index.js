@@ -9,6 +9,12 @@ import express from "express";
 import cors from "cors";
 import sqlite3 from "sqlite3";
 import bodyParser from "body-parser";
+import { createObservabilityRouter } from './observability.js';
+// Import minimal core services (lazy CJS fallback if needed)
+import { EventBus } from '../core/kernel/events/EventBus.js';
+import { MetricsService } from '../core/kernel/services/MetricsService.js';
+import { HealthService } from '../core/kernel/services/HealthService.js';
+import { InMemoryResourceRepository, InstrumentedResourceRepository } from '../core/kernel/repository/ResourceRepository.js';
 
 // Configuration centralisée depuis le core
 // Note: En attendant l'import ES modules, on reproduit la logique ici
@@ -24,6 +30,13 @@ const db = new sqlite3.Database(CONFIG.DB_NAME);
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+// --- Core observability wiring (in-memory repo for health baseline) ---
+const eventBus = new EventBus();
+const metricsService = new MetricsService(eventBus);
+const coreRepo = new InstrumentedResourceRepository(new InMemoryResourceRepository(), metricsService);
+const healthService = new HealthService(coreRepo, metricsService);
+app.use('/_obs', createObservabilityRouter({ metricsService, healthService }));
 
 // Création table utilisateurs si non existante
 db.run(`

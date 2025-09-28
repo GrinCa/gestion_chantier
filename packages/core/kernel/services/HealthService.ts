@@ -18,6 +18,8 @@ export interface HealthSnapshot {
   exports?: any;
   accessDenied?: any;
   imports?: any;
+  migrationsRun?: any;
+  eventErrors?: number;
 }
 
 export class HealthService {
@@ -45,6 +47,8 @@ export class HealthService {
         if (m.export) snap.exports = m.export;
         if (m.import) snap.imports = m.import;
         if (m.accessDenied) snap.accessDenied = m.accessDenied;
+        if (m.migration) snap.migrationsRun = m.migration;
+        if (m.eventErrors) snap.eventErrors = m.eventErrors;
       } catch (e:any) { snap.notes?.push('metrics:error'); snap.ok = false; }
     }
     if (this.migrations) {

@@ -8,6 +8,7 @@
 import { globalDataTypeRegistry } from '../registry/DataTypeRegistry.js';
 import type { Resource } from '../domain/Resource.js';
 import type { ResourceRepository } from '../repository/ResourceRepository.js';
+import type { MetricsService } from './MetricsService.js';
 
 export interface MigrationResult {
   migrated: number;
@@ -15,14 +16,15 @@ export interface MigrationResult {
 }
 
 export class MigrationService {
-  constructor(private repo: ResourceRepository) {}
+  constructor(private repo: ResourceRepository, private metrics?: MetricsService) {}
 
   /**
    * Parcours toutes les resources d'un workspace et tente une migration
    * si leur `schemaVersion` est < à celle déclarée.
    */
   async migrateWorkspace(workspaceId: string): Promise<MigrationResult> {
-    const page = await this.repo.list(workspaceId, { limit: 10000 });
+  const start = Date.now();
+  const page = await this.repo.list(workspaceId, { limit: 10000 });
     let migrated = 0; const touched: string[] = [];
     for (const res of page.data) {
       const desc = globalDataTypeRegistry.get(res.type);
@@ -39,6 +41,7 @@ export class MigrationService {
       await this.repo.save(res as Resource);
       migrated++; touched.push(res.id);
     }
+    this.metrics?.recordMigration(touched.length, Date.now()-start);
     return { migrated, touchedIds: touched };
   }
 

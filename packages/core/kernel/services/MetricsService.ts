@@ -46,6 +46,10 @@ export interface MetricsSnapshot {
   export?: { total: number; byKind: Record<string, { count: number; resources: number; lastDurationMs: number }> };
   /** Import counters */
   import?: { total: number; resources: number; lastDurationMs: number; errors: number };
+  /** Migration counters */
+  migration?: { total: number; resourcesTouched: number; lastDurationMs: number };
+  /** Event handler errors */
+  eventErrors?: number;
 }
 
 export class MetricsService {
@@ -69,6 +73,12 @@ export class MetricsService {
   private importResources = 0;
   private importLastDuration = 0;
   private importErrors = 0;
+  // migration metrics
+  private migrationTotal = 0;
+  private migrationTouched = 0;
+  private migrationLastDuration = 0;
+  // event errors
+  private eventErrors = 0;
 
   constructor(bus: EventBus, indexer?: Indexer){
     this.indexer = indexer;
@@ -111,6 +121,14 @@ export class MetricsService {
     this.importErrors += errors;
   }
 
+  recordMigration(touched: number, durationMs: number){
+    this.migrationTotal += 1;
+    this.migrationTouched += touched;
+    this.migrationLastDuration = durationMs;
+  }
+
+  recordEventError(){ this.eventErrors += 1; }
+
   snapshot(): MetricsSnapshot {
     const toolSnap = this.toolDurations.snapshot();
     const repoOps: Record<string, { count: number; avgMs: number; p95Ms: number }> = {};
@@ -128,7 +146,9 @@ export class MetricsService {
       repository: Object.keys(repoOps).length ? { ops: repoOps, totalOps } : undefined,
       accessDenied: this.accessDeniedTotal ? { total: this.accessDeniedTotal, byAction: { ...this.accessDeniedByAction } } : undefined,
   export: this.exportTotal ? { total: this.exportTotal, byKind: { ...this.exportByKind } } : undefined,
-  import: this.importTotal ? { total: this.importTotal, resources: this.importResources, lastDurationMs: this.importLastDuration, errors: this.importErrors } : undefined
+      import: this.importTotal ? { total: this.importTotal, resources: this.importResources, lastDurationMs: this.importLastDuration, errors: this.importErrors } : undefined,
+      migration: this.migrationTotal ? { total: this.migrationTotal, resourcesTouched: this.migrationTouched, lastDurationMs: this.migrationLastDuration } : undefined,
+      eventErrors: this.eventErrors || undefined
     };
   }
 
@@ -142,5 +162,6 @@ export class MetricsService {
     this.exportByKind = {};
     this.exportTotal = 0;
     this.importTotal = 0; this.importResources = 0; this.importLastDuration = 0; this.importErrors = 0;
+    this.migrationTotal = 0; this.migrationTouched = 0; this.migrationLastDuration = 0; this.eventErrors = 0;
   }
 }
