@@ -155,3 +155,14 @@ Rule: un commit = une intention claire; en cas de mélange code+doc, préférer 
 - Génération automatique d’un `ARCHI-SUMMARY.md` pour onboarding rapide.
 - Ajout d’un test d’intégrité “event taxonomy” (tous les events émis listés dans ARCHITECTURE.md).
 
+---
+## 15. Itération Rapide Locale (Sans Scripts Supplémentaires)
+Usage recommandé pour développer rapidement sans réintroduire le loader expérimental :
+1. Ouvrir un terminal watch: `npm run dev --workspace=packages/core` (génère en continu `dist/`).
+2. Dans un second terminal, lancer un self-test compilé ciblé (ex: `npm run resource-service-selftest --workspace=packages/core`).
+3. Répéter modification → test sans rebuild manuel (le watcher le fait déjà).
+
+Pourquoi pas de mode :fast séparé ? Tant que le build reste rapide (< ~10s), on évite la complexité d’un deuxième chemin (ts-node) et les warnings Node.
+
+Indicateur pour réévaluer : si cycle moyen (> modification + test) dépasse 15s sur série de petits changements, envisager ajout d’un script fast ou smart runner.
+
