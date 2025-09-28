@@ -5,7 +5,20 @@
  */
 import type { ResourceRepository } from '../repository/ResourceRepository.js';
 import type { AccessPolicy } from '../auth/AccessPolicy.js';
-import { Readable } from 'stream';
+// Lazy import pour compat browser: évite que le bundler web tente de résoudre 'stream'.
+type ReadableLike = any; // minimal typing pour surface publique
+let _Readable: any;
+function getReadable(): ReadableLike {
+  if (!_Readable) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      _Readable = require('stream').Readable; // CJS interop safe
+    } catch {
+      throw new Error('[core] stream module non disponible dans cet environnement');
+    }
+  }
+  return _Readable;
+}
 
 export class ExportService {
   constructor(private repo: ResourceRepository, private policy?: AccessPolicy) {}
@@ -37,7 +50,8 @@ export class ExportService {
     return { manifest, ndjson };
   }
 
-  streamWorkspace(workspaceId: string): Readable {
+  streamWorkspace(workspaceId: string): ReadableLike {
+    const Readable = getReadable();
     const stream = new Readable({ read(){} });
     this.repo.list(workspaceId, { limit: 100000 })
       .then(result => {

@@ -23,7 +23,8 @@ export * from './kernel/services/MetricsService.js';
 export * from './kernel/services/HealthService.js';
 export * from './kernel/auth/AccessPolicy.js';
 export * from './kernel/bootstrap/KernelBootstrap.js';
-export * from './kernel/services/ExportService.js';
+// ExportService: stub browser (pas de stream Readable)
+export * from './kernel/services/ExportService.browser.js';
 export * from './kernel/indexer/Indexer.js';
 export * from './kernel/indexer/IndexSubscriber.js';
 // SQLite repository remplacé par stub explicite côté browser
