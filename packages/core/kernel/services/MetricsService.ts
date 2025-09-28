@@ -44,6 +44,8 @@ export interface MetricsSnapshot {
   accessDenied?: { total: number; byAction: Record<string, number> };
   /** Export counters */
   export?: { total: number; byKind: Record<string, { count: number; resources: number; lastDurationMs: number }> };
+  /** Import counters */
+  import?: { total: number; resources: number; lastDurationMs: number; errors: number };
 }
 
 export class MetricsService {
@@ -62,6 +64,11 @@ export class MetricsService {
   // export metrics
   private exportByKind: Record<string, { count: number; resources: number; lastDurationMs: number }> = {};
   private exportTotal = 0;
+  // import metrics
+  private importTotal = 0;
+  private importResources = 0;
+  private importLastDuration = 0;
+  private importErrors = 0;
 
   constructor(bus: EventBus, indexer?: Indexer){
     this.indexer = indexer;
@@ -97,6 +104,13 @@ export class MetricsService {
     this.exportByKind[kind] = k;
   }
 
+  recordImport(resourceCount: number, durationMs: number, errors: number){
+    this.importTotal += 1;
+    this.importResources += resourceCount;
+    this.importLastDuration = durationMs;
+    this.importErrors += errors;
+  }
+
   snapshot(): MetricsSnapshot {
     const toolSnap = this.toolDurations.snapshot();
     const repoOps: Record<string, { count: number; avgMs: number; p95Ms: number }> = {};
@@ -113,7 +127,8 @@ export class MetricsService {
       indexSize: this.indexer?.size(),
       repository: Object.keys(repoOps).length ? { ops: repoOps, totalOps } : undefined,
       accessDenied: this.accessDeniedTotal ? { total: this.accessDeniedTotal, byAction: { ...this.accessDeniedByAction } } : undefined,
-      export: this.exportTotal ? { total: this.exportTotal, byKind: { ...this.exportByKind } } : undefined
+  export: this.exportTotal ? { total: this.exportTotal, byKind: { ...this.exportByKind } } : undefined,
+  import: this.importTotal ? { total: this.importTotal, resources: this.importResources, lastDurationMs: this.importLastDuration, errors: this.importErrors } : undefined
     };
   }
 
@@ -126,5 +141,6 @@ export class MetricsService {
     this.accessDeniedByAction = {};
     this.exportByKind = {};
     this.exportTotal = 0;
+    this.importTotal = 0; this.importResources = 0; this.importLastDuration = 0; this.importErrors = 0;
   }
 }

@@ -17,6 +17,7 @@ export interface HealthSnapshot {
   repositoryLatency?: any;
   exports?: any;
   accessDenied?: any;
+  imports?: any;
 }
 
 export class HealthService {
@@ -42,6 +43,7 @@ export class HealthService {
         };
         if (m.repository) snap.repositoryLatency = m.repository;
         if (m.export) snap.exports = m.export;
+        if (m.import) snap.imports = m.import;
         if (m.accessDenied) snap.accessDenied = m.accessDenied;
       } catch (e:any) { snap.notes?.push('metrics:error'); snap.ok = false; }
     }

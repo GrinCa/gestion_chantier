@@ -54,12 +54,13 @@ Résumé: Pipeline export complet (simple, chunked, incremental) + validation st
 - [x] Health enrichi (repositoryLatency, exports, accessDenied exposés) -> `HealthService.snapshot()`
 - [x] Test dédié `metrics-observability.test.ts`
 
-Reste (Phase 2 Observabilité Avancée - à planifier hors clôture initiale):
-- [ ] Compteur migrations exécutées (hook MigrationService) + latence migration
-- [ ] Endpoint CLI/HTTP `/health` & `/metrics` dans layer server
-- [ ] Erreurs EventBus (compteur exceptions handlers)
-- [ ] Import metrics (durée, resources, erreurs) + recordImport
-- [ ] Histogrammes (buckets) si besoin (actuel = avg/p95)
+Phase 2 (en cours):
+- [x] Import metrics (durée, resources, erreurs) + recordImport (MetricsService + HealthService.imports)
+- [ ] Hook MigrationService: compteur migrations exécutées + latence (recordMigration)
+- [ ] Ajouter recordMigration dans MetricsService + exposition health
+- [ ] Erreurs EventBus (compteur exceptions handlers) -> wrapper bus.emit try/catch + metrics.eventErrors
+- [ ] Endpoint CLI/HTTP `/health` & `/metrics` (implémentation server)
+- [ ] Histogrammes (buckets) optionnels (non critique) ou simple p50/p95/p99 extension
 
 Résumé: Phase 1 Observabilité livrée (latence repo, exports, refus accès, health enrichi). Section considérée close pour la vague actuelle; sous-tâches avancées déplacées vers Phase 2.
 

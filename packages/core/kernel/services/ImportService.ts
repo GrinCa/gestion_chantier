@@ -25,8 +25,12 @@ export interface ImportValidationResult {
   };
 }
 
+import type { MetricsService } from './MetricsService.js';
+
 export class ImportService {
+  constructor(private metrics?: MetricsService){}
   validateNdjson(manifest: any, ndjson: string): ImportValidationResult {
+    const start = Date.now();
     const lines = ndjson.split(/\n+/).filter(l => l.trim().length > 0);
     const issues: ValidationIssue[] = [];
     const types: Record<string, number> = {};
@@ -73,11 +77,13 @@ export class ImportService {
       issues.push({ code: 'DUPLICATE_ID', message: `IDs dupliqués: ${duplicateIds}` });
     }
 
-    return {
+    const result: ImportValidationResult = {
       success: issues.length === 0,
       issues,
       stats: { count: lines.length, types, duplicateIds }
     };
+    this.metrics?.recordImport(lines.length, Date.now()-start, issues.length);
+    return result;
   }
 
   validateChunked(manifest: any, chunks: Array<{ ndjson: string }>): ImportValidationResult {
@@ -86,4 +92,4 @@ export class ImportService {
   }
 }
 
-export const createImportService = () => new ImportService();
+export const createImportService = (metrics?: MetricsService) => new ImportService(metrics);
