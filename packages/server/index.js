@@ -518,6 +518,150 @@ app.get("/", (req, res) => {
   res.send("API Laser App OK");
 });
 
+// ---------------------------------------------------------------------------
+// PHASE DE MIGRATION: alias /workspaces -> /projets (lecture & écriture)
+// Objectif: permettre aux clients v2 d'utiliser la terminologie workspace
+// sans casser les clients existants encore sur /projets. Quand la migration
+// sera terminée, on pourra supprimer les routes /projets.
+// ---------------------------------------------------------------------------
+
+// Créer un workspace (alias projet)
+app.post('/workspaces', (req, res)=> {
+  // délègue à la route projets existante via ré-exécution de la logique
+  const { nom, description, username } = req.body;
+  if (!nom || !username) {
+    return res.status(400).json({ error: "Nom et username requis" });
+  }
+  const id = Date.now().toString() + Math.random().toString(36).slice(2);
+  const now = Date.now();
+  db.run(
+    "INSERT INTO projets (id, nom, description, username, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [id, nom, description || "", username, now, now],
+    function(err) {
+      if (err) {
+        console.error("Erreur création workspace:", err);
+        return res.status(500).json({ error: "Erreur serveur" });
+      }
+      res.json({ id, nom, description, username, created_at: now, updated_at: now });
+    }
+  );
+});
+
+// Lister les workspaces d'un utilisateur
+app.get('/workspaces/:username', (req, res)=> {
+  const { username } = req.params;
+  db.all(
+    "SELECT * FROM projets WHERE username = ? ORDER BY updated_at DESC",
+    [username],
+    (err, rows)=> {
+      if (err) {
+        console.error('Erreur liste workspaces:', err);
+        return res.status(500).json({ error: 'Erreur serveur' });
+      }
+      res.json(rows.map(r => ({ ...r, nom: r.nom }))); // structure future
+    }
+  );
+});
+
+// Supprimer un workspace
+app.delete('/workspaces/:id', (req, res)=> {
+  const { id } = req.params;
+  db.run("DELETE FROM projets WHERE id = ?", [id], function(err){
+    if (err) {
+      console.error('Erreur suppression workspace:', err);
+      return res.status(500).json({ error: 'Erreur serveur' });
+    }
+    res.json({ success: true, deleted: this.changes });
+  });
+});
+
+// Sauvegarder les mesures d'un workspace (alias)
+app.post('/workspaces/:id/mesures', (req, res)=> {
+  req.url = req.url.replace('/workspaces', '/projets');
+  // réutilise la logique existante (idempotent car même schéma)
+  // On appelle explicitement la fonction handler originale via duplication serait verbeux;
+  // plus simple: recopier la logique. Pour éviter code duplication, on pourrait factoriser
+  // mais ceci reste temporaire durant migration.
+  const { id: projetId } = req.params;
+  const { groups } = req.body;
+  if (!groups || !Array.isArray(groups)) {
+    return res.status(400).json({ error: "Données groups requises" });
+  }
+  db.serialize(()=> {
+    db.run('BEGIN TRANSACTION');
+    db.run("DELETE FROM mesures WHERE section_id IN (SELECT id FROM sections WHERE groupe_id IN (SELECT id FROM groupes_mesures WHERE projet_id = ?))", [projetId]);
+    db.run("DELETE FROM sections WHERE groupe_id IN (SELECT id FROM groupes_mesures WHERE projet_id = ?)", [projetId]);
+    db.run("DELETE FROM groupes_mesures WHERE projet_id = ?", [projetId]);
+    let errors = []; let completed = 0;
+    const totalOperations = groups.length + groups.reduce((acc, g) => acc + g.sections.length + g.sections.reduce((acc2, s) => acc2 + s.mesures.length, 0), 0);
+    if (totalOperations === 0) { db.run('COMMIT'); return res.json({ success: true }); }
+    groups.forEach(group => {
+      db.run(
+        "INSERT INTO groupes_mesures (id, projet_id, label, ref_to_prev_id, ref_to_next_id, stored_rel_offset, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [group.id, projetId, group.label, group.refToPrevId || null, group.refToNextId || null, group.storedRelOffset || null, Date.now()],
+        function(err){
+          if (err) errors.push(err);
+          group.sections.forEach(section => {
+            db.run(
+              "INSERT INTO sections (id, groupe_id, label, created_at) VALUES (?, ?, ?, ?)",
+              [section.id, group.id, section.label, section.createdAt],
+              function(err){
+                if (err) errors.push(err);
+                section.mesures.forEach(mesure => {
+                  db.run(
+                    "INSERT INTO mesures (id, section_id, raw_value, is_ref, label, include_in_stats, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    [mesure.id, section.id, mesure.raw, mesure.isRef ? 1 : 0, mesure.label || null, mesure.includeInStats !== false ? 1 : 0, mesure.createdAt],
+                    function(err){
+                      if (err) errors.push(err);
+                      completed++;
+                      if (completed === totalOperations){
+                        if (errors.length){ db.run('ROLLBACK'); return res.status(500).json({ error: 'Erreur sauvegarde', details: errors }); }
+                        db.run('COMMIT'); db.run('UPDATE projets SET updated_at = ? WHERE id = ?', [Date.now(), projetId]); res.json({ success: true });
+                      }
+                    }
+                  );
+                });
+                if (section.mesures.length === 0){
+                  completed++;
+                  if (completed === totalOperations){
+                    if (errors.length){ db.run('ROLLBACK'); return res.status(500).json({ error: 'Erreur sauvegarde' }); }
+                    db.run('COMMIT'); db.run('UPDATE projets SET updated_at = ? WHERE id = ?', [Date.now(), projetId]); res.json({ success: true });
+                  }
+                }
+              }
+            );
+          });
+        }
+      );
+    });
+  });
+});
+
+// Charger les mesures d'un workspace
+app.get('/workspaces/:id/mesures', (req, res)=> {
+  const { id: projetId } = req.params;
+  const query = `\n    SELECT \n      gm.id as groupe_id, gm.label as groupe_label, gm.ref_to_prev_id, gm.ref_to_next_id, gm.stored_rel_offset,\n      s.id as section_id, s.label as section_label, s.created_at as section_created_at,\n      m.id as mesure_id, m.raw_value, m.is_ref, m.label as mesure_label, m.include_in_stats, m.created_at as mesure_created_at\n    FROM groupes_mesures gm\n    LEFT JOIN sections s ON s.groupe_id = gm.id\n    LEFT JOIN mesures m ON m.section_id = s.id\n    WHERE gm.projet_id = ?\n    ORDER BY gm.created_at, s.created_at, m.created_at\n  `;
+  db.all(query, [projetId], (err, rows)=> {
+    if (err){ console.error('Erreur chargement mesures workspace:', err); return res.status(500).json({ error: 'Erreur serveur' }); }
+    const groupsMap = new Map();
+    rows.forEach(row => {
+      if (!groupsMap.has(row.groupe_id)) {
+        groupsMap.set(row.groupe_id, { id: row.groupe_id, label: row.groupe_label, refToPrevId: row.ref_to_prev_id, refToNextId: row.ref_to_next_id, storedRelOffset: row.stored_rel_offset, sections: new Map() });
+      }
+      const group = groupsMap.get(row.groupe_id);
+      if (row.section_id && !group.sections.has(row.section_id)) {
+        group.sections.set(row.section_id, { id: row.section_id, label: row.section_label, createdAt: row.section_created_at, mesures: [] });
+      }
+      if (row.mesure_id) {
+        const section = group.sections.get(row.section_id);
+        section.mesures.push({ id: row.mesure_id, raw: row.raw_value, isRef: Boolean(row.is_ref), label: row.mesure_label, includeInStats: Boolean(row.include_in_stats), createdAt: row.created_at, sectionId: row.section_id });
+      }
+    });
+    const groups = Array.from(groupsMap.values()).map(g => ({ ...g, sections: Array.from(g.sections.values()) }));
+    res.json({ groups });
+  });
+});
+
 app.listen(CONFIG.API_PORT, err => {
   if (err) {
     console.error("Erreur au lancement du serveur:", err);
