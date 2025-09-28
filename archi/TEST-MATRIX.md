@@ -16,7 +16,7 @@
 | Tool execution | tool-execution-selftest.ts | ✅ | Invalid input schema case |
 | Indexer basics | indexer-selftest.ts | ✅ | Full-text ranking (future) |
 | Conflicts | conflict-selftest.ts | ✅ | Consider multi-conflict race test |
-| SQLite filters | (planned) sqlite-filters-selftest.ts | ❌ | Implement |
+| SQLite filters | sqlite-filters-selftest.ts | ✅ | JSON1 + FTS future |
 | Export manifest | export-manifest-selftest.ts | ✅ | Hash + incremental future |
 | Reindex | (planned) reindex-selftest.ts | ❌ | Implement |
 | Workspace key migration | (planned) key-migration-selftest.ts | ❌ | Implement |

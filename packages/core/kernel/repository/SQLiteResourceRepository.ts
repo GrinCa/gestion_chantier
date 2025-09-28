@@ -5,7 +5,7 @@
  * Version Lite: opérations basiques get/save/delete/list (liste sans filtres avancés au début).
  */
 import type { Resource } from '../domain/Resource.js';
-import type { QueryOptions, ResourceListResult, ResourceRepository } from './ResourceRepository.js';
+import type { QueryOptions, ResourceListResult, ResourceRepository, QueryFilter } from './ResourceRepository.js';
 import sqlite3 from 'sqlite3';
 
 export interface SQLiteResourceRepositoryOptions {
@@ -43,12 +43,71 @@ export class SQLiteResourceRepository implements ResourceRepository {
       });
     });
   }
-  async list(workspaceId: string, _query?: QueryOptions): Promise<ResourceListResult> {
-    return new Promise((resolve,reject)=>{
-      this.db.all('SELECT * FROM resources WHERE workspace_id=?', [workspaceId], (err, rows)=>{
-        if(err) return reject(err);
-        const data = rows.map(r=> this.rowToResource(r));
-        resolve({ data, total: data.length });
+  async list(workspaceId: string, query?: QueryOptions): Promise<ResourceListResult> {
+    const q = query || {};
+    const where: string[] = ['workspace_id = ?'];
+    const params: any[] = [workspaceId];
+
+    // Filter by types
+    if (q.types && q.types.length) {
+      where.push(`type IN (${q.types.map(()=> '?').join(',')})`);
+      params.push(...q.types);
+    }
+
+    // Generic filters (limited translation)
+    if (q.filter && q.filter.length) {
+      for (const f of q.filter) {
+        // Map known top-level fields
+        if (f.field === 'updatedAt' || f.field === 'updated_at') {
+          if (f.op === 'gt') { where.push('updated_at > ?'); params.push(f.value); }
+          else if (f.op === 'lt') { where.push('updated_at < ?'); params.push(f.value); }
+          else if (f.op === 'eq') { where.push('updated_at = ?'); params.push(f.value); }
+        } else if (f.field === 'createdAt' || f.field === 'created_at') {
+          if (f.op === 'gt') { where.push('created_at > ?'); params.push(f.value); }
+          else if (f.op === 'lt') { where.push('created_at < ?'); params.push(f.value); }
+          else if (f.op === 'eq') { where.push('created_at = ?'); params.push(f.value); }
+        } else if (f.field === 'type') {
+          if (f.op === 'eq') { where.push('type = ?'); params.push(f.value); }
+          else if (f.op === 'in' && Array.isArray(f.value)) { where.push(`type IN (${f.value.map(()=> '?').join(',')})`); params.push(...f.value); }
+        } else if (f.op === 'contains') {
+          // Fallback naive JSON LIKE search across payload and metadata
+            where.push('(payload LIKE ? OR metadata LIKE ?)');
+            const needle = `%${String(f.value)}%`;
+            params.push(needle, needle);
+        }
+        // Other ops ignored for now (could extend JSON1 usage)
+      }
+    }
+
+    // Simple full-text fallback (LIKE on payload/metadata)
+    if (q.fullText) {
+      where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
+      const like = `%${q.fullText}%`;
+      params.push(like, like, like);
+    }
+
+    const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const limit = q.limit && q.limit > 0 ? q.limit : 50;
+    const offset = q.offset && q.offset > 0 ? q.offset : 0;
+
+    const orderClause = q.sort && q.sort.length
+      ? 'ORDER BY ' + q.sort.map(s => {
+          const col = (s.field === 'updatedAt') ? 'updated_at' : (s.field === 'createdAt') ? 'created_at' : s.field;
+          return `${col} ${s.dir.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'}`;
+        }).join(',')
+      : 'ORDER BY updated_at DESC';
+
+    const sqlData = `SELECT * FROM resources ${whereClause} ${orderClause} LIMIT ? OFFSET ?`;
+    const sqlCount = `SELECT COUNT(*) as c FROM resources ${whereClause}`;
+
+    return new Promise((resolve, reject) => {
+      this.db.get(sqlCount, params, (cerr, crow: any) => {
+        if (cerr) return reject(cerr);
+        this.db.all(sqlData, [...params, limit, offset], (err, rows) => {
+          if (err) return reject(err);
+          const data = rows.map(r => this.rowToResource(r));
+          resolve({ data, total: crow?.c ?? data.length });
+        });
       });
     });
   }

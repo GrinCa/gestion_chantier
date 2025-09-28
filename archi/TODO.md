@@ -7,8 +7,8 @@
 - [~] Mettre à jour toutes les docs (mobile README fait, reste README root + web) avec la table de migration Project → Workspace
 
 ## 2. Persistence & Repository
-- [ ] Étendre `SQLiteResourceRepository` : filtres (owner, type, updated_at range)
-- [ ] Ajouter pagination simple (limit + offset) puis évolution vers curseur
+- [x] Étendre `SQLiteResourceRepository` : filtres (owner, type, updated_at range)
+- [x] Ajouter pagination simple (limit + offset) puis évolution vers curseur
 - [ ] Ajouter index SQL (owner, type, updated_at)
 - [ ] Préparer future FTS (schema + table virtuelle, plan de migration)
 - [ ] Script de migration SQL (création/upgrades) + auto-check version
