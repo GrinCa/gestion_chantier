@@ -7,6 +7,8 @@
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 
+const ENHANCED = process.env.PR_ENHANCED !== 'false';
+
 // Optional lightweight env loaders (support priority: .env.pr > .env.local > .env)
 function parseEnvFile(path) {
   const map = {};
@@ -107,19 +109,35 @@ try {
   process.exit(1);
 }
 
-// Collect diff summary vs base
+// Collect diff summary vs base (file names + numstat)
 let diffFilesRaw = '';
 try { diffFilesRaw = sh(`git diff --name-only ${baseBranch}...${headBranch}`); } catch {
-  // fallback try fetching base
   try { sh(`git fetch origin ${baseBranch}:${baseBranch}`); diffFilesRaw = sh(`git diff --name-only ${baseBranch}...${headBranch}`); } catch(e){ error('Impossible d’obtenir le diff avec base='+baseBranch+' : '+e.message); }
 }
 const diffFiles = diffFilesRaw.split('\n').filter(Boolean);
-const topLevelBuckets = {};
-for (const f of diffFiles) {
-  const seg = f.split('/')[0];
-  topLevelBuckets[seg] = (topLevelBuckets[seg] || 0) + 1;
+let numstatRaw = '';
+try { numstatRaw = sh(`git diff --numstat ${baseBranch}...${headBranch}`); } catch { /* ignore */ }
+const numstats = numstatRaw.split(/\n/).filter(Boolean).map(l => {
+  const parts = l.split(/\t/);
+  if (parts.length < 3) return null;
+  return { added: parseInt(parts[0],10)||0, removed: parseInt(parts[1],10)||0, file: parts[2] };
+}).filter(Boolean);
+const additions = numstats.reduce((a,b)=>a+b.added,0);
+const deletions = numstats.reduce((a,b)=>a+b.removed,0);
+
+function classify(file){
+  if (file.startsWith('archi/')) return 'docs-archi';
+  if (file.endsWith('.md')) return 'docs';
+  if (file.startsWith('packages/core')) return 'core';
+  if (file.startsWith('packages/web')) return 'web';
+  if (file.startsWith('packages/server')) return 'server';
+  if (file.startsWith('scripts/')) return 'scripts';
+  if (file.includes('fts') || /fts|MATCH|sqlite/i.test(file)) return 'search';
+  return 'other';
 }
-const bucketSummary = Object.entries(topLevelBuckets).map(([k,v]) => `${k}(${v})`).join(', ');
+const categories = {};
+for (const f of diffFiles){ const c = classify(f); categories[c]=(categories[c]||0)+1; }
+const catSummary = Object.entries(categories).map(([k,v]) => `${k}(${v})`).join(', ');
 
 // Latest conventional commit subject
 let latestSubject = '';
@@ -134,18 +152,71 @@ if (existsSync(templatePath)) {
     .trim();
 }
 
-// Auto sections
-const autoSummary = `Branche: ${headBranch}\nBase: ${baseBranch}\nFichiers modifiés: ${diffFiles.length}\nZones: ${bucketSummary || 'n/a'}`;
+// Heuristic context extraction
+function detectHighlights(files){
+  const notes=[];
+  if (files.some(f=>/fts|MATCH|sqlite/i.test(f))) notes.push('FTS / SQLite full-text modifications détectées');
+  if (files.some(f=>f.includes('scripts/create-pr.mjs'))) notes.push('Outillage PR automatisé modifié');
+  if (files.some(f=>f.startsWith('archi/'))) notes.push('Documentation architecture mise à jour');
+  return notes;
+}
 
-const body = [
+const highlights = detectHighlights(diffFiles);
+const autoSummary = `Branche: ${headBranch}\nBase: ${baseBranch}\nFichiers: ${diffFiles.length}\nCatégories: ${catSummary || 'n/a'}\nAdditions: ${additions}  Suppressions: ${deletions}`;
+
+function buildEnhancedBody(){
+  const changedSelftests = diffFiles.filter(f=>/selftest/i.test(f));
+  const hasCore = !!categories.core;
+  const sections = {
+    resume: hasCore ? 'Extension du noyau + recherche plein texte + outillage PR.' : 'Mise à jour multi-surface.',
+    contexte: highlights.join(' | ') || 'Évolution incrémentale.',
+    changements: diffFiles.slice(0,50).map(f=>`- ${f}`).join('\n') + (diffFiles.length>50?'\n- ...':'') ,
+    tests: changedSelftests.length ? `Self-tests modifiés/ajoutés:\n${changedSelftests.map(f=>' - '+f).join('\n')}` : 'Aucun nouveau self-test détecté (à vérifier).',
+    risques: hasCore ? 'Impact potentiel sur requêtes repository / scoring. Vérifier fallback LIKE.' : 'Faible.',
+    docs: Object.keys(categories).some(c=>c.startsWith('docs')) ? 'Docs mises à jour.' : 'Pas de docs modifiées (ajouter si nécessaire).',
+    perf: highlights.some(h=>h.includes('FTS')) ? 'FTS: surveiller temps de création index & latence requêtes.' : 'Pas d’impact majeur attendu.',
+    db: diffFiles.some(f=>/migration|sql/i.test(f)) ? 'Vérifier migrations.' : 'Pas de nouvelle migration détectée.',
+    securite: 'Aucun changement surface réseau. Token automation local uniquement.'
+  };
+  return [
+    template ? '## (Pré-rempli) Template\n' : '## PR\n',
+    template || '',
+    '---',
+    '## Résumé Automatisé',
+    sections.resume,
+    '## Contexte (détecté)',
+    sections.contexte,
+    '## Changements (liste fichiers)',
+    sections.changements,
+    '## Tests',
+    sections.tests,
+    '## Performance',
+    sections.perf,
+    '## Sécurité',
+    sections.securite,
+    '## Base de Données',
+    sections.db,
+    '## Documentation',
+    sections.docs,
+    '## Risques / Revue',
+    sections.risques,
+    '## Auto-Analyse (statistiques)',
+    '```',
+    autoSummary,
+    '```',
+    latestSubject ? `Dernier commit: ${latestSubject}` : ''
+  ].join('\n');
+}
+
+const body = ENHANCED ? buildEnhancedBody() : [
   template ? '## (Pré-rempli) Template\n' : '## PR\n',
   template || '',
-  '\n---',
+  '---',
   '## Auto-Analyse (généré)',
   '```',
   autoSummary,
   '```',
-  latestSubject ? `\nDernier commit: ${latestSubject}` : ''
+  latestSubject ? `Dernier commit: ${latestSubject}` : ''
 ].join('\n');
 
 const title = latestSubject || `feat: ${headBranch}`;
