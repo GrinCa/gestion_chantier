@@ -88,3 +88,15 @@ Chaque tâche : patch + self-test associé.
 
 ## Suivi
 Cocher au fur et à mesure ; garder commits atomiques `feat(core): ...`, `chore(docs): ...`, `refactor(core): ...`.
+
+---
+## Dettes (référence croisée TECH-DEBT.md)
+- TD-001 Node/browser split (build bloquant)
+- TD-002 FTS avancé (OR/phrase/highlight)
+- TD-003 Auto labels PR
+- TD-004 Metrics latence repo
+- TD-005 Gate lint/tests
+
+## Incidents / Bugs Temporaires
+- (vide) – reporter ici avant création issue externe.
+

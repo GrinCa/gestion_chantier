@@ -42,7 +42,7 @@ function globToRegex(glob){
 }
 
 const categoryDefs = prConfig.categories || [
-  { name:'docs', patterns:['archi/**','**/*.md'] },
+  { name:'docs', patterns:['handbook/**','archi/**','**/*.md'] },
   { name:'scripts', patterns:['scripts/**'] },
   { name:'server', patterns:['server/**'] },
   { name:'frontend', patterns:['src/**','public/**'] },
@@ -53,7 +53,7 @@ for (const c of categoryDefs){ c._regex = c.patterns.map(globToRegex); }
 const highlightDefs = prConfig.highlights || [
   { patterns:['**/*fts*','**/*MATCH*','**/*sqlite*'], message:'Recherche plein texte / SQLite FTS modifiée' },
   { patterns:['scripts/create-pr.mjs','scripts/update-pr.mjs'], message:'Outillage PR modifié' },
-  { patterns:['archi/**','**/*.md'], message:'Documentation mise à jour' }
+  { patterns:['handbook/**','archi/**','**/*.md'], message:'Documentation mise à jour' }
 ];
 for (const h of highlightDefs){ h._regex = h.patterns.map(globToRegex); }
 
