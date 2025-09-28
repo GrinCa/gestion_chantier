@@ -22,7 +22,8 @@
     "setup": "npm run install:all && npm run build:core && npm run link:core",
     "setup:mobile": "npm run setup && npm run dev:mobile",
     "pr:create": "node scripts/create-pr.mjs",
-    "pr:update": "node scripts/update-pr.mjs"
+    "pr:update": "node scripts/update-pr.mjs",
+    "pr:check": "node scripts/pr-check.mjs"
   },
   "devDependencies": {
     "typescript": "~5.6.2"

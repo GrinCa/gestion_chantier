@@ -17,7 +17,8 @@ export interface DataEngineBridgeOptions {
 }
 
 export class DataEngineBridge {
-  constructor(private opts: DataEngineBridgeOptions) {}
+  private opts: DataEngineBridgeOptions;
+  constructor(opts: DataEngineBridgeOptions) { this.opts = opts; }
 
   /** Branche les handlers nécessaires. */
   attach() {

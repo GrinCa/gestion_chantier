@@ -15,7 +15,8 @@ export interface MigrationResult {
 }
 
 export class MigrationService {
-  constructor(private repo: ResourceRepository) {}
+  private repo: ResourceRepository;
+  constructor(repo: ResourceRepository) { this.repo = repo; }
 
   /**
    * Parcours toutes les resources d'un workspace et tente une migration

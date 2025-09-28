@@ -23,7 +23,16 @@ export interface ToolContextFactory {
 }
 
 export class ToolExecutionService {
-  constructor(private registry: ToolRegistry, private events: EventBus, private ctxFactory: ToolContextFactory, private policy?: AccessPolicy) {}
+  private registry: ToolRegistry;
+  private events: EventBus;
+  private ctxFactory: ToolContextFactory;
+  private policy?: AccessPolicy;
+  constructor(registry: ToolRegistry, events: EventBus, ctxFactory: ToolContextFactory, policy?: AccessPolicy) {
+    this.registry = registry;
+    this.events = events;
+    this.ctxFactory = ctxFactory;
+    this.policy = policy;
+  }
 
   private id() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 

@@ -12,7 +12,9 @@
     "rootDir": "./",
     "strict": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": false,
+    "erasableSyntaxOnly": false
   },
   "include": [
     "**/*.ts",

@@ -27,7 +27,14 @@ export interface ResourceUpdateInput<T = any> {
 }
 
 export class ResourceService {
-  constructor(private repo: ResourceRepository, private events: EventBus, private policy?: AccessPolicy) {}
+  private repo: ResourceRepository;
+  private events: EventBus;
+  private policy?: AccessPolicy;
+  constructor(repo: ResourceRepository, events: EventBus, policy?: AccessPolicy) {
+    this.repo = repo;
+    this.events = events;
+    this.policy = policy;
+  }
 
   private now() { return Date.now(); }
   private id() { return this.now().toString(36) + Math.random().toString(36).slice(2); }

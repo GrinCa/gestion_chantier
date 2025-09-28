@@ -8,7 +8,12 @@ import type { AccessPolicy } from '../auth/AccessPolicy.js';
 import { Readable } from 'stream';
 
 export class ExportService {
-  constructor(private repo: ResourceRepository, private policy?: AccessPolicy) {}
+  private repo: ResourceRepository;
+  private policy?: AccessPolicy;
+  constructor(repo: ResourceRepository, policy?: AccessPolicy) {
+    this.repo = repo;
+    this.policy = policy;
+  }
 
   async exportWorkspace(workspaceId: string): Promise<string> {
     const list = await this.repo.list(workspaceId, { limit: 100000 });

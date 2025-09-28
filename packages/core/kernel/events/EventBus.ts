@@ -17,7 +17,7 @@
  *   - Isolation / sandbox des handlers (timeouts, erreurs contrôlées).
  */
 
-import { DomainEvent, EventHandler } from './DomainEvent.js';
+import type { DomainEvent, EventHandler } from './DomainEvent.js';
 
 export class EventBus {
   private handlers: Map<string, EventHandler[]> = new Map();

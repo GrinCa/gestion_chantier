@@ -149,6 +149,17 @@ try {
   process.exit(1);
 }
 
+// Optional pre-check gating (build etc.)
+if (process.env.PR_SKIP_CHECK !== 'true') {
+  try {
+    log('[PR][CHECK] Lancement pre-check (scripts/pr-check.mjs)');
+    sh('node scripts/pr-check.mjs');
+  } catch (e) {
+    error('Pre-check a échoué. Annulation création PR. (export PR_SKIP_CHECK=true pour bypass)');
+    process.exit(1);
+  }
+}
+
 // Collect diff summary vs base (file names + numstat)
 let diffFilesRaw = '';
 try { diffFilesRaw = sh(`git diff --name-only ${baseBranch}...${headBranch}`); } catch {

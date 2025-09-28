@@ -100,6 +100,17 @@ if(headBranch==='HEAD') headBranch = sh('git branch --show-current');
 if(!headBranch){ error('Branche courante introuvable'); process.exit(1); }
 if(headBranch==='main' || headBranch==='master'){ error('Sur branche principale – rien à mettre à jour.'); process.exit(1); }
 
+// Optional pre-check before updating PR (ensures branch still builds)
+if (process.env.PR_SKIP_CHECK !== 'true') {
+  try {
+    log('[PR][CHECK] Lancement pre-check (scripts/pr-check.mjs)');
+    sh('node scripts/pr-check.mjs');
+  } catch (e) {
+    error('Pre-check a échoué. Annulation update PR. (export PR_SKIP_CHECK=true pour bypass)');
+    process.exit(1);
+  }
+}
+
 const baseBranch = process.env.BASE_BRANCH || 'main';
 let remoteUrl='';
 try { remoteUrl = sh('git remote get-url origin'); } catch { error('Remote origin manquant'); process.exit(1); }

@@ -9,7 +9,14 @@ import type { ResourceRepository } from '../repository/ResourceRepository.js';
 import type { Indexer } from './Indexer.js';
 
 export class IndexSubscriber {
-  constructor(private bus: EventBus, private repo: ResourceRepository, private indexer: Indexer) {}
+  private bus: EventBus;
+  private repo: ResourceRepository;
+  private indexer: Indexer;
+  constructor(bus: EventBus, repo: ResourceRepository, indexer: Indexer) {
+    this.bus = bus;
+    this.repo = repo;
+    this.indexer = indexer;
+  }
 
   attach() {
     this.bus.on('created', (e) => this.handle(e.entityType, e.entityId));
