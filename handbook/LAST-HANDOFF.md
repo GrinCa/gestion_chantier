@@ -1,5 +1,7 @@
 # LAST HANDOFF
 
+> AUTO-GÉNÉRÉ – ne pas éditer à la main. Régénérer via `node scripts/save-session.mjs`.
+
 ````
 Handoff:
   GeneratedAt: 2025-09-28T17:15:16.847Z

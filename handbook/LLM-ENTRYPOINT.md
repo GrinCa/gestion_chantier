@@ -134,6 +134,8 @@ Option automatisée (recommandée):
      - Écrit `handbook/LAST-HANDOFF.md`
   2. Copier le snippet "NEXT SESSION" dans le dernier message.
 
+Note: Ancien fichier `HANDFOFF.md` supprimé (intégré ici le 2025-09-28) pour éviter duplication.
+
 Format produit exemple:
 ```
 Handoff:
