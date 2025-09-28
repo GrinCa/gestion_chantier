@@ -17,14 +17,11 @@ export interface HealthSnapshot {
 }
 
 export class HealthService {
-  private repo: ResourceRepository;
-  private metrics?: MetricsService;
-  private migrations?: MigrationService;
-  constructor(repo: ResourceRepository, metrics?: MetricsService, migrations?: MigrationService) {
-    this.repo = repo;
-    this.metrics = metrics;
-    this.migrations = migrations;
-  }
+  constructor(
+    private repo: ResourceRepository,
+    private metrics?: MetricsService,
+    private migrations?: MigrationService
+  ){}
 
   async snapshot(workspaceId: string, syncProvider?: ()=>Promise<any>): Promise<HealthSnapshot> {
     const ts = Date.now();

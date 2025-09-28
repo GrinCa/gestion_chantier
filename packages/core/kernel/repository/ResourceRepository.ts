@@ -16,7 +16,7 @@
  * - Pagination performante (curseurs)
  */
 
-import type { Resource } from '../domain/Resource.js';
+import { Resource } from '../domain/Resource.js';
 
 export type FieldOp = 'eq' | 'in' | 'lt' | 'gt' | 'contains';
 
