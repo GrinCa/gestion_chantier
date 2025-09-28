@@ -182,38 +182,38 @@ export class DataEngine {
   async createData(projectId: string, dataType: string, content: any, toolOrigin: string): Promise<DataEntry> {
     const id = this.generateId();
     const timestamp = Date.now();
+    // Validation avant toute écriture locale
+    let validated = content;
+    try {
+      validated = globalDataTypeRegistry.validate(dataType, content);
+    } catch (e: any) {
+      throw new Error(`Validation failed for type ${dataType}: ${e.message}`);
+    }
 
     const entry: DataEntry = {
       id,
       project_id: projectId,
       data_type: dataType,
-      content,
+      content: validated,
       tool_origin: toolOrigin,
       created_at: timestamp
     };
 
-    // Save locally
+    // Persist local après validation
     await this.storage.set(`data:${id}`, entry);
 
-    // EXPÉRIMENTAL: si repository présent, créer une Resource miroir.
-    // Validation (toujours si type existant) – lance si invalide
-    try {
-      content = globalDataTypeRegistry.validate(dataType, content);
-    } catch (e: any) {
-      throw new Error(`Validation failed for type ${dataType}: ${e.message}`);
-    }
-
+    // Mirroring Resource (expérimental) si repo présent
     if (this.resourceRepo) {
       const descriptor = globalDataTypeRegistry.get(dataType);
       const resource: Resource = {
         id: entry.id,
         type: dataType,
-        workspaceId: projectId, // alias projet -> workspace (futur renommage)
+        workspaceId: projectId,
         createdAt: timestamp,
         updatedAt: timestamp,
         version: 1,
         origin: toolOrigin,
-        payload: content,
+        payload: validated,
         schemaVersion: descriptor?.schemaVersion
       };
       await this.resourceRepo.save(resource);
