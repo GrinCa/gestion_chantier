@@ -14,10 +14,41 @@ function sh(cmd) {
 function log(msg) { process.stdout.write(msg + '\n'); }
 function error(msg) { process.stderr.write('\n[PR][ERROR] ' + msg + '\n'); }
 
-// 1. Preconditions
-const token = process.env.GITHUB_TOKEN;
+// 1. Token Resolution (env or fallback)
+let token = process.env.GITHUB_TOKEN;
 if (!token) {
-  error('GITHUB_TOKEN manquant. Crée un PAT (repo scope) puis: setx GITHUB_TOKEN "<token>" (Windows) et relance ton terminal.');
+  // Fallback 1: .secrets/github_token
+  try {
+    if (existsSync('.secrets/github_token')) {
+      token = readFileSync('.secrets/github_token', 'utf8').trim();
+    }
+  } catch {}
+}
+if (!token) {
+  // Fallback 2: .env (parse simple lines KEY=VALUE)
+  try {
+    if (existsSync('.env')) {
+      const envRaw = readFileSync('.env', 'utf8');
+      for (const line of envRaw.split(/\r?\n/)) {
+        if (!line || line.trim().startsWith('#')) continue;
+        const eq = line.indexOf('=');
+        if (eq === -1) continue;
+        const k = line.slice(0, eq).trim();
+        const v = line.slice(eq + 1).trim().replace(/^['"]|['"]$/g, '');
+        if (k === 'GITHUB_TOKEN' && v) { token = v; break; }
+      }
+    }
+  } catch {}
+}
+if (!token) {
+  // Fallback 3: git config github.token
+  try {
+    const cfg = sh('git config --get github.token');
+    if (cfg) token = cfg.trim();
+  } catch {}
+}
+if (!token) {
+  error('GITHUB_TOKEN introuvable (env/.secrets/.env/git config). Fournis-le via setx GITHUB_TOKEN ou .secrets/github_token.');
   process.exit(1);
 }
 
