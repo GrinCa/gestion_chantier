@@ -208,8 +208,27 @@ function buildEnhancedBody(){
   ].join('\n');
 }
 
-const body = ENHANCED ? buildEnhancedBody() : [
-  template ? '## (Pré-rempli) Template\n' : '## PR\n',
+// Derive title (allow override via PR_TITLE)
+const title = process.env.PR_TITLE || latestSubject || `feat: ${headBranch}`;
+
+function deriveResume(){
+  const parts=[];
+  if (highlights.length) parts.push(highlights.join(' | '));
+  if (categories.core) parts.push('Modifications noyau');
+  if (categories.search) parts.push('FTS / recherche');
+  if (categories['docs-archi']) parts.push('Documentation architecture');
+  parts.push(`Δ +${additions}/-${deletions}`);
+  return parts.join(' · ');
+}
+
+const autoResume = deriveResume();
+
+const body = ENHANCED ? (`## 🎯 Titre\n${title}\n\n## 📌 Résumé\n${autoResume}\n\n` + buildEnhancedBody()) : [
+  '## 🎯 Titre',
+  title,
+  '## 📌 Résumé',
+  autoResume,
+  template ? '## (Pré-rempli) Template' : '## PR',
   template || '',
   '---',
   '## Auto-Analyse (généré)',
@@ -218,8 +237,6 @@ const body = ENHANCED ? buildEnhancedBody() : [
   '```',
   latestSubject ? `Dernier commit: ${latestSubject}` : ''
 ].join('\n');
-
-const title = latestSubject || `feat: ${headBranch}`;
 
 async function main() {
   // Check existing PR

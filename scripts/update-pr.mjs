@@ -133,8 +133,23 @@ function buildBody(){
   ].join('\n');
 }
 
-const body = buildBody();
-const title = latestSubject || `feat: ${headBranch}`;
+// Derive title override
+const title = process.env.PR_TITLE || latestSubject || `feat: ${headBranch}`;
+function deriveResume(){
+  const parts=[];
+  if (highlights.length) parts.push(highlights.join(' | '));
+  if (categories.core) parts.push('Modifications noyau');
+  if (categories.search) parts.push('FTS / recherche');
+  if (categories['docs-archi']) parts.push('Documentation architecture');
+  parts.push(`Δ +${additions}/-${deletions}`);
+  return parts.join(' · ');
+}
+const autoResume = deriveResume();
+const body = ENHANCED ? (`## 🎯 Titre\n${title}\n\n## 📌 Résumé\n${autoResume}\n\n` + buildBody()) : [
+  '## 🎯 Titre', title,
+  '## 📌 Résumé', autoResume,
+  buildBody()
+].join('\n');
 
 async function main(){
   // Locate existing PR
