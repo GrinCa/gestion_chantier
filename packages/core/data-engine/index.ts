@@ -10,6 +10,7 @@ import type {
   DataQuery,
   QueryResult,
   Project,
+  Workspace,
   CreateInput,
   UpdateInput,
   ApiResponse,
@@ -54,6 +55,7 @@ export class DataEngine {
   private indexer?: Indexer; // enrichissement sync status
   private migrationService?: MigrationService;
   private lastEventTimestamp: number | null = null;
+  private conflicts: Array<{ id: string; expected: number; actual: number; at: number }> = [];
 
   constructor(storage: StorageAdapter, network: NetworkAdapter, opts?: { eventBus?: EventBus; resourceRepo?: ResourceRepository; indexer?: Indexer; migrationService?: MigrationService }) {
     this.storage = storage;
@@ -62,6 +64,14 @@ export class DataEngine {
     this.resourceRepo = opts?.resourceRepo;
     this.indexer = opts?.indexer;
     this.migrationService = opts?.migrationService;
+    // Listen for conflict events if eventBus provided
+    this.eventBus.on?.('*', (e: any) => {
+      if (e.entityType === 'resource' && e.operation === 'conflict') {
+        const { expected, actual } = e.payload || {};
+        this.conflicts.push({ id: e.entityId, expected, actual, at: e.timestamp });
+        if (this.conflicts.length > 50) this.conflicts.shift(); // cap memory
+      }
+    });
     
     // Auto-sync when coming online
     this.network.onlineStatusChanged((online) => {
@@ -73,28 +83,26 @@ export class DataEngine {
 
   // ===== PROJECT MANAGEMENT =====
 
-  async createProject(project: CreateInput<Project>): Promise<Project> {
+  // NEW canonical API
+  async createWorkspace(workspace: CreateInput<Workspace>): Promise<Workspace> {
     const id = this.generateId();
     const timestamp = Date.now();
-    
-    const newProject: Project = {
+    const newWorkspace: Workspace = {
       id,
-      ...project,
+      ...workspace,
       created_at: timestamp,
       updated_at: timestamp
     };
-
-    // Save locally first
-    await this.storage.set(`project:${id}`, newProject);
+    await this.storage.set(`project:${id}`, newWorkspace);
     
     // Try to sync to server
     if (this.network.isOnline()) {
       try {
-        const response = await this.network.request<Project>('POST', '/projects', newProject);
+        const response = await this.network.request<Workspace>('POST', '/workspaces', newWorkspace);
         if (response.success && response.data) {
           // Update with server response
           await this.storage.set(`project:${id}`, response.data);
-          await this.emitEvent('project', response.data.id, 'created', response.data, response.data.updated_at, project.owner as any);
+          await this.emitEvent('workspace', response.data.id, 'created', response.data, response.data.updated_at, (workspace as any).owner);
           return response.data;
         }
       } catch (error) {
@@ -104,14 +112,19 @@ export class DataEngine {
     } else {
       this.pendingSync.add(`project:${id}`);
     }
-    // Emit local event (offline or pre-sync)
-    await this.emitEvent('project', newProject.id, 'created', newProject, newProject.updated_at, (project as any).owner);
-    return newProject;
+    await this.emitEvent('workspace', newWorkspace.id, 'created', newWorkspace, newWorkspace.updated_at, (workspace as any).owner);
+    return newWorkspace;
   }
 
-  async getProject(id: string): Promise<Project | null> {
+  // Backward compatibility wrapper (deprecated)
+  /**
+   * @deprecated Use createWorkspace() instead. Will be removed in a future major version.
+   */
+  async createProject(project: CreateInput<Project>): Promise<Project> { return this.createWorkspace(project as any as CreateInput<Workspace>) as any; }
+
+  async getWorkspace(id: string): Promise<Workspace | null> {
     // Check cache first
-    const cached = this.cache.get(`project:${id}`);
+  const cached = this.cache.get(`project:${id}`);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
       return cached.data;
     }
@@ -123,10 +136,10 @@ export class DataEngine {
       return local;
     }
 
-    // Try to fetch from server
+    // Try to fetch from server (workspace endpoint)
     if (this.network.isOnline()) {
       try {
-        const response = await this.network.request<Project>('GET', `/projects/${id}`);
+        const response = await this.network.request<Workspace>('GET', `/workspaces/${id}`);
         if (response.success && response.data) {
           await this.storage.set(`project:${id}`, response.data);
           this.cache.set(`project:${id}`, { data: response.data, timestamp: Date.now(), ttl: 300000 });
@@ -140,8 +153,8 @@ export class DataEngine {
     return null;
   }
 
-  async getUserProjects(userId: string): Promise<Project[]> {
-    const cacheKey = `user_projects:${userId}`;
+  async getUserWorkspaces(userId: string): Promise<Workspace[]> {
+  const cacheKey = `user_workspaces:${userId}`;
     
     // Check cache
     const cached = this.cache.get(cacheKey);
@@ -152,7 +165,7 @@ export class DataEngine {
     // Try server first if online
     if (this.network.isOnline()) {
       try {
-        const response = await this.network.request<Project[]>('GET', `/projects?owner=${userId}`);
+  const response = await this.network.request<Workspace[]>('GET', `/workspaces?owner=${userId}`);
         if (response.success && response.data) {
           // Cache server response
           this.cache.set(cacheKey, { data: response.data, timestamp: Date.now(), ttl: 60000 }); // 1min cache
@@ -171,18 +184,23 @@ export class DataEngine {
 
     // Fallback to local storage
     const keys = await this.storage.keys();
-    const projectKeys = keys.filter(key => key.startsWith('project:'));
-    const projects: Project[] = [];
+  const projectKeys = keys.filter(key => key.startsWith('project:'));// keeping key prefix for compatibility
+  const workspaces: Workspace[] = [];
     
     for (const key of projectKeys) {
       const project = await this.storage.get(key);
       if (project && project.owner === userId) {
-        projects.push(project);
+        workspaces.push(project);
       }
     }
-
-    return projects.sort((a, b) => b.updated_at - a.updated_at);
+    return workspaces.sort((a, b) => b.updated_at - a.updated_at);
   }
+
+  // Deprecated wrappers
+  /** @deprecated Use getWorkspace() */
+  async getProject(id: string): Promise<Project | null> { return this.getWorkspace(id) as any; }
+  /** @deprecated Use getUserWorkspaces() */
+  async getUserProjects(userId: string): Promise<Project[]> { return this.getUserWorkspaces(userId) as any; }
 
   // ===== DATA MANAGEMENT =====
 
@@ -227,11 +245,11 @@ export class DataEngine {
     }
     
     // Update project's updated_at
-    const project = await this.getProject(projectId);
-    if (project) {
-      project.updated_at = timestamp;
-      await this.storage.set(`project:${projectId}`, project);
-      await this.emitEvent('project', project.id, 'updated', { updated_at: project.updated_at }, project.updated_at);
+    const workspace = await this.getWorkspace(projectId);
+    if (workspace) {
+      workspace.updated_at = timestamp;
+      await this.storage.set(`project:${projectId}`, workspace);
+      await this.emitEvent('workspace', workspace.id, 'updated', { updated_at: workspace.updated_at }, workspace.updated_at);
     }
 
     // Try to sync
@@ -395,7 +413,7 @@ export class DataEngine {
     return {
       last_sync: Date.now(),
       pending_changes: this.pendingSync.size,
-      conflicts: [],
+      conflicts: this.conflicts,
       status: this.pendingSync.size === 0 ? 'synced' : 'pending',
       // extensions internes (non standardisées encore)
       // @ts-ignore

@@ -19,12 +19,12 @@ class DummyNetwork { isOnline(){return false;} onlineStatusChanged(){} async req
 
 async function main(){
   const engine = new DataEngine(new MemoryStorage(), new DummyNetwork(), { eventBus: new EventBus(), resourceRepo: createInMemoryRepository() });
-  const project = await engine.createProject({ name: 'ValProj', owner: 'u1' } as any);
-  // Valid
-  await engine.createData(project.id, 'note', { text: 'Validation OK', tags:['a'] }, 'tool:test');
+    const workspace = await engine.createWorkspace({ name: 'ValProj', owner: 'u1' } as any);
+    // Valid
+    await engine.createData(workspace.id, 'note', { text: 'Validation OK', tags:['a'] }, 'tool:test');
   let failed = false;
   try {
-    await engine.createData(project.id, 'note', { text: '' }, 'tool:test'); // invalid (empty)
+  await engine.createData(workspace.id, 'note', { text: '' }, 'tool:test'); // invalid (empty)
   } catch (e) {
     failed = true;
   }

@@ -25,9 +25,9 @@ async function main(){
   const bridge = new DataEngineBridge({ eventBus: bus, repository: repo });
   bridge.attach();
   const engine = new DataEngine(new MemoryStorage(), new DummyNetwork(), { eventBus: bus, resourceRepo: repo });
-  const project = await engine.createProject({ name:'Test', owner:'u1' } as any);
-  await engine.createData(project.id, 'note', { text: 'Hello Bridge', tags:['bridge','test'] }, 'tool:test');
-  const listed = await repo.list(project.id, { fullText: 'hello' });
+    const workspace = await engine.createWorkspace({ name:'Test', owner:'u1' } as any);
+    await engine.createData(workspace.id, 'note', { text:'Hello Bridge', tags:['bridge','test'] }, 'tool:test');
+  const listed = await repo.list(workspace.id, { fullText: 'hello' });
   console.log('Bridge resources count:', listed.total);
   if (listed.total !== 1) {
     console.error('Bridge test FAILED');

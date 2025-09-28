@@ -1,6 +1,7 @@
 {
   "name": "@gestion-chantier/mobile",
   "version": "1.0.0",
+  "type": "module",
   "description": "Application mobile Gestion Chantier - React Native + Expo",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {

@@ -23,6 +23,7 @@ export interface ResourceUpdateInput<T = any> {
   payload?: Partial<T> | ((prev: T) => T);
   metadata?: Record<string, any>;
   origin?: string;
+  expectedVersion?: number; // for optimistic locking
 }
 
 export class ResourceService {
@@ -60,6 +61,11 @@ export class ResourceService {
     if (!existing) throw new Error(`Resource not found: ${id}`);
     if (this.policy && !(await this.policy.can('resource:update', { workspaceId: existing.workspaceId, resourceType: existing.type }))) {
       throw new Error('Access denied: resource:update');
+    }
+    if (mutate.expectedVersion && existing.version !== mutate.expectedVersion) {
+      // Emit conflict event and return existing unchanged
+      await this.emit('resource', existing.id, 'conflict', { expected: mutate.expectedVersion, actual: existing.version }, Date.now(), mutate.origin || existing.origin, existing.version);
+      throw new Error(`Version conflict for resource ${id}: expected ${mutate.expectedVersion} got ${existing.version}`);
     }
     const descriptor = globalDataTypeRegistry.get(existing.type);
     let newPayload = existing.payload;

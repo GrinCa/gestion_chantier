@@ -15,7 +15,7 @@ packages/mobile/
 │   ├── screens/               # Écrans de l'app
 │   │   ├── HomeScreen.tsx     # Accueil
 │   │   ├── CalculatriceScreen.tsx  # 📐 Calculatrice (utilise le core!)
-│   │   ├── ProjectsScreen.tsx # Gestion projets
+│   │   ├── WorkspacesScreen.tsx # Gestion workspaces (ex-projets)
 │   │   └── SettingsScreen.tsx # Paramètres
 │   ├── hooks/                 # Hooks React Native
 │   │   └── useMobileDataEngine.tsx  # Hook DataEngine mobile
@@ -136,9 +136,13 @@ const updated = calculatriceTool.addGroupe(groups, 'Position 1');
 // useMobileDataEngine.tsx
 const { dataEngine, isOnline, syncStatus } = useMobileDataEngine();
 
-// Même API que la version Web
-await dataEngine.createProject(project);
-await dataEngine.createData(projectId, 'measurement', data, 'calculatrice');
+// Nouvelle API (Project renommé en Workspace)
+await dataEngine.createWorkspace(workspace);
+await dataEngine.createData(workspaceId, 'measurement', data, 'calculatrice');
+
+// Ancienne API (DEPRECATED – sera supprimée après période de transition)
+// await dataEngine.createProject(project);
+// await dataEngine.createData(projectId, 'measurement', data, 'calculatrice');
 ```
 
 ### **Auto-sync**
@@ -169,9 +173,27 @@ Web:               Mobile:
 ## 🚀 **Next Steps**
 
 1. **Test sur device** : Scanner QR code avec Expo Go
-2. **Développer screens** : Projets, authentification
-3. **Build production** : APK/IPA pour distribution
-4. **Store deployment** : Google Play / App Store
+2. **Renommer définitivement UI** : Remplacer "projet" par "workspace" dans les écrans restants
+3. **Développer screens** : Authentification, gestion avancée workspace
+4. **Build production** : APK/IPA pour distribution
+5. **Store deployment** : Google Play / App Store
+
+---
+
+## 🔄 Migration Project → Workspace
+
+| Avant | Après | Statut |
+|-------|-------|--------|
+| createProject | createWorkspace | ✅ Utiliser maintenant |
+| getProject | getWorkspace | ✅ |
+| getUserProjects | getUserWorkspaces | ✅ |
+| useMobileProjects | useMobileWorkspaces | ✅ alias conservé |
+| projectId (variables) | workspaceId | À migrer progressivement |
+
+Notes:
+- Les clés de stockage internes conservent encore le préfixe `project:` pendant la phase de transition.
+- Les événements utilisent désormais `workspace` comme `entityType`.
+- Les anciennes méthodes sont maintenues comme wrappers avec @deprecated (à venir dans la doc technique) et seront retirées dans une future version majeure.
 
 ---
 

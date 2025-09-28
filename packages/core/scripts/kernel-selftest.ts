@@ -37,14 +37,14 @@ async function main() {
 
   const engine = new DataEngine(new MemoryStorage(), new DummyNetwork(), { eventBus: bus });
 
-  // Simule project & data
-  const project = await engine.createProject({ name: 'Test Workspace', owner: 'user-1' } as any);
-  await engine.createData(project.id, 'measurement', { value: 42, unit: 'm' }, 'tool:calc');
-  await engine.createData(project.id, 'note', { text: 'Ceci est une note', tags: ['demo'] }, 'tool:note');
+  // Simule workspace & data (ex-project)
+  const workspace = await engine.createWorkspace({ name: 'Test Workspace', owner: 'user-1' } as any);
+  await engine.createData(workspace.id, 'measurement', { value: 42, unit: 'm' }, 'tool:calc');
+  await engine.createData(workspace.id, 'note', { text: 'Ceci est une note', tags: ['demo'] }, 'tool:note');
 
   const output = {
     builtinsLoaded: BUILTIN_DATA_TYPES,
-    projectId: project.id,
+  workspaceId: workspace.id,
     eventCount: events.length,
     events: events.map(e => ({ op: e.operation, type: e.entityType, id: e.entityId }))
   };

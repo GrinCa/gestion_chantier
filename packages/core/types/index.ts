@@ -7,6 +7,7 @@
 
 // ===== CORE PROJECT TYPES =====
 
+// Deprecated alias (Project) -> new canonical name Workspace
 export interface Project {
   id: string;
   name: string;
@@ -17,6 +18,8 @@ export interface Project {
   created_at: number;
   updated_at: number;
 }
+
+export interface Workspace extends Project {}
 
 // ===== UNIVERSAL DATA TYPES =====
 

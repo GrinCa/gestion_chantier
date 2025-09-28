@@ -7,8 +7,8 @@
 import { useState, useEffect, useContext, createContext } from 'react';
 import type { ReactNode } from 'react';
 import { DataEngine } from '@gestion-chantier/core';
-import type { Project, DataEntry, DataQuery } from '@gestion-chantier/core';
-import { createMobileDataEngine } from '../adapters/mobile-adapters';
+import type { Workspace, DataEntry, DataQuery } from '@gestion-chantier/core';
+import { createMobileDataEngine } from '../adapters/mobile-adapters.js';
 
 // ===== CONTEXT =====
 
@@ -96,63 +96,66 @@ export function useMobileDataEngine() {
   return context;
 }
 
-export function useMobileProjects(userId?: string) {
+export function useMobileWorkspaces(userId?: string) {
   const { dataEngine, isInitialized } = useMobileDataEngine();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadProjects = async () => {
+  const loadWorkspaces = async () => {
     if (!dataEngine || !userId || !isInitialized) return;
 
     try {
       setLoading(true);
       setError(null);
-      const userProjects = await dataEngine.getUserProjects(userId);
-      setProjects(userProjects);
+      const userWorkspaces = await dataEngine.getUserWorkspaces(userId as any);
+      setWorkspaces(userWorkspaces as any);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load projects');
+      setError(err instanceof Error ? err.message : 'Failed to load workspaces');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProjects();
+    loadWorkspaces();
   }, [dataEngine, userId, isInitialized]);
 
-  const createProject = async (project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) => {
+  const createWorkspace = async (workspace: Omit<Workspace, 'id' | 'created_at' | 'updated_at'>) => {
     if (!dataEngine) throw new Error('DataEngine not initialized');
     
-    const newProject = await dataEngine.createProject(project);
-    await loadProjects(); // Refresh
-    return newProject;
+    const newWorkspace = await dataEngine.createWorkspace(workspace as any);
+    await loadWorkspaces(); // Refresh
+    return newWorkspace;
   };
 
   return {
-    projects,
+    workspaces,
     loading,
     error,
-    createProject,
-    refresh: loadProjects
+    createWorkspace,
+    refresh: loadWorkspaces
   };
 }
 
-export function useMobileProjectData(projectId?: string, dataTypes?: string[]) {
+/** @deprecated Use useMobileWorkspaces */
+export const useMobileProjects = useMobileWorkspaces; // deprecated alias
+
+export function useMobileWorkspaceData(workspaceId?: string, dataTypes?: string[]) {
   const { dataEngine, isInitialized } = useMobileDataEngine();
   const [data, setData] = useState<DataEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
-    if (!dataEngine || !projectId || !isInitialized) return;
+    if (!dataEngine || !workspaceId || !isInitialized) return;
 
     try {
       setLoading(true);
       setError(null);
       
       const query: DataQuery = {
-        project_id: projectId,
+        project_id: workspaceId, // field kept for backward compatibility
         data_types: dataTypes,
         limit: 1000
       };
@@ -168,12 +171,12 @@ export function useMobileProjectData(projectId?: string, dataTypes?: string[]) {
 
   useEffect(() => {
     loadData();
-  }, [dataEngine, projectId, isInitialized, dataTypes?.join(',')]);
+  }, [dataEngine, workspaceId, isInitialized, dataTypes?.join(',')]);
 
   const createData = async (dataType: string, content: any, toolOrigin: string) => {
-    if (!dataEngine || !projectId) throw new Error('DataEngine or projectId not available');
+    if (!dataEngine || !workspaceId) throw new Error('DataEngine or workspaceId not available');
     
-    const newData = await dataEngine.createData(projectId, dataType, content, toolOrigin);
+    const newData = await dataEngine.createData(workspaceId, dataType, content, toolOrigin);
     await loadData(); // Refresh
     return newData;
   };
@@ -188,11 +191,11 @@ export function useMobileProjectData(projectId?: string, dataTypes?: string[]) {
 }
 
 // Hook pour la calculatrice mobile (utilise la logique métier du core)
-export function useMobileCalculatrice(projectId?: string) {
-  const { createData } = useMobileProjectData(projectId, ['measurement']);
+export function useMobileCalculatrice(workspaceId?: string) {
+  const { createData } = useMobileWorkspaceData(workspaceId, ['measurement']);
   
   const saveCalculatriceData = async (groupes: any[]) => {
-    if (!projectId) throw new Error('Project ID required');
+  if (!workspaceId) throw new Error('Workspace ID required');
     
     return await createData('measurement', {
       type: 'calculatrice_session',
@@ -201,7 +204,8 @@ export function useMobileCalculatrice(projectId?: string) {
     }, 'calculatrice');
   };
 
-  return {
-    saveCalculatriceData
-  };
+  return { saveCalculatriceData };
 }
+
+/** @deprecated Use useMobileWorkspaceData */
+export const useMobileProjectData = useMobileWorkspaceData; // deprecated alias

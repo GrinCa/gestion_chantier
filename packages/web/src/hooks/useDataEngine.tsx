@@ -7,7 +7,7 @@
 import { useState, useEffect, useContext, createContext } from 'react';
 import type { ReactNode } from 'react';
 import { DataEngine } from '@gestion-chantier/core';
-import type { Project, DataEntry, DataQuery } from '@gestion-chantier/core';
+import type { Project, Workspace, DataEntry, DataQuery } from '@gestion-chantier/core';
 import { createWebDataEngine } from '../adapters/web-adapters';
 
 // ===== CONTEXT =====
@@ -76,38 +76,38 @@ export function useDataEngine() {
   return context;
 }
 
-// ===== PROJECT HOOKS =====
+// ===== WORKSPACE (ex-Project) HOOKS =====
 
-export function useProjects(userId?: string) {
+export function useWorkspaces(userId?: string) {
   const { dataEngine } = useDataEngine();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId || !dataEngine) return;
 
-    const loadProjects = async () => {
+    const loadWorkspaces = async () => {
       try {
         setLoading(true);
         setError(null);
-        const userProjects = await dataEngine.getUserProjects(userId);
-        setProjects(userProjects);
+        const userWorkspaces = await dataEngine.getUserWorkspaces(userId as any);
+        setWorkspaces(userWorkspaces as any);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load projects');
+        setError(err instanceof Error ? err.message : 'Failed to load workspaces');
       } finally {
         setLoading(false);
       }
     };
 
-    loadProjects();
+    loadWorkspaces();
   }, [dataEngine, userId]);
 
-  const createProject = async (name: string, description?: string, domain = 'construction') => {
+  const createWorkspace = async (name: string, description?: string, domain = 'construction') => {
     if (!userId || !dataEngine) throw new Error('User ID and DataEngine required');
     
     try {
-      const project = await dataEngine.createProject({
+      const workspace = await dataEngine.createWorkspace({
         name,
         description,
         domain,
@@ -115,68 +115,75 @@ export function useProjects(userId?: string) {
         metadata: {}
       });
       
-      setProjects(prev => [project, ...prev]);
-      return project;
+      setWorkspaces(prev => [workspace as any, ...prev]);
+      return workspace;
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to create project');
+      throw new Error(err instanceof Error ? err.message : 'Failed to create workspace');
     }
   };
 
   return {
-    projects,
+    workspaces,
     loading,
     error,
-    createProject,
+    createWorkspace,
     refetch: () => {
       if (userId && dataEngine) {
-        dataEngine.getUserProjects(userId).then(setProjects);
+        dataEngine.getUserWorkspaces(userId).then(ws => setWorkspaces(ws as any));
       }
     }
   };
 }
 
-export function useProject(projectId?: string) {
+// Backward-compatible alias (will be removed later)
+/** @deprecated Use useWorkspaces */
+export const useProjects = useWorkspaces;
+
+export function useWorkspace(workspaceId?: string) {
   const { dataEngine } = useDataEngine();
-  const [project, setProject] = useState<Project | null>(null);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!projectId || !dataEngine) {
-      setProject(null);
+    if (!workspaceId || !dataEngine) {
+      setWorkspace(null);
       setLoading(false);
       return;
     }
 
-    const loadProject = async () => {
+    const loadWorkspace = async () => {
       try {
         setLoading(true);
         setError(null);
-        const proj = await dataEngine.getProject(projectId);
-        setProject(proj);
+        const ws = await dataEngine.getWorkspace(workspaceId as any);
+        setWorkspace(ws as any);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load project');
+        setError(err instanceof Error ? err.message : 'Failed to load workspace');
       } finally {
         setLoading(false);
       }
     };
 
-    loadProject();
-  }, [dataEngine, projectId]);
+    loadWorkspace();
+  }, [dataEngine, workspaceId]);
 
-  return { project, loading, error };
+  return { workspace, loading, error };
 }
+
+/** @deprecated Use useWorkspace */
+export const useProject = useWorkspace; // deprecated alias
 
 // ===== DATA HOOKS =====
 
-export function useProjectData(projectId?: string, dataTypes?: string[]) {
+export function useWorkspaceData(workspaceId?: string, dataTypes?: string[]) {
   const { dataEngine } = useDataEngine();
   const [data, setData] = useState<DataEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!projectId || !dataEngine) {
+    if (!workspaceId || !dataEngine) {
       setData([]);
       setLoading(false);
       return;
@@ -188,7 +195,7 @@ export function useProjectData(projectId?: string, dataTypes?: string[]) {
         setError(null);
         
         const query: DataQuery = {
-          project_id: projectId,
+          project_id: workspaceId, // field name kept for now in query object
           data_types: dataTypes,
           sort: [{ field: 'created_at', direction: 'desc' }]
         };
@@ -203,13 +210,13 @@ export function useProjectData(projectId?: string, dataTypes?: string[]) {
     };
 
     loadData();
-  }, [dataEngine, projectId, dataTypes?.join(',')]);
+  }, [dataEngine, workspaceId, dataTypes?.join(',')]);
 
   const createData = async (dataType: string, content: any, toolOrigin: string) => {
-    if (!projectId || !dataEngine) throw new Error('Project ID and DataEngine required');
+  if (!workspaceId || !dataEngine) throw new Error('Workspace ID and DataEngine required');
     
     try {
-      const entry = await dataEngine.createData(projectId, dataType, content, toolOrigin);
+  const entry = await dataEngine.createData(workspaceId, dataType, content, toolOrigin);
       setData(prev => [entry, ...prev]);
       return entry;
     } catch (err) {
@@ -223,9 +230,9 @@ export function useProjectData(projectId?: string, dataTypes?: string[]) {
     error,
     createData,
     refetch: () => {
-      if (projectId && dataEngine) {
+      if (workspaceId && dataEngine) {
         const query: DataQuery = {
-          project_id: projectId,
+          project_id: workspaceId,
           data_types: dataTypes,
           sort: [{ field: 'created_at', direction: 'desc' }]
         };
@@ -234,6 +241,9 @@ export function useProjectData(projectId?: string, dataTypes?: string[]) {
     }
   };
 }
+
+/** @deprecated Use useWorkspaceData */
+export const useProjectData = useWorkspaceData; // deprecated alias
 
 // ===== SYNC HOOKS =====
 
