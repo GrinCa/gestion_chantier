@@ -75,11 +75,13 @@ Résumé: Phase 1 + Phase 2 (hors option p50/p99) livrées : repo latency, expor
 
 Résumé Section 8: Phase de compatibilité clé terminée. Aucune écriture nouvelle sous préfixe `project:`. Les lectures legacy sont comptées et miroir vers `workspace:`. La suppression définitive (breaking) sera orchestrée en Section 12.
 
-## 9. DevX & Sécurité
-- [ ] ESLint rule custom pour détecter usage `createProject` hors core
-- [ ] Ajout d’un mode strict (feature flag) désactivant wrappers
+## 9. DevX & Sécurité (EN COURS)
+- [x] ESLint rule custom (flat config) détectant usage `createProject` / `getProject` / `getUserProjects` hors core
+- [x] Mode strict runtime (`CORE_STRICT_MODE` via env GC_CORE_STRICT=1) : wrappers dépréciés lèvent des erreurs
 - [ ] Vérification taille export avant création (limite configurable)
-- [x] Script guard: échouer si dossier `archi/` réapparaît (lint CI) (post-nettoyage 2025-09-28) (implémenté via suppression + watch qualité, reste lint formel)
+- [x] Script guard: échouer si dossier `archi/` réapparaît (lint CI) (post-nettoyage 2025-09-28)
+
+Notes: Une fois la limite export ajoutée, Section 9 pourra être marquée close. Possibles améliorations futures : rule ESLint séparée en plugin dédié, reporting métrique sur violations strict mode.
 
 ## 10. Tests & Qualité
 - [x] Initial test suite (repository, dual export, sqlite stub, export stub, access policy)
