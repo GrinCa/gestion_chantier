@@ -30,3 +30,7 @@ packages/server/*.db
 
 # Local environment secrets
 .env
+.env.local
+.env.pr
+.env.*.local
+.secrets/
