@@ -126,7 +126,6 @@ AccessPolicy (allow-all stub). Planned:
 - Export lacks manifest
 - No repository latency metrics
 - No FTS or scoring beyond naive index
-- Core package mixes universal (isomorphic) services with Node-only concerns (export streaming, future sqlite adapter) leading to browser build failures when the web workspace attempts to bundle Node built-ins (stream/fs/path). See Section 21.
 
 ---
 ## 13. Planned Scripts
@@ -180,7 +179,6 @@ AccessPolicy (allow-all stub). Planned:
 ## 18. Changelog Anchor (Human + LLM)
 LLM Agents should append summarized deltas here (top):
 ```
-[2025-09-28] Documented browser build failure cause (core Node deps: stream/sqlite3) and deferred fix (layer split planned: core-browser vs core-node). Added pr:check gate exposing issue.
 [2025-09-28] Added SQLite FTS multi-term search (AND + heuristic scoring), self-test script, PR template + documented mandatory PR process.
 [2025-09-28] Added optimistic locking + resource.conflict events, conflicts surfaced in SyncStatus.
 ```
@@ -220,14 +218,3 @@ Tout contributeur (humain ou LLM) doit utiliser le template PR standard lors de 
   - [pull_request_template.md](../../.github/pull_request_template.md)
 
 *End of document.*
-
----
-## 21. Known Issues Index
-
-Detailed descriptions were moved to `KNOWN-ISSUES.md` for maintainability.
-
-| ID | Type | Title | Status |
-|----|------|-------|--------|
-| KI-001 | DEBT | Web build fails (Node-only imports in core) | ACCEPTED |
-
-See also: `TECH-DEBT.md` for structural / strategic debt register.
