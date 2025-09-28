@@ -38,6 +38,8 @@ export interface QueryOptions {
   offset?: number;
   fullText?: string;
   types?: string[];
+  /** Cursor basé sur ordre par défaut (updatedAt DESC, id DESC) sous forme `${updatedAt}:${id}` */
+  cursor?: string;
 }
 
 export interface ResourceListResult {
@@ -45,6 +47,8 @@ export interface ResourceListResult {
   total: number;
   // Optionnel: score simple pour recherche fullText (si applicable)
   scores?: Record<string, number>;
+  /** Cursor pour la page suivante (même format que QueryOptions.cursor) */
+  nextCursor?: string | null;
 }
 
 export interface ResourceRepository {
@@ -73,7 +77,7 @@ export class InMemoryResourceRepository implements ResourceRepository {
   }
 
   async list(workspaceId: string, query?: QueryOptions): Promise<ResourceListResult> {
-    let items = [...this.store.values()].filter(r => r.workspaceId === workspaceId);
+  let items = [...this.store.values()].filter(r => r.workspaceId === workspaceId);
 
     if (query?.types) {
       items = items.filter(r => query.types!.includes(r.type));
@@ -112,20 +116,39 @@ export class InMemoryResourceRepository implements ResourceRepository {
       items.sort((a, b) => {
         for (const s of query.sort!) {
           const av = this.getField(a, s.field);
-            const bv = this.getField(b, s.field);
-            if (av === bv) continue;
-            const cmp = av < bv ? -1 : 1;
-            return s.dir === 'asc' ? cmp : -cmp;
+          const bv = this.getField(b, s.field);
+          if (av === bv) continue;
+          const cmp = av < bv ? -1 : 1;
+          return s.dir === 'asc' ? cmp : -cmp;
         }
         return 0;
       });
+    } else if (!scores) { // ne pas écraser le tri par score déjà appliqué
+      // Ordre stable par défaut pour pagination cursor
+      items.sort((a,b)=>{
+        if (a.updatedAt === b.updatedAt) return a.id < b.id ? 1 : -1; // id DESC si timestamp égal
+        return a.updatedAt > b.updatedAt ? -1 : 1; // updatedAt DESC
+      });
+    }
+
+    // Cursor application (après tri)
+    if (query?.cursor) {
+      const [tsStr, idCur] = query.cursor.split(':');
+      const ts = parseInt(tsStr, 10);
+      items = items.filter(r => (r.updatedAt < ts) || (r.updatedAt === ts && r.id < idCur));
     }
 
     const total = items.length;
     const offset = query?.offset ?? 0;
     const limit = query?.limit ?? 50;
-    const data = items.slice(offset, offset + limit);
-    return { data, total, scores };
+    const page = items.slice(offset, offset + limit + 1); // fetch one extra to detect next
+    let nextCursor: string | null = null;
+    if (page.length > limit) {
+      const last = page[limit - 1];
+      nextCursor = `${last.updatedAt}:${last.id}`;
+    }
+    const data = page.slice(0, limit);
+    return { data, total, scores, nextCursor };
   }
 
   async save(resource: Resource): Promise<Resource> {
