@@ -9,9 +9,10 @@
 ## 2. Persistence & Repository
 - [x] Étendre `SQLiteResourceRepository` : filtres (owner, type, updated_at range)
 - [x] Ajouter pagination simple (limit + offset) puis évolution vers curseur
-- [ ] Ajouter index SQL (owner, type, updated_at)
-- [ ] Préparer future FTS (schema + table virtuelle, plan de migration)
-- [ ] Script de migration SQL (création/upgrades) + auto-check version
+ - [x] Ajouter index SQL (owner, type, updated_at)
+ - [x] Préparer future FTS (schema + table virtuelle, plan de migration) – table `resources_fts` créée best-effort (sans requêtage encore)
+ - [ ] Script de migration SQL (création/upgrades) + auto-check version (placeholder: schema_version meta présent, migrations incrémentales à implémenter)
+ - [x] Meta `schema_version` stockée dans table `__meta` (actuelle = 2)
 
 ## 3. Conflits & Concurrency
 - [x] Ajouter champ `version` incrémental aux Resources (déjà présent, validé)

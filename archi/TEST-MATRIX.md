@@ -18,11 +18,12 @@
 | Conflicts | conflict-selftest.ts | ✅ | Consider multi-conflict race test |
 | SQLite filters | sqlite-filters-selftest.ts | ✅ | JSON1 + FTS future |
 | Export manifest | export-manifest-selftest.ts | ✅ | Hash + incremental future |
+| SQLite migration meta/index | sqlite-migration-selftest.ts | ✅ | Add real incremental migration path |
 | Reindex | (planned) reindex-selftest.ts | ❌ | Implement |
 | Workspace key migration | (planned) key-migration-selftest.ts | ❌ | Implement |
 
 ---
 ## Priorities (Next)
-1. sqlite-filters-selftest.ts
-2. reindex-selftest.ts (after filters)
+1. reindex-selftest.ts
+2. scoring / full-text integration (after FTS query path)
 3. chunked-export-selftest.ts (future)
