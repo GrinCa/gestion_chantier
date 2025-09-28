@@ -7,6 +7,26 @@
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 
+// Optional lightweight .env loader (before token resolution)
+function loadDotEnv() {
+  if (!existsSync('.env')) return {};
+  const map = {};
+  try {
+    const raw = readFileSync('.env', 'utf8');
+    for (const line of raw.split(/\r?\n/)) {
+      if (!line || line.trim().startsWith('#')) continue;
+      const eq = line.indexOf('=');
+      if (eq === -1) continue;
+      const k = line.slice(0, eq).trim();
+      let v = line.slice(eq + 1).trim();
+      v = v.replace(/^['"]|['"]$/g, '');
+      if (k) map[k] = v;
+    }
+  } catch {}
+  return map;
+}
+const dotenvVals = loadDotEnv();
+
 function sh(cmd) {
   return execSync(cmd, { encoding: 'utf8' }).trim();
 }
@@ -15,7 +35,7 @@ function log(msg) { process.stdout.write(msg + '\n'); }
 function error(msg) { process.stderr.write('\n[PR][ERROR] ' + msg + '\n'); }
 
 // 1. Token Resolution (env or fallback)
-let token = process.env.GITHUB_TOKEN;
+let token = process.env.GITHUB_TOKEN || dotenvVals.GITHUB_TOKEN;
 if (!token) {
   // Fallback 1: .secrets/github_token
   try {
@@ -24,22 +44,7 @@ if (!token) {
     }
   } catch {}
 }
-if (!token) {
-  // Fallback 2: .env (parse simple lines KEY=VALUE)
-  try {
-    if (existsSync('.env')) {
-      const envRaw = readFileSync('.env', 'utf8');
-      for (const line of envRaw.split(/\r?\n/)) {
-        if (!line || line.trim().startsWith('#')) continue;
-        const eq = line.indexOf('=');
-        if (eq === -1) continue;
-        const k = line.slice(0, eq).trim();
-        const v = line.slice(eq + 1).trim().replace(/^['"]|['"]$/g, '');
-        if (k === 'GITHUB_TOKEN' && v) { token = v; break; }
-      }
-    }
-  } catch {}
-}
+// Fallback 2 removed (handled by early loader)
 if (!token) {
   // Fallback 3: git config github.token
   try {
@@ -48,7 +53,10 @@ if (!token) {
   } catch {}
 }
 if (!token) {
-  error('GITHUB_TOKEN introuvable (env/.secrets/.env/git config). Fournis-le via setx GITHUB_TOKEN ou .secrets/github_token.');
+  error('GITHUB_TOKEN introuvable (env/.env/.secrets/git config). Fournis-le via setx GITHUB_TOKEN ou .secrets/github_token.');
+  if (process.env.PR_DEBUG === 'true') {
+    log('[DEBUG] dotenv keys: ' + Object.keys(dotenvVals).join(','));
+  }
   process.exit(1);
 }
 

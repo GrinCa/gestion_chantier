@@ -27,3 +27,6 @@ packages/server/users.db
 packages/server/*.db
 !packages/server/users.template.db
 *.sw?
+
+# Local environment secrets
+.env
