@@ -25,7 +25,7 @@ function parseEnvFile(path) {
   } catch {/* ignore parsing errors */}
   return map;
 }
-const dotenvPriority = ['.env.pr', '.env.local', '.env'];
+const dotenvPriority = ['.secrets/.env.pr', '.env.local', '.env'];
 const dotenvVals = {};
 for (const p of dotenvPriority) {
   Object.assign(dotenvVals, parseEnvFile(p));
@@ -61,7 +61,7 @@ if (!token) {
   } catch {}
 }
 if (!token) {
-  error('GITHUB_TOKEN introuvable (env/.env.pr/.env.local/.env/.secrets/git config). Fournis-le via setx GITHUB_TOKEN, .secrets/github_token, ou .env.pr');
+  error('GITHUB_TOKEN introuvable (env/.secrets/.env.pr/.env.local/.env/.secrets/github_token/git config). Fournis-le via setx GITHUB_TOKEN ou .secrets/.env.pr');
   if (process.env.PR_DEBUG === 'true') {
     log('[DEBUG] dotenv keys loaded: ' + Object.keys(dotenvVals).join(','));
     log('[DEBUG] Checked files order: ' + dotenvPriority.join(' -> '));

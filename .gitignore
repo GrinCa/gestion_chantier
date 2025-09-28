@@ -28,9 +28,10 @@ packages/server/*.db
 !packages/server/users.template.db
 *.sw?
 
-# Local environment secrets
-.env
+# Local environment secrets (real secrets kept in .secrets/)
 .env.local
 .env.pr
 .env.*.local
 .secrets/
+
+# NOTE: .env is intentionally tracked (project-level config). Do NOT put secrets there.

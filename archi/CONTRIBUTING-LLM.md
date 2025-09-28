@@ -24,9 +24,9 @@ These rules are optimized for automated + human collaboration across EVERY packa
 Ne jamais commit un token. Priorité de résolution pour `scripts/create-pr.mjs` :
 1. `GITHUB_TOKEN` (variable d'environnement)
 2. `GITHUB_TOKEN_FILE` (chemin fichier)
-3. `.env.pr`
+3. `.secrets/.env.pr`
 4. `.env.local`
-5. `.env`
+5. `.env` (config projet, pas de secrets sensibles)
 6. `.secrets/github_token`
 7. `git config github.token`
 
