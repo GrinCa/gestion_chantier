@@ -17,7 +17,12 @@ async function main(){
   // Expect n1 first (contains mur twice) if scoring implemented else still present
   const first = res.data[0];
   console.log('FTS result order first=', first.id, 'total=', res.total);
-  console.log('PASS fts-query (basic)');
+  // Multi-term query
+  const multi = await repo.list('w1', { fullText: 'mur isolant' });
+  if(!multi.data.length) throw new Error('Multi-term FTS returned empty');
+  if(!multi.data.find((r:any)=> r.id==='n1')) throw new Error('Expected n1 in multi-term results');
+  console.log('Multi-term count=', multi.total);
+  console.log('PASS fts-query (basic + multi)');
 }
 
 main().catch(e=>{ console.error(e); process.exit(1); });

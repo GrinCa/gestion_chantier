@@ -110,14 +110,19 @@ export class SQLiteResourceRepository implements ResourceRepository {
 
     // Decide if we will run FTS path
     if (q.fullText) {
-      if (this.ftsReady) {
+      const raw = q.fullText.trim();
+      const tokens = raw.split(/\s+/).filter(t=> t.length);
+      const normalized = tokens.join(' ');
+      if (this.ftsReady && tokens.length) {
         useFts = true;
-        ftsTerm = q.fullText;
+        ftsTerm = tokens.length > 1 ? tokens.map(t=> t).join(' AND ') : tokens[0];
       } else {
-        // Fallback LIKE on payload/metadata/type
-        where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
-        const like = `%${q.fullText}%`;
-        params.push(like, like, like);
+        // Fallback LIKE across tokens (AND semantics): each token must appear in payload OR metadata OR type
+        for (const t of tokens) {
+          where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
+          const like = `%${t}%`;
+          params.push(like, like, like);
+        }
       }
     }
 
@@ -135,14 +140,14 @@ export class SQLiteResourceRepository implements ResourceRepository {
     let sqlData: string;
     let sqlCount: string;
     if (useFts && ftsTerm) {
-      // Basic scoring: count occurrences of term in FTS content via length replace trick
-      // We join FTS table to main resources.
+      // Multi-term scoring: sum of per-token frequencies
+      const originalTokens = q.fullText!.trim().split(/\s+/).filter(t=> t.length);
+      const freqExprs = originalTokens.map(t=>`( (length(lower(f.content)) - length(replace(lower(f.content), lower('${t}'), '')))/length('${t}') )`).join(' + ');
+      const scoreExpr = originalTokens.length ? freqExprs : '0';
       sqlCount = `SELECT COUNT(*) as c FROM resources r JOIN resources_fts f ON f.id=r.id WHERE r.workspace_id=? AND f.content MATCH ?`;
-      // order by computed score desc then updated_at desc
-      sqlData = `SELECT r.*, ((length(f.content) - length(replace(lower(f.content), lower(?), '')))/length(?)) as score
+      sqlData = `SELECT r.*, (${scoreExpr}) as score
                  FROM resources r JOIN resources_fts f ON f.id=r.id
                  WHERE r.workspace_id=? AND f.content MATCH ?
-                 ${orderClause.includes('updated_at') ? '' : ''}
                  ORDER BY score DESC, r.updated_at DESC
                  LIMIT ? OFFSET ?`;
     } else {
@@ -152,11 +157,10 @@ export class SQLiteResourceRepository implements ResourceRepository {
 
     return new Promise((resolve, reject) => {
       if (useFts && ftsTerm) {
-        // For FTS path we have separate param ordering
         const countParams = [workspaceId, ftsTerm];
         this.db.get(sqlCount, countParams, (cerr, crow: any) => {
           if (cerr) return reject(cerr);
-          const dataParams = [ftsTerm, ftsTerm, workspaceId, ftsTerm, limit, offset];
+          const dataParams = [workspaceId, ftsTerm, limit, offset];
           this.db.all(sqlData, dataParams, (err, rows:any[]) => {
             if (err) return reject(err);
             const data = rows.map(r => this.rowToResource(r));
