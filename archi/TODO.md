@@ -213,6 +213,7 @@ Phase 1 (Stabilisation):
 Phase 2 (Structuration):
 - [x] Repository + QueryOptions implémentés ✅ (`kernel/repository/ResourceRepository.ts` InMemory)
 - [x] KernelContext (fabrique contextes) ✅ (`kernel/KernelContext.ts`)
+- [x] Bridge DataEngine -> ResourceRepository (écoute events) ✅ (`kernel/bridge/DataEngineBridge.ts`)
 - [ ] Validation (Zod) + premières migrations
 - [ ] Versionnement simple (Resource.version)
 

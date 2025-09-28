@@ -13,3 +13,4 @@ export * from './tools/ToolRegistry.js';
 export * from './domain/Resource.js';
 export * from './repository/ResourceRepository.js';
 export * from './KernelContext.js';
+export * from './bridge/DataEngineBridge.js';
