@@ -220,7 +220,7 @@ Phase 2 (Structuration):
 
 Phase 3 (Extensibilité):
 - [ ] ToolExecution log
-- [ ] Indexer naïf
+- [x] Indexer naïf ✅ (`kernel/indexer/*` + events resource.*)
 - [ ] Sync status enrichi
 
 Phase 4 (Fonctionnel):
