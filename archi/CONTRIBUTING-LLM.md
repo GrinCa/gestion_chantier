@@ -20,6 +20,18 @@ These rules are optimized for automated + human collaboration across EVERY packa
 7. Update docs (TODO, Changelog Anchor, MANIFEST if new module) in a separate docs(commit) juste après; commit séparé.
 8. Stop early if ambiguity arises—request clarification instead of guessing wildly.
 
+### 2.1 Secrets & Tokens (PR Automation)
+Ne jamais commit un token. Priorité de résolution pour `scripts/create-pr.mjs` :
+1. `GITHUB_TOKEN` (variable d'environnement)
+2. `GITHUB_TOKEN_FILE` (chemin fichier)
+3. `.secrets/.env.pr`
+4. `.env.local`
+5. `.env` (config projet, pas de secrets sensibles)
+6. `.secrets/github_token`
+7. `git config github.token`
+
+Fichiers d'exemple: `.env.example`, `.env.pr.example`. Le dossier `.secrets/` est ignoré. Rotation recommandée (90j). Révoquer immédiatement si fuite.
+
 ## 3. Events Policy
 | When | Emit |
 |------|------|

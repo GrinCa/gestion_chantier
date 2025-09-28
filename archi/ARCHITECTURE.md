@@ -179,6 +179,7 @@ AccessPolicy (allow-all stub). Planned:
 ## 18. Changelog Anchor (Human + LLM)
 LLM Agents should append summarized deltas here (top):
 ```
+[2025-09-28] Added SQLite FTS multi-term search (AND + heuristic scoring), self-test script, PR template + documented mandatory PR process.
 [2025-09-28] Added optimistic locking + resource.conflict events, conflicts surfaced in SyncStatus.
 ```
 
@@ -192,4 +193,28 @@ LLM Agents should append summarized deltas here (top):
 6. Append delta in Changelog Anchor (#18)
 
 ---
+
+---
+## 20. Pull Request Processus & Template (LLM & Humain)
+
+Tout contributeur (humain ou LLM) doit utiliser le template PR standard lors de toute ouverture de Pull Request.
+
+- **Emplacement du template** : `.github/pull_request_template.md`
+- **Obligation** :
+  - Remplir chaque section du template (contexte, changements, tests, perf, DB, sécurité, checklist, etc.).
+  - Synchroniser la documentation (TEST-MATRIX.md, ARCHITECTURE.md, etc.) avant soumission.
+  - Respecter la checklist finale (build, lint, self-tests, doc, atomicité des commits, etc.).
+  - Utiliser la variante hotfix ou courte si approprié (voir template).
+- **But** :
+  - Garantir la traçabilité, la lisibilité et la maintenabilité des évolutions.
+  - Permettre à tout LLM ou humain de reprendre le projet sans perte de contexte ou de rigueur.
+- **Démarche attendue** :
+  1. Préparer la PR sur une branche dédiée (`feat/`, `fix/`, etc.).
+  2. Compléter le template PR en justifiant chaque choix et en collant les extraits de self-tests pertinents.
+  3. Vérifier la synchronisation de la documentation et la cohérence des scripts/tests.
+  4. S’assurer que la checklist finale est entièrement validée avant soumission.
+  5. En cas de modification du process, mettre à jour cette section et le template.
+- **Lien direct** :
+  - [pull_request_template.md](../../.github/pull_request_template.md)
+
 *End of document.*

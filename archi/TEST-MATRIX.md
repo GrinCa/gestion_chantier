@@ -20,10 +20,12 @@
 | Export manifest | export-manifest-selftest.ts | ✅ | Hash + incremental future |
 | SQLite migration meta/index | sqlite-migration-selftest.ts | ✅ | Add real incremental migration path |
 | Reindex | reindex-selftest.ts | ✅ | Add failure injection + large dataset |
+| FTS query path | fts-query-selftest.ts | ✅ | Multi-term, highlight, fallback explicit |
 | Workspace key migration | (planned) key-migration-selftest.ts | ❌ | Implement |
 
 ---
 ## Priorities (Next)
-1. reindex-selftest.ts
-2. scoring / full-text integration (after FTS query path)
-3. chunked-export-selftest.ts (future)
+1. Multi-term FTS + highlight (extend fts-query-selftest)
+2. Chunked export (chunked-export-selftest.ts)
+3. Repository latency metrics + timing integration
+4. Incremental migration engine (schema version steps)

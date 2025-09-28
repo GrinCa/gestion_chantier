@@ -74,6 +74,8 @@ export class SQLiteResourceRepository implements ResourceRepository {
     const q = query || {};
     const where: string[] = ['workspace_id = ?'];
     const params: any[] = [workspaceId];
+    let useFts = false;
+    let ftsTerm: string | undefined;
 
     // Filter by types
     if (q.types && q.types.length) {
@@ -106,11 +108,22 @@ export class SQLiteResourceRepository implements ResourceRepository {
       }
     }
 
-    // Simple full-text fallback (LIKE on payload/metadata)
+    // Decide if we will run FTS path
     if (q.fullText) {
-      where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
-      const like = `%${q.fullText}%`;
-      params.push(like, like, like);
+      const raw = q.fullText.trim();
+      const tokens = raw.split(/\s+/).filter(t=> t.length);
+      const normalized = tokens.join(' ');
+      if (this.ftsReady && tokens.length) {
+        useFts = true;
+        ftsTerm = tokens.length > 1 ? tokens.map(t=> t).join(' AND ') : tokens[0];
+      } else {
+        // Fallback LIKE across tokens (AND semantics): each token must appear in payload OR metadata OR type
+        for (const t of tokens) {
+          where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
+          const like = `%${t}%`;
+          params.push(like, like, like);
+        }
+      }
     }
 
     const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
@@ -124,18 +137,46 @@ export class SQLiteResourceRepository implements ResourceRepository {
         }).join(',')
       : 'ORDER BY updated_at DESC';
 
-    const sqlData = `SELECT * FROM resources ${whereClause} ${orderClause} LIMIT ? OFFSET ?`;
-    const sqlCount = `SELECT COUNT(*) as c FROM resources ${whereClause}`;
+    let sqlData: string;
+    let sqlCount: string;
+    if (useFts && ftsTerm) {
+      // Multi-term scoring: sum of per-token frequencies
+      const originalTokens = q.fullText!.trim().split(/\s+/).filter(t=> t.length);
+      const freqExprs = originalTokens.map(t=>`( (length(lower(f.content)) - length(replace(lower(f.content), lower('${t}'), '')))/length('${t}') )`).join(' + ');
+      const scoreExpr = originalTokens.length ? freqExprs : '0';
+      sqlCount = `SELECT COUNT(*) as c FROM resources r JOIN resources_fts f ON f.id=r.id WHERE r.workspace_id=? AND f.content MATCH ?`;
+      sqlData = `SELECT r.*, (${scoreExpr}) as score
+                 FROM resources r JOIN resources_fts f ON f.id=r.id
+                 WHERE r.workspace_id=? AND f.content MATCH ?
+                 ORDER BY score DESC, r.updated_at DESC
+                 LIMIT ? OFFSET ?`;
+    } else {
+      sqlData = `SELECT * FROM resources ${whereClause} ${orderClause} LIMIT ? OFFSET ?`;
+      sqlCount = `SELECT COUNT(*) as c FROM resources ${whereClause}`;
+    }
 
     return new Promise((resolve, reject) => {
-      this.db.get(sqlCount, params, (cerr, crow: any) => {
-        if (cerr) return reject(cerr);
-        this.db.all(sqlData, [...params, limit, offset], (err, rows) => {
-          if (err) return reject(err);
-          const data = rows.map(r => this.rowToResource(r));
-          resolve({ data, total: crow?.c ?? data.length });
+      if (useFts && ftsTerm) {
+        const countParams = [workspaceId, ftsTerm];
+        this.db.get(sqlCount, countParams, (cerr, crow: any) => {
+          if (cerr) return reject(cerr);
+          const dataParams = [workspaceId, ftsTerm, limit, offset];
+          this.db.all(sqlData, dataParams, (err, rows:any[]) => {
+            if (err) return reject(err);
+            const data = rows.map(r => this.rowToResource(r));
+            resolve({ data, total: crow?.c ?? data.length });
+          });
         });
-      });
+      } else {
+        this.db.get(sqlCount, params, (cerr, crow: any) => {
+          if (cerr) return reject(cerr);
+          this.db.all(sqlData, [...params, limit, offset], (err, rows) => {
+            if (err) return reject(err);
+            const data = rows.map(r => this.rowToResource(r));
+            resolve({ data, total: crow?.c ?? data.length });
+          });
+        });
+      }
     });
   }
   async save(resource: Resource): Promise<Resource> {
