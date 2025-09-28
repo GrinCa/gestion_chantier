@@ -1,7 +1,11 @@
 /**
- * CORE PACKAGE - Entry Point
- * ==========================
- * Universal data/tools architecture
+ * CORE PACKAGE - Legacy Aggregated Entry Point
+ * ============================================
+ * Conservé pour compat interne. Ne pas utiliser directement côté application.
+ * Utiliser:
+ *   import { ... } from '@gestion-chantier/core/browser'
+ *   import { ... } from '@gestion-chantier/core/node'
+ * (Voir TD-001 Node vs Browser surface split)
  */
 
 // Re-export all types

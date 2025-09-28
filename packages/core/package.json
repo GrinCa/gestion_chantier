@@ -3,13 +3,27 @@
   "version": "1.0.0",
   "description": "Core data engine and tools registry for universal project management",
   "type": "module",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.node.js",
+  "types": "dist/index.node.d.ts",
   "exports": {
-    ".": "./index.js",
-    "./types": "./types/index.js",
-    "./data-engine": "./data-engine/index.js",
-    "./tools-registry": "./tools-registry/index.js"
+    ".": {
+      "import": {
+        "browser": "./dist/index.browser.js",
+        "default": "./dist/index.node.js"
+      },
+      "require": "./dist/index.node.cjs"
+    },
+    "./browser": {
+      "import": "./dist/index.browser.js",
+      "types": "./dist/index.browser.d.ts"
+    },
+    "./node": {
+      "import": "./dist/index.node.js",
+      "types": "./dist/index.node.d.ts"
+    },
+    "./types": "./dist/types/index.js",
+    "./data-engine": "./dist/data-engine/index.js",
+    "./tools-registry": "./dist/tools-registry/index.js"
   },
   "scripts": {
   "build": "tsc",
