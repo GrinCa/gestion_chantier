@@ -1,5 +1,41 @@
 # LLM ENTRYPOINT (Point d'Ancrage Unique pour Chaque Nouvelle Session)
 
+> Section 0 ajoutée: passation express pour qu'un nouvel agent récupère seul l'état courant avant d'agir.
+
+## 0. Passation Express (Ce que le LLM doit faire AVANT toute proposition)
+Checklist impérative, aucune modification tant que chaque point n'a pas une réponse synthétique:
+
+1. Git Context:
+   - Lire branche: `git rev-parse --abbrev-ref HEAD`
+   - Lire SHA court: `git rev-parse --short HEAD`
+   - Vérifier diff en cours: `git status -s` (si modifications → demander clarification avant d'écrire autre chose)
+2. Santé Build (optionnel si coût): tenter `npm run build` (ou signaler "non vérifié" si trop long).
+3. Debt / Issues Focus: ouvrir `handbook/TECH-DEBT.md` & `handbook/KNOWN-ISSUES.md` → relever IDs en statut OPEN/ACCEPTED prioritaire (TD-001 / KI-001).
+4. Tâches Actives: dans `handbook/TODO.md` récupérer les 3 premières cases non cochées pertinentes pour le domaine ciblé (ignorer sections non liées si hors scope).
+5. Derniers Commits: récupérer les 2 derniers messages (`git log -2 --oneline`) pour voir le contexte immédiat (ex: nettoyage, refactor, feature en cours).
+6. Vérification Surface: confirmer si objectif demandé par l'utilisateur correspond bien à la priorité actuelle (sinon proposer réalignement).
+7. Préparer un BLOC RÉSUMÉ (≤ 15 lignes) incluant: branche, sha, build (OK/FAIL/UNK + 3 mots), focus (TD/KI), tâches 1–3, deliverable suggéré, risques.
+8. Attendre validation humaine si le deliverable diffère de la priorité attendue (ex: l'utilisateur voulait TD-001 mais tâches détectées autre chose).
+
+Format cible du BLOC RÉSUMÉ généré automatiquement:
+```
+Context:
+  Branch: <nom> @ <sha>
+  Build: <OK|FAIL|UNK> (<cause courte>)
+  Focus: TD-001, KI-001
+  LastCommits: <c1>, <c2>
+  Tasks:
+    1. <...>
+    2. <...>
+    3. <...>
+  ProposedDeliverable: <feat|refactor(...): ...>
+  Risks: <1 ligne>
+  NextAction: proposer patch tâche 1 uniquement
+```
+
+Si un de ces éléments ne peut être obtenu, indiquer `UNK` au lieu d'inventer.
+
+
 Ce fichier est la SEULE source à coller / condenser au démarrage d'une nouvelle session LLM. Il remplace `SESSION-PRIMER.md` et le script `session-primer.mjs` (dépréciés). Objectif: contexte suffisant pour agir immédiatement sans relecture intégrale du handbook.
 
 ---
