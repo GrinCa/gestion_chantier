@@ -19,7 +19,7 @@
 | SQLite filters | sqlite-filters-selftest.ts | ✅ | JSON1 + FTS future |
 | Export manifest | export-manifest-selftest.ts | ✅ | Hash + incremental future |
 | SQLite migration meta/index | sqlite-migration-selftest.ts | ✅ | Add real incremental migration path |
-| Reindex | (planned) reindex-selftest.ts | ❌ | Implement |
+| Reindex | reindex-selftest.ts | ✅ | Add failure injection + large dataset |
 | Workspace key migration | (planned) key-migration-selftest.ts | ❌ | Implement |
 
 ---

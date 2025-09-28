@@ -29,7 +29,7 @@
 ## 5. Index & Recherche
 - [ ] Ajouter scoring simple (compte occurrences champ texte)
 - [ ] API query enrichie: `fullText`, `limit`, `cursor`
-- [ ] Rebuilder index à partir du repository (script `reindex-selftest`)
+- [x] Rebuilder index à partir du repository (script `reindex-selftest`) – méthode `rebuildFullTextIndex()` + self-test
 
 ## 6. Export & Sauvegarde
 - [x] Ajouter manifest export (metadata.json : date, count, types, version)
