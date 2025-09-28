@@ -14,12 +14,20 @@ export interface SQLiteResourceRepositoryOptions {
 
 export class SQLiteResourceRepository implements ResourceRepository {
   private db: sqlite3.Database;
+  private ftsReady = false;
+  private static CURRENT_SCHEMA_VERSION = 2; // bump when schema changes
   constructor(opts?: SQLiteResourceRepositoryOptions){
     this.db = new sqlite3.Database(opts?.filename || ':memory:');
     this.init();
   }
   private init(){
     this.db.serialize(()=>{
+      // meta table
+      this.db.run(`CREATE TABLE IF NOT EXISTS __meta (
+        schema_key TEXT PRIMARY KEY,
+        schema_value TEXT NOT NULL
+      )`);
+      // resources table (initial)
       this.db.run(`CREATE TABLE IF NOT EXISTS resources (
         id TEXT PRIMARY KEY,
         type TEXT NOT NULL,
@@ -32,6 +40,25 @@ export class SQLiteResourceRepository implements ResourceRepository {
         metadata TEXT,
         payload TEXT
       )`);
+      // indices (owner not yet tracked -> workspace_id + type, updated_at)
+      this.db.run(`CREATE INDEX IF NOT EXISTS idx_resources_workspace_type ON resources(workspace_id, type)`);
+      this.db.run(`CREATE INDEX IF NOT EXISTS idx_resources_updated_at ON resources(updated_at)`);
+      // Attempt FTS (best-effort). Some builds may not include FTS5; ignore errors.
+      this.db.run(`CREATE VIRTUAL TABLE IF NOT EXISTS resources_fts USING fts5(id UNINDEXED, content)`, (err)=>{
+        if (!err) this.ftsReady = true; // mark available
+      });
+      // Set or migrate schema version
+      this.db.get(`SELECT schema_value FROM __meta WHERE schema_key='schema_version'`, (err,row:any)=>{
+        if (err) { /* ignore */ return; }
+        const current = row ? parseInt(row.schema_value,10) : undefined;
+        if (!current) {
+          this.db.run(`INSERT OR REPLACE INTO __meta(schema_key, schema_value) VALUES ('schema_version', ?)`, [String(SQLiteResourceRepository.CURRENT_SCHEMA_VERSION)]);
+        } else if (current < SQLiteResourceRepository.CURRENT_SCHEMA_VERSION) {
+          // Placeholder for future incremental migrations
+          // e.g., if (current < 3) { ... }
+          this.db.run(`UPDATE __meta SET schema_value=? WHERE schema_key='schema_version'`, [String(SQLiteResourceRepository.CURRENT_SCHEMA_VERSION)]);
+        }
+      });
     });
   }
   async get(id: string): Promise<Resource | null> {
@@ -119,6 +146,13 @@ export class SQLiteResourceRepository implements ResourceRepository {
           resource.origin || null, resource.schemaVersion || null, JSON.stringify(resource.metadata||null), JSON.stringify(resource.payload)
         ], err=>{
           if(err) return reject(err);
+          if (this.ftsReady) {
+            const content = [resource.type, JSON.stringify(resource.payload||''), JSON.stringify(resource.metadata||'')].join(' ');
+            // FTS virtual tables often don't support standard UPSERT; emulate with delete + insert
+            this.db.run(`DELETE FROM resources_fts WHERE id=?`, [resource.id], ()=>{
+              this.db.run(`INSERT INTO resources_fts(id,content) VALUES (?,?)`, [resource.id, content], ()=>{/* ignore errors */});
+            });
+          }
           resolve(resource);
         });
     });
@@ -128,6 +162,8 @@ export class SQLiteResourceRepository implements ResourceRepository {
       this.db.run('DELETE FROM resources WHERE id=?', [id], err=>{ if(err) reject(err); else resolve(); });
     });
   }
+  /** Internal debug accessor for self-tests */
+  __debugUnsafeDb() { return this.db; }
   private rowToResource(row: any): Resource {
     return {
       id: row.id,
