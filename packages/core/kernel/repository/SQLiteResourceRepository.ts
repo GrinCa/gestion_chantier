@@ -127,8 +127,8 @@ export class SQLiteResourceRepository implements ResourceRepository {
     }
 
     const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
-    const limit = q.limit && q.limit > 0 ? q.limit : 50;
-    const offset = q.offset && q.offset > 0 ? q.offset : 0;
+  const limit = q.limit && q.limit > 0 ? q.limit : 50;
+  const offset = q.offset && q.offset > 0 ? q.offset : 0;
 
     const orderClause = q.sort && q.sort.length
       ? 'ORDER BY ' + q.sort.map(s => {
@@ -169,7 +169,13 @@ export class SQLiteResourceRepository implements ResourceRepository {
             for (const r of rows) {
               if (typeof (r as any).score === 'number') scores[r.id] = (r as any).score;
             }
-            resolve({ data, total: crow?.c ?? data.length, scores: Object.keys(scores).length ? scores : undefined });
+            // pagination cursor naive (repose sur tri ORDER BY updated_at DESC)
+            let nextCursor: string | null = null;
+            if (data.length === limit) {
+              const last = data[data.length - 1];
+              nextCursor = `${last.updatedAt}:${last.id}`;
+            }
+            resolve({ data, total: crow?.c ?? data.length, scores: Object.keys(scores).length ? scores : undefined, nextCursor });
           });
         });
       } else {
@@ -194,7 +200,12 @@ export class SQLiteResourceRepository implements ResourceRepository {
                 if (sc>0) scores![r.id] = sc;
               }
             }
-            resolve({ data, total: crow?.c ?? data.length, scores });
+            let nextCursor: string | null = null;
+            if (data.length === limit) {
+              const last = data[data.length - 1];
+              nextCursor = `${last.updatedAt}:${last.id}`;
+            }
+            resolve({ data, total: crow?.c ?? data.length, scores, nextCursor });
           });
         });
       }
