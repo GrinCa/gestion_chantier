@@ -33,8 +33,10 @@ Résumé Section 2: Base de persistance stable (schema v2), indices critiques en
 
 ## 5. Index & Recherche
 - [x] Ajouter scoring simple (compte occurrences champ texte) + exposition `scores` (InMemory + fallback SQLite, FTS garde score futur dédié)
-- [ ] API query enrichie: `fullText`, `limit`, `cursor`
+- [x] API query enrichie: `fullText`, `limit`, `cursor` (nextCursor implémenté + tri par défaut stable)
 - [x] Rebuilder index à partir du repository (script `reindex-selftest`) – méthode `rebuildFullTextIndex()` + self-test
+
+Section 5 CONCLU (phase actuelle). Améliorations futures (highlight, FTS avancé, ranking BM25) → TD-002.
 
 ## 6. Export & Sauvegarde
 - [x] Ajouter manifest export (metadata.json : date, count, types, version)
