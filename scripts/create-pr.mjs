@@ -7,12 +7,12 @@
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 
-// Optional lightweight .env loader (before token resolution)
-function loadDotEnv() {
-  if (!existsSync('.env')) return {};
+// Optional lightweight env loaders (support priority: .env.pr > .env.local > .env)
+function parseEnvFile(path) {
   const map = {};
+  if (!existsSync(path)) return map;
   try {
-    const raw = readFileSync('.env', 'utf8');
+    const raw = readFileSync(path, 'utf8');
     for (const line of raw.split(/\r?\n/)) {
       if (!line || line.trim().startsWith('#')) continue;
       const eq = line.indexOf('=');
@@ -22,10 +22,14 @@ function loadDotEnv() {
       v = v.replace(/^['"]|['"]$/g, '');
       if (k) map[k] = v;
     }
-  } catch {}
+  } catch {/* ignore parsing errors */}
   return map;
 }
-const dotenvVals = loadDotEnv();
+const dotenvPriority = ['.env.pr', '.env.local', '.env'];
+const dotenvVals = {};
+for (const p of dotenvPriority) {
+  Object.assign(dotenvVals, parseEnvFile(p));
+}
 
 function sh(cmd) {
   return execSync(cmd, { encoding: 'utf8' }).trim();
@@ -35,6 +39,10 @@ function log(msg) { process.stdout.write(msg + '\n'); }
 function error(msg) { process.stderr.write('\n[PR][ERROR] ' + msg + '\n'); }
 
 // 1. Token Resolution (env or fallback)
+// If user specifies an explicit file path for token
+if (!process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN_FILE && existsSync(process.env.GITHUB_TOKEN_FILE)) {
+  try { process.env.GITHUB_TOKEN = readFileSync(process.env.GITHUB_TOKEN_FILE, 'utf8').trim(); } catch {}
+}
 let token = process.env.GITHUB_TOKEN || dotenvVals.GITHUB_TOKEN;
 if (!token) {
   // Fallback 1: .secrets/github_token
@@ -53,9 +61,11 @@ if (!token) {
   } catch {}
 }
 if (!token) {
-  error('GITHUB_TOKEN introuvable (env/.env/.secrets/git config). Fournis-le via setx GITHUB_TOKEN ou .secrets/github_token.');
+  error('GITHUB_TOKEN introuvable (env/.env.pr/.env.local/.env/.secrets/git config). Fournis-le via setx GITHUB_TOKEN, .secrets/github_token, ou .env.pr');
   if (process.env.PR_DEBUG === 'true') {
-    log('[DEBUG] dotenv keys: ' + Object.keys(dotenvVals).join(','));
+    log('[DEBUG] dotenv keys loaded: ' + Object.keys(dotenvVals).join(','));
+    log('[DEBUG] Checked files order: ' + dotenvPriority.join(' -> '));
+    log('[DEBUG] GITHUB_TOKEN_FILE=' + (process.env.GITHUB_TOKEN_FILE || 'not set'));
   }
   process.exit(1);
 }
