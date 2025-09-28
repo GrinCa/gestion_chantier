@@ -40,44 +40,59 @@ export type Mesure = {
   includeInStats?: boolean;
 };
 
-// Créer un projet
+// Créer un projet (nouvelle terminologie workspace avec fallback legacy)
 export async function createProjet(nom: string, description: string, username: string): Promise<Projet> {
-  const res = await fetch(`${API_URL}/projets`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nom, description, username })
+  let res = await fetch(`${API_URL}/workspaces`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, description, username })
   });
-  if (!res.ok) throw new Error("Erreur création projet");
+  if (res.status === 404) {
+    res = await fetch(`${API_URL}/projets`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, description, username })
+    });
+  }
+  if (!res.ok) throw new Error('Erreur création projet');
   return await res.json();
 }
 
-// Lister les projets d'un utilisateur
+// Lister les projets (workspaces) d'un utilisateur
 export async function getUserProjets(username: string): Promise<Projet[]> {
-  const res = await fetch(`${API_URL}/projets/${username}`);
-  if (!res.ok) throw new Error("Erreur récupération projets");
+  let res = await fetch(`${API_URL}/workspaces/${username}`);
+  if (res.status === 404) {
+    res = await fetch(`${API_URL}/projets/${username}`);
+  }
+  if (!res.ok) throw new Error('Erreur récupération projets');
   return await res.json();
 }
 
-// Supprimer un projet
+// Supprimer un projet/workspace
 export async function deleteProjet(id: string): Promise<void> {
-  const res = await fetch(`${API_URL}/projets/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Erreur suppression projet");
+  let res = await fetch(`${API_URL}/workspaces/${id}`, { method: 'DELETE' });
+  if (res.status === 404) {
+    res = await fetch(`${API_URL}/projets/${id}`, { method: 'DELETE' });
+  }
+  if (!res.ok) throw new Error('Erreur suppression projet');
 }
 
-// Sauvegarder les mesures d'un projet
+// Sauvegarder les mesures (workspace fallback)
 export async function saveMesures(projetId: string, groups: GroupeMesures[]): Promise<void> {
-  const res = await fetch(`${API_URL}/projets/${projetId}/mesures`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ groups })
+  let res = await fetch(`${API_URL}/workspaces/${projetId}/mesures`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groups })
   });
-  if (!res.ok) throw new Error("Erreur sauvegarde mesures");
+  if (res.status === 404) {
+    res = await fetch(`${API_URL}/projets/${projetId}/mesures`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groups })
+    });
+  }
+  if (!res.ok) throw new Error('Erreur sauvegarde mesures');
 }
 
-// Charger les mesures d'un projet
+// Charger les mesures (workspace fallback)
 export async function loadMesures(projetId: string): Promise<GroupeMesures[]> {
-  const res = await fetch(`${API_URL}/projets/${projetId}/mesures`);
-  if (!res.ok) throw new Error("Erreur chargement mesures");
+  let res = await fetch(`${API_URL}/workspaces/${projetId}/mesures`);
+  if (res.status === 404) {
+    res = await fetch(`${API_URL}/projets/${projetId}/mesures`);
+  }
+  if (!res.ok) throw new Error('Erreur chargement mesures');
   const data = await res.json();
   return data.groups;
 }
