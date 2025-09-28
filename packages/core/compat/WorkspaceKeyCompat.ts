@@ -45,12 +45,17 @@ export function wrapDataEngineWorkspaceCompat(engine: any, opts: WorkspaceCompat
   const originalGetWorkspace = engine.getWorkspace?.bind(engine);
   if (originalGetWorkspace) {
     (engine as any).getWorkspace = async (id: string) => {
-      // Try normal API path first (may fetch & set project:)
+      // First attempt via original (may only populate legacy key)
       const res = await originalGetWorkspace(id);
       if (res) {
-        // ensure new key mirror
+        const existingNew = await storage.get(`workspace:${res.id}`);
+        if (!existingNew) {
+          // Count as fallback since we had to mirror from legacy-only presence
+            legacyFallbackCount++; warn(`fallback mirror project:${id} -> workspace:${id}`);
+        }
         try { await storage.set(`workspace:${res.id}`, res); } catch{}
-        return res; }
+        return res;
+      }
       const fallback = await readWorkspace(id);
       if (fallback) try { await storage.set(`workspace:${fallback.id}`, fallback); } catch{}
       return fallback;
