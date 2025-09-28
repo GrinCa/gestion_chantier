@@ -30,8 +30,8 @@
     "measurement-migration-selftest": "node --loader ts-node/esm ./scripts/measurement-migration-selftest.ts",
     "export-selftest": "node --loader ts-node/esm ./scripts/export-selftest.ts",
     "export-manifest-selftest": "node --loader ts-node/esm ./scripts/export-manifest-selftest.ts",
-  "sqlite-filters-selftest": "node --loader ts-node/esm ./scripts/sqlite-filters-selftest.ts",
-  "selftest:all": "npm run kernel-selftest && npm run repository-selftest && npm run bridge-selftest && npm run validation-selftest && npm run resource-service-selftest && npm run indexer-selftest && npm run tool-execution-selftest && npm run migration-selftest && npm run deletion-selftest && npm run metrics-selftest && npm run health-selftest && npm run bootstrap-selftest && npm run measurement-migration-selftest && npm run export-selftest && npm run export-manifest-selftest && npm run sqlite-filters-selftest",
+    "sqlite-filters-selftest": "node --loader ts-node/esm ./scripts/sqlite-filters-selftest.ts",
+    "selftest:all": "npm run kernel-selftest && npm run repository-selftest && npm run bridge-selftest && npm run validation-selftest && npm run resource-service-selftest && npm run indexer-selftest && npm run tool-execution-selftest && npm run migration-selftest && npm run deletion-selftest && npm run metrics-selftest && npm run health-selftest && npm run bootstrap-selftest && npm run measurement-migration-selftest && npm run export-selftest && npm run export-manifest-selftest && npm run sqlite-filters-selftest",
     "quickstart": "node --loader ts-node/esm ./scripts/quickstart-demo.ts",
     "cli": "node --loader ts-node/esm ./scripts/cli.ts",
     "clean": "rm -rf dist *.js *.d.ts types/*.js types/*.d.ts data-engine/*.js data-engine/*.d.ts tools-registry/*.js tools-registry/*.d.ts"
@@ -46,7 +46,8 @@
   ],
   "dependencies": {
     "react": "^18.2.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
