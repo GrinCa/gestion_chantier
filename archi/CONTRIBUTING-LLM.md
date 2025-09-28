@@ -15,9 +15,10 @@ These rules are optimized for automated + human collaboration.
 2. Read `archi/TODO.md` and select one pending task.
 3. Prepare a tiny plan (list of files to touch + expected events/tests).
 4. Apply patch using diff tool (avoid mass formatting).
-5. Run quick sanity scripts (quickstart + targeted self-test).
-6. Update docs (TODO, Changelog Anchor, MANIFEST if new module).
-7. Stop early if ambiguity arises—request clarification instead of guessing wildly.
+5. Immediately stage & commit the logical change (atomic commit: feature OR doc OR test) using conventional message (feat|fix|docs|chore|refactor|test). Ne pas accumuler de multiples changements non liés dans un seul commit.
+6. Run quick sanity scripts (quickstart + targeted self-test) – if failure, fix and amend commit.
+7. Update docs (TODO, Changelog Anchor, MANIFEST if new module) in a separate docs(commit) juste après; commit séparé.
+8. Stop early if ambiguity arises—request clarification instead of guessing wildly.
 
 ## 3. Events Policy
 | When | Emit |
@@ -88,8 +89,8 @@ Post-Change Actions:
 |---------|--------|-------|
 | Optimistic Lock | ✅ | resource.conflict emitted |
 | SQLite Filters | ❌ | TODO (type, updated_at) |
-| Export Manifest | ❌ | TODO |
-| Conflict Self-Test | ❌ | TODO |
+| Export Manifest | ✅ | manifest + test (hash future) |
+| Conflict Self-Test | ✅ | `archi/scripts/conflict-selftest.ts` |
 | Workspace Key Migration | ❌ | Needs dual-read plan |
 
 ## 12. Escalation Path (LLM)
