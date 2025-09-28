@@ -10,13 +10,15 @@
 
 Résumé: Phase 1 de migration terminée (noyau). Le reste est scindé en tâches granulaires (voir Section 12) pour éviter un big-bang et permettre validation incrémentale.
 
-## 2. Persistence & Repository
+## 2. Persistence & Repository (CONCLU Phase 1)
 - [x] Étendre `SQLiteResourceRepository` : filtres (owner, type, updated_at range)
 - [x] Ajouter pagination simple (limit + offset) puis évolution vers curseur
- - [x] Ajouter index SQL (owner, type, updated_at)
- - [x] Préparer future FTS (schema + table virtuelle, plan de migration) – table `resources_fts` créée best-effort (sans requêtage encore)
- - [ ] Script de migration SQL (création/upgrades) + auto-check version (placeholder: schema_version meta présent, migrations incrémentales à implémenter)
- - [x] Meta `schema_version` stockée dans table `__meta` (actuelle = 2)
+	- [x] Ajouter index SQL (owner, type, updated_at)
+	- [x] Préparer future FTS (schema + table virtuelle, plan de migration) – table `resources_fts` créée best-effort (sans requêtage encore)
+	- [x] Script de validation migration (meta + indices) via `sqlite-migration-selftest` (incrémente check schema_version>=2). Les migrations incrémentales futures (schema_version >2) seront suivies dans une future Section dédiée (ex: Section FTS avancé / migrations).
+	- [x] Meta `schema_version` stockée dans table `__meta` (actuelle = 2)
+
+Résumé Section 2: Base de persistance stable (schema v2), indices critiques en place, FTS pré-initialisé, self-test de conformité ajouté. Prochaines évolutions (migrations incrémentales, FTS avancé, curseur, compression) seront traitées dans les sections Index/FTS (Section 5) et TECH-DEBT (TD-002) pour garder cette section clôturée.
 
 ## 3. Conflits & Concurrency
 - [x] Ajouter champ `version` incrémental aux Resources (déjà présent, validé)
