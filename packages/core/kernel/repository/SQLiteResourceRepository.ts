@@ -155,7 +155,7 @@ export class SQLiteResourceRepository implements ResourceRepository {
       sqlCount = `SELECT COUNT(*) as c FROM resources ${whereClause}`;
     }
 
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
       if (useFts && ftsTerm) {
         const countParams = [workspaceId, ftsTerm];
         this.db.get(sqlCount, countParams, (cerr, crow: any) => {
@@ -164,7 +164,12 @@ export class SQLiteResourceRepository implements ResourceRepository {
           this.db.all(sqlData, dataParams, (err, rows:any[]) => {
             if (err) return reject(err);
             const data = rows.map(r => this.rowToResource(r));
-            resolve({ data, total: crow?.c ?? data.length });
+            // Score déjà calculé via expression (alias score) - on pourrait l'exposer
+            const scores: Record<string, number> = {};
+            for (const r of rows) {
+              if (typeof (r as any).score === 'number') scores[r.id] = (r as any).score;
+            }
+            resolve({ data, total: crow?.c ?? data.length, scores: Object.keys(scores).length ? scores : undefined });
           });
         });
       } else {
@@ -173,7 +178,23 @@ export class SQLiteResourceRepository implements ResourceRepository {
           this.db.all(sqlData, [...params, limit, offset], (err, rows) => {
             if (err) return reject(err);
             const data = rows.map(r => this.rowToResource(r));
-            resolve({ data, total: crow?.c ?? data.length });
+            // Fallback: si fullText tokens présents mais pas FTS, recalculer score simple occurrences
+            let scores: Record<string, number> | undefined;
+            if (query?.fullText && !useFts) {
+              const tokens = query.fullText.trim().toLowerCase().split(/\s+/).filter(t=> t.length);
+              scores = {};
+              for (const rAny of rows as any[]) {
+                const r = rAny as any;
+                const content = [r.type, r.payload, r.metadata].join(' ').toLowerCase();
+                let sc = 0;
+                for (const t of tokens) {
+                  const occ = content.split(t).length - 1;
+                  if (occ>0) sc += occ;
+                }
+                if (sc>0) scores![r.id] = sc;
+              }
+            }
+            resolve({ data, total: crow?.c ?? data.length, scores });
           });
         });
       }

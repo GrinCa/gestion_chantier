@@ -43,6 +43,8 @@ export interface QueryOptions {
 export interface ResourceListResult {
   data: Resource[];
   total: number;
+  // Optionnel: score simple pour recherche fullText (si applicable)
+  scores?: Record<string, number>;
 }
 
 export interface ResourceRepository {
@@ -81,13 +83,29 @@ export class InMemoryResourceRepository implements ResourceRepository {
       items = items.filter(r => this.applyFilters(r, query.filter!));
     }
 
+    let scores: Record<string, number> | undefined;
     if (query?.fullText) {
-      const q = query.fullText.toLowerCase();
-      const ids = [...this.index.values()]
-        .filter(e => e.workspaceId === workspaceId && e.text.includes(q))
-        .map(e => e.id);
-      const set = new Set(ids);
-      items = items.filter(r => set.has(r.id));
+      const qRaw = query.fullText.trim().toLowerCase();
+      const tokens = qRaw.split(/\s+/).filter(t=> t.length);
+      scores = {};
+      const matches = new Set<string>();
+      for (const entry of this.index.values()) {
+        if (entry.workspaceId !== workspaceId) continue;
+        let score = 0;
+        for (const t of tokens) {
+          const occ = entry.text.split(t).length - 1;
+            if (occ > 0) score += occ;
+        }
+        if (score > 0) {
+          scores[entry.id] = score;
+          matches.add(entry.id);
+        }
+      }
+      items = items.filter(r => matches.has(r.id));
+      // Tri secondaire par score si non spécifié
+      if (!query.sort) {
+        items.sort((a,b)=> (scores![b.id]||0) - (scores![a.id]||0));
+      }
     }
 
     if (query?.sort) {
@@ -107,7 +125,7 @@ export class InMemoryResourceRepository implements ResourceRepository {
     const offset = query?.offset ?? 0;
     const limit = query?.limit ?? 50;
     const data = items.slice(offset, offset + limit);
-    return { data, total };
+    return { data, total, scores };
   }
 
   async save(resource: Resource): Promise<Resource> {
