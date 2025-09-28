@@ -11,6 +11,7 @@ import { ToolExecutionService } from '../services/ToolExecutionService.js';
 import { MetricsService } from '../services/MetricsService.js';
 import { MigrationService } from '../services/MigrationService.js';
 import { HealthService } from '../services/HealthService.js';
+import { ExportService } from '../services/ExportService.js';
 import { AllowAllAccessPolicy, AccessPolicy } from '../auth/AccessPolicy.js';
 import { InMemoryIndexer } from '../indexer/Indexer.js';
 import { IndexSubscriber } from '../indexer/IndexSubscriber.js';
@@ -32,6 +33,7 @@ export function bootstrapKernel(opts?: KernelBootstrapOptions) {
   const toolRegistry = new ToolRegistry();
   const toolExec = new ToolExecutionService(toolRegistry, events, ()=>({ repo: repository, events, now: ()=>Date.now(), currentUser: ()=>null, workspaceId: ()=>null }), policy);
   const health = new HealthService(repository, metrics, migrations);
+  const exporter = new ExportService(repository, policy);
   return {
     events,
     repository,
@@ -42,6 +44,7 @@ export function bootstrapKernel(opts?: KernelBootstrapOptions) {
     toolRegistry,
     toolExec,
     health,
+    exporter,
     policy
   };
 }
