@@ -24,4 +24,6 @@ dist-ssr
 
 # Local sqlite runtime database (server)
 packages/server/users.db
+packages/server/*.db
+!packages/server/users.template.db
 *.sw?
