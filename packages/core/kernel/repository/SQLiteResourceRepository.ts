@@ -162,6 +162,26 @@ export class SQLiteResourceRepository implements ResourceRepository {
       this.db.run('DELETE FROM resources WHERE id=?', [id], err=>{ if(err) reject(err); else resolve(); });
     });
   }
+  /** Rebuild FTS index from current resources (no-op if FTS unavailable). */
+  async rebuildFullTextIndex(): Promise<boolean> {
+    if (!this.ftsReady) return false;
+    return new Promise<boolean>((resolve,reject)=>{
+      this.db.serialize(()=>{
+        this.db.run('DELETE FROM resources_fts', (delErr)=>{
+          if (delErr) { /* treat as skip */ return resolve(false); }
+          this.db.all('SELECT id,type,payload,metadata FROM resources', (err, rows: any[])=>{
+            if (err) return reject(err);
+            const stmt = this.db.prepare('INSERT INTO resources_fts(id,content) VALUES (?,?)');
+            for (const r of rows) {
+              const content = [r.type, r.payload, r.metadata].join(' ');
+              stmt.run(r.id, content);
+            }
+            stmt.finalize(()=> resolve(true));
+          });
+        });
+      });
+    });
+  }
   /** Internal debug accessor for self-tests */
   __debugUnsafeDb() { return this.db; }
   private rowToResource(row: any): Resource {

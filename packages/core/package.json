@@ -32,7 +32,8 @@
   "export-manifest-selftest": "node dist/scripts/export-manifest-selftest.js",
   "sqlite-filters-selftest": "node dist/scripts/sqlite-filters-selftest.js",
   "sqlite-migration-selftest": "node dist/scripts/sqlite-migration-selftest.js",
-  "selftest:all": "npm run build && npm run kernel-selftest && npm run repo-selftest && npm run validation-selftest && npm run resource-service-selftest && npm run indexer-selftest && npm run tool-execution-selftest && npm run migration-selftest && npm run measurement-migration-selftest && npm run deletion-selftest && npm run metrics-selftest && npm run health-selftest && npm run bridge-selftest && npm run bootstrap-selftest && npm run export-selftest && npm run export-manifest-selftest && npm run sqlite-filters-selftest && npm run sqlite-migration-selftest",
+  "reindex-selftest": "node dist/scripts/reindex-selftest.js",
+  "selftest:all": "npm run build && npm run kernel-selftest && npm run repo-selftest && npm run validation-selftest && npm run resource-service-selftest && npm run indexer-selftest && npm run tool-execution-selftest && npm run migration-selftest && npm run measurement-migration-selftest && npm run deletion-selftest && npm run metrics-selftest && npm run health-selftest && npm run bridge-selftest && npm run bootstrap-selftest && npm run export-selftest && npm run export-manifest-selftest && npm run sqlite-filters-selftest && npm run sqlite-migration-selftest && npm run reindex-selftest",
   "quickstart": "node dist/scripts/quickstart-demo.js",
   "cli": "node dist/scripts/cli.js",
     "clean": "rm -rf dist *.js *.d.ts types/*.js types/*.d.ts data-engine/*.js data-engine/*.d.ts tools-registry/*.js tools-registry/*.d.ts"
