@@ -22,6 +22,8 @@ import { EventBus, NoopEventBus } from '../kernel/events/EventBus.js';
 import type { ResourceRepository } from '../kernel/repository/ResourceRepository.js';
 import type { Resource } from '../kernel/domain/Resource.js';
 import { globalDataTypeRegistry } from '../kernel/registry/DataTypeRegistry.js';
+import type { Indexer } from '../kernel/indexer/Indexer.js';
+import { MigrationService } from '../kernel/services/MigrationService.js';
 // NOTE: EventBus runtime exported via kernel/index, we rely on duck typing ; fallback no-op local if absent
 function getNoopBus(): EventBus { return NoopEventBus; }
 // ===== STORAGE INTERFACES =====
@@ -49,12 +51,17 @@ export class DataEngine {
   private pendingSync = new Set<string>();
   private eventBus: EventBus;
   private resourceRepo?: ResourceRepository; // expérimental
+  private indexer?: Indexer; // enrichissement sync status
+  private migrationService?: MigrationService;
+  private lastEventTimestamp: number | null = null;
 
-  constructor(storage: StorageAdapter, network: NetworkAdapter, opts?: { eventBus?: EventBus; resourceRepo?: ResourceRepository }) {
+  constructor(storage: StorageAdapter, network: NetworkAdapter, opts?: { eventBus?: EventBus; resourceRepo?: ResourceRepository; indexer?: Indexer; migrationService?: MigrationService }) {
     this.storage = storage;
     this.network = network;
     this.eventBus = opts?.eventBus ?? getNoopBus();
     this.resourceRepo = opts?.resourceRepo;
+    this.indexer = opts?.indexer;
+    this.migrationService = opts?.migrationService;
     
     // Auto-sync when coming online
     this.network.onlineStatusChanged((online) => {
@@ -364,12 +371,42 @@ export class DataEngine {
   }
 
   async getSyncStatus(): Promise<SyncStatus> {
+    let migrationsPending: number | undefined;
+    let migrationsByType: Record<string, any> | undefined;
+    if (this.migrationService && this.resourceRepo) {
+      try {
+        const workspaceIds = new Set<string>();
+        const keys = await this.storage.keys();
+        for (const k of keys) if (k.startsWith('project:')) { const p = await this.storage.get(k); if (p?.id) workspaceIds.add(p.id); }
+        let total = 0; const byTypeAgg: Record<string, { outdated: number; targetVersion: number }> = {};
+        for (const ws of workspaceIds) {
+          const pending = await this.migrationService.pendingMigrations(ws);
+          total += pending.total;
+          for (const [t, info] of Object.entries(pending.byType)) {
+            if (!byTypeAgg[t]) byTypeAgg[t] = { outdated: 0, targetVersion: info.targetVersion };
+            byTypeAgg[t].outdated += info.outdated;
+          }
+        }
+        migrationsPending = total;
+        migrationsByType = byTypeAgg;
+      } catch {/* ignore */}
+    }
+    const indexSize = this.indexer?.size();
     return {
-      last_sync: Date.now(), // TODO: Track actual last sync
+      last_sync: Date.now(),
       pending_changes: this.pendingSync.size,
-      conflicts: [], // TODO: Implement conflict detection
-      status: this.pendingSync.size === 0 ? 'synced' : 'pending'
-    };
+      conflicts: [],
+      status: this.pendingSync.size === 0 ? 'synced' : 'pending',
+      // extensions internes (non standardisées encore)
+      // @ts-ignore
+      index_size: indexSize,
+      // @ts-ignore
+      last_event_at: this.lastEventTimestamp,
+      // @ts-ignore
+      migrations_pending: migrationsPending,
+      // @ts-ignore
+      migrations_by_type: migrationsByType
+    } as any;
   }
 
   // ===== UTILITY METHODS =====
@@ -401,6 +438,7 @@ export class DataEngine {
       };
       // @ts-ignore if eventBus has no emit signature at runtime fallback silent
       await this.eventBus.emit(evt);
+      this.lastEventTimestamp = evt.timestamp;
     } catch (e) {
       // Ne jamais faire échouer une écriture à cause de la couche d'observation
       console.warn('[DataEngine] Event emission failed', e);

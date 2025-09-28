@@ -18,5 +18,6 @@ export * from './services/ResourceService.js';
 export * from './services/ToolExecutionService.js';
 export * from './services/MigrationService.js';
 export * from './services/MetricsService.js';
+export * from './services/HealthService.js';
 export * from './indexer/Indexer.js';
 export * from './indexer/IndexSubscriber.js';

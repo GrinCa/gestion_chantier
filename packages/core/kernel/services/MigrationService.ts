@@ -41,4 +41,24 @@ export class MigrationService {
     }
     return { migrated, touchedIds: touched };
   }
+
+  /**
+   * Retourne un résumé des migrations en attente pour un workspace.
+   * Renvoie { total, byType: { [type]: { outdated: number; targetVersion: number } } }
+   */
+  async pendingMigrations(workspaceId: string): Promise<{ total: number; byType: Record<string, { outdated: number; targetVersion: number }> }> {
+    const page = await this.repo.list(workspaceId, { limit: 10000 });
+    const acc: Record<string, { outdated: number; targetVersion: number }> = {};
+    let total = 0;
+    for (const res of page.data) {
+      const desc = globalDataTypeRegistry.get(res.type);
+      if (!desc || desc.schemaVersion == null) continue;
+      const current = res.schemaVersion ?? desc.schemaVersion;
+      if (current >= desc.schemaVersion) continue;
+      if (!acc[res.type]) acc[res.type] = { outdated: 0, targetVersion: desc.schemaVersion };
+      acc[res.type].outdated++;
+      total++;
+    }
+    return { total, byType: acc };
+  }
 }
