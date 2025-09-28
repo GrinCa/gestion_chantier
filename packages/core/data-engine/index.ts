@@ -198,11 +198,13 @@ export class DataEngine {
     // EXPÉRIMENTAL: si repository présent, créer une Resource miroir.
     if (this.resourceRepo) {
       try {
-        const descriptor = globalDataTypeRegistry.get(dataType);
-        if (descriptor?.validate) {
-          // Valide le payload (content) avant insertion Resource
-            descriptor.validate(content);
+        // Validation unifiée (Zod ou custom) via registre
+        try {
+          content = globalDataTypeRegistry.validate(dataType, content);
+        } catch (e:any) {
+          throw new Error(`Validation failed for type ${dataType}: ${e.message}`);
         }
+        const descriptor = globalDataTypeRegistry.get(dataType);
         const resource: Resource = {
           id: entry.id,
           type: dataType,
