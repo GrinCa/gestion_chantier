@@ -195,7 +195,10 @@ export function useWorkspaceData(workspaceId?: string, dataTypes?: string[]) {
         setError(null);
         
         const query: DataQuery = {
-          project_id: workspaceId, // field name kept for now in query object
+          // Transitional dual-field: new workspace_id plus legacy project_id for backward compat
+          // Remove project_id once server & engine fully migrated.
+          project_id: workspaceId,
+          workspace_id: workspaceId,
           data_types: dataTypes,
           sort: [{ field: 'created_at', direction: 'desc' }]
         };
@@ -233,6 +236,7 @@ export function useWorkspaceData(workspaceId?: string, dataTypes?: string[]) {
       if (workspaceId && dataEngine) {
         const query: DataQuery = {
           project_id: workspaceId,
+          workspace_id: workspaceId,
           data_types: dataTypes,
           sort: [{ field: 'created_at', direction: 'desc' }]
         };

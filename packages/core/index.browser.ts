@@ -30,5 +30,8 @@ export * from './kernel/indexer/IndexSubscriber.js';
 // SQLite repository remplacé par stub explicite côté browser
 export * from './kernel/repository/SQLiteResourceRepository.browser.js';
 
+// Workspace key compatibility (Section 8 transitional)
+export * from './compat/WorkspaceKeyCompat.js';
+
 export { ensureBrowserEnvironment } from './runtime/env-guard.js';
 export const RUNTIME_TARGET = 'browser';

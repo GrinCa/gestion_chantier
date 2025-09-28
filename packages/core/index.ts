@@ -26,6 +26,9 @@ export * from './config/index.js';
 // Usage : instrumentation / prototypage avant intégration profonde DataEngine.
 export * from './kernel/index.js';
 
+// Transitional workspace key compatibility layer (Section 8)
+export * from './compat/WorkspaceKeyCompat.js';
+
 // Version info
 export const VERSION = '1.0.0';
 export const CORE_NAME = '@gestion-chantier/core';

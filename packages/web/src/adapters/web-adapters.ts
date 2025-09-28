@@ -6,6 +6,7 @@
 
 // Import from core package
 import { DataEngine } from '@gestion-chantier/core';
+import { wrapDataEngineWorkspaceCompat } from '@gestion-chantier/core/compat/WorkspaceKeyCompat';
 import type { 
   StorageAdapter, 
   NetworkAdapter, 
@@ -150,5 +151,6 @@ export function createWebDataEngine(apiUrl?: string) {
   const storage = new WebStorageAdapter();
   const network = new WebNetworkAdapter(apiUrl);
   
-  return new DataEngine(storage, network);
+  const engine = new DataEngine(storage, network);
+  return wrapDataEngineWorkspaceCompat(engine, { enableWarnings: true });
 }

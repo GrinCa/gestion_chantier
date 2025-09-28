@@ -23,7 +23,11 @@
     },
     "./types": "./dist/types/index.js",
     "./data-engine": "./dist/data-engine/index.js",
-    "./tools-registry": "./dist/tools-registry/index.js"
+    "./tools-registry": "./dist/tools-registry/index.js",
+    "./compat/WorkspaceKeyCompat": {
+      "import": "./dist/compat/WorkspaceKeyCompat.js",
+      "types": "./dist/compat/WorkspaceKeyCompat.d.ts"
+    }
   },
   "scripts": {
   "build": "tsc && node ./scripts/build-cjs.mjs",
