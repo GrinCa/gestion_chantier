@@ -14,6 +14,9 @@ export interface HealthSnapshot {
   metrics?: any;
   migrations?: { total: number; byType: Record<string, { outdated: number; targetVersion: number }> };
   notes?: string[];
+  repositoryLatency?: any;
+  exports?: any;
+  accessDenied?: any;
 }
 
 export class HealthService {
@@ -30,7 +33,17 @@ export class HealthService {
       try { snap.sync = await syncProvider(); } catch (e:any) { snap.notes?.push('sync:error'); snap.ok = false; }
     }
     if (this.metrics) {
-      try { snap.metrics = this.metrics.snapshot(); } catch (e:any) { snap.notes?.push('metrics:error'); snap.ok = false; }
+      try {
+        const m = this.metrics.snapshot();
+        snap.metrics = {
+          events: m.events,
+          toolExec: m.toolExec,
+          indexSize: m.indexSize
+        };
+        if (m.repository) snap.repositoryLatency = m.repository;
+        if (m.export) snap.exports = m.export;
+        if (m.accessDenied) snap.accessDenied = m.accessDenied;
+      } catch (e:any) { snap.notes?.push('metrics:error'); snap.ok = false; }
     }
     if (this.migrations) {
       try { snap.migrations = await this.migrations.pendingMigrations(workspaceId); } catch (e:any) { snap.notes?.push('migrations:error'); }

@@ -84,13 +84,15 @@ export class RoleBasedAccessPolicy implements AccessPolicy {
  * Requiert un eventBus shape minimal { emit(type,payload) }
  */
 export interface EventEmitterLike { emit?(type: string, payload: any): void; }
+export interface MetricsLikeForAccess { recordAccessDenied?(action: string): void; }
 
 export class InstrumentedAccessPolicy implements AccessPolicy {
-  constructor(private inner: AccessPolicy, private events?: EventEmitterLike){ }
+  constructor(private inner: AccessPolicy, private events?: EventEmitterLike, private metrics?: MetricsLikeForAccess){ }
   async can(action: AccessAction, ctx?: AccessContext): Promise<boolean> {
     const allowed = await this.inner.can(action, ctx);
     if (!allowed) {
       this.events?.emit?.('access.denied', { action, ctx, at: Date.now() });
+      this.metrics?.recordAccessDenied?.(action);
     }
     return allowed;
   }

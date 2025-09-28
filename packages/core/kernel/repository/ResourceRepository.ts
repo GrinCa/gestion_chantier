@@ -60,6 +60,24 @@ export interface ResourceRepository {
   reindex?(resource: Resource): Promise<void>;
 }
 
+/**
+ * InstrumentedResourceRepository
+ * Wrapper pour mesurer latence des opérations repo via MetricsService.recordRepositoryOp
+ */
+export interface RepositoryMetricsLike { recordRepositoryOp?(op: string, durationMs: number): void; }
+export class InstrumentedResourceRepository implements ResourceRepository {
+  constructor(private inner: ResourceRepository, private metrics?: RepositoryMetricsLike){}
+  private async time<T>(op: string, fn: ()=>Promise<T>): Promise<T> {
+    const start = Date.now();
+    try { return await fn(); } finally { this.metrics?.recordRepositoryOp?.(op, Date.now()-start); }
+  }
+  get(id: string): Promise<Resource | null> { return this.time('get', ()=> this.inner.get(id)); }
+  list(workspaceId: string, query?: QueryOptions): Promise<ResourceListResult> { return this.time('list', ()=> this.inner.list(workspaceId, query)); }
+  save(resource: Resource): Promise<Resource> { return this.time('save', ()=> this.inner.save(resource)); }
+  delete(id: string): Promise<void> { return this.time('delete', ()=> this.inner.delete(id)); }
+  reindex?(resource: Resource): Promise<void> { return (this.inner as any).reindex?.(resource); }
+}
+
 interface InternalIndexEntry {
   id: string;
   workspaceId: string;

@@ -47,11 +47,21 @@ Section 5 CONCLU (phase actuelle). Améliorations futures (highlight, FTS avanc�
 
 Résumé: Pipeline export complet (simple, chunked, incremental) + validation structurée (count, types, duplicates, JSON). Prochaines évolutions futures (hash par chunk, signature, reprise partielle) pourront passer en dettes ou Section Observabilité.
 
-## 7. Observabilité
-- [ ] Ajouter latence moyenne repository (wrap CRUD timed)
-- [ ] Compteur migrations exécutées / en attente dans metrics
-- [ ] Endpoint CLI/HTTP `health` détaillé (inclut version repo, index size, pending migrations, conflicts)
-- [ ] Exposer metrics en JSON (future /metrics)
+## 7. Observabilité (CONCLU Phase 1)
+- [x] Ajouter latence moyenne repository (wrap CRUD timed) -> `InstrumentedResourceRepository` + metrics.repository.ops
+- [x] Compteur accès refusés (access.denied) -> `InstrumentedAccessPolicy` + metrics.accessDenied
+- [x] Compteurs export (full / manifest / chunked / incremental) + durée + volume -> metrics.export
+- [x] Health enrichi (repositoryLatency, exports, accessDenied exposés) -> `HealthService.snapshot()`
+- [x] Test dédié `metrics-observability.test.ts`
+
+Reste (Phase 2 Observabilité Avancée - à planifier hors clôture initiale):
+- [ ] Compteur migrations exécutées (hook MigrationService) + latence migration
+- [ ] Endpoint CLI/HTTP `/health` & `/metrics` dans layer server
+- [ ] Erreurs EventBus (compteur exceptions handlers)
+- [ ] Import metrics (durée, resources, erreurs) + recordImport
+- [ ] Histogrammes (buckets) si besoin (actuel = avg/p95)
+
+Résumé: Phase 1 Observabilité livrée (latence repo, exports, refus accès, health enrichi). Section considérée close pour la vague actuelle; sous-tâches avancées déplacées vers Phase 2.
 
 ## 8. Nettoyage Legacy
 - [ ] Remplacer toutes les chaînes `project:` storage par `workspace:` avec phase de lecture double
