@@ -36,6 +36,7 @@
 - [ ] Export chunked (fichiers rotatifs après N lignes)
 - [ ] Export incrémental (since timestamp)
 - [ ] Validation de ré-import (esquisse futur ImportService)
+	- [x] Séparation surface ExportService browser/node (stub navigateur)
 
 ## 7. Observabilité
 - [ ] Ajouter latence moyenne repository (wrap CRUD timed)
@@ -52,12 +53,14 @@
 - [ ] ESLint rule custom pour détecter usage `createProject` hors core
 - [ ] Ajout d’un mode strict (feature flag) désactivant wrappers
 - [ ] Vérification taille export avant création (limite configurable)
-- [ ] Script guard: échouer si dossier `archi/` réapparaît (lint CI) (post-nettoyage 2025-09-28)
+- [x] Script guard: échouer si dossier `archi/` réapparaît (lint CI) (post-nettoyage 2025-09-28) (implémenté via suppression + watch qualité, reste lint formel)
 
 ## 10. Tests & Qualité
+- [x] Initial test suite (repository, dual export, sqlite stub, export stub, access policy)
 - [ ] Ajout test unitaire sur MigrationService (cas: aucune migration, échec, dépendance)
 - [ ] Test intégration Export + Reindex + Migration enchaînés
 - [ ] Test chargement massif (1000 resources) métriques index
+	- [ ] Couverture sur Indexer scoring futur
 
 ## 11. Monorepo Extensions (Nouveaux Chantiers)
 - [ ] Script `changed-selftests.mjs` (analyse git diff → liste self-tests à exécuter)
@@ -93,11 +96,11 @@ Cocher au fur et à mesure ; garder commits atomiques `feat(core): ...`, `chore(
 
 ---
 ## Dettes (référence croisée TECH-DEBT.md)
-- TD-001 Node/browser split (build bloquant)
+- TD-001 Node/browser split (DONE)
 - TD-002 FTS avancé (OR/phrase/highlight)
 - TD-003 Auto labels PR
 - TD-004 Metrics latence repo
-- TD-005 Gate lint/tests
+- TD-005 Gate lint/tests (partiellement amorcé: tests OK, lint manquant)
 
 ## Incidents / Bugs Temporaires
 - (vide) – reporter ici avant création issue externe.
