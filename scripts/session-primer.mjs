@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// DEPRECATED: Use handbook/LLM-ENTRYPOINT.md as the single source of truth.
 // Generates a concise session primer snippet (markdown) to paste as first prompt to LLM.
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';

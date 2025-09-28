@@ -1,3 +1,17 @@
+# DEPRECATION NOTICE – Replaced by LLM-ENTRYPOINT.md
+
+Ce fichier est conservé uniquement pour compatibilité historique.
+Nouvelle source unique: `handbook/LLM-ENTRYPOINT.md`.
+
+À faire si vous tombez ici:
+1. Ouvrir `LLM-ENTRYPOINT.md`.
+2. Suivre le format de session défini (section 6).
+3. Supprimer toute référence future à ce fichier dans la doc / scripts.
+
+Script générateur `scripts/session-primer.mjs` également déprécié.
+
+— Mainteneur
+
 # Session Primer (Fournir Contexte Initial au LLM)
 
 Objectif: Disposer d'un format court et structuré que tu peux coller en tout début de session pour que le LLM soit immédiatement opérationnel sans relire toutes les docs.
