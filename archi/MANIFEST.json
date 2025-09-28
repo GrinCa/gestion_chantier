@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "modules": [
+    {
+      "name": "EventBus",
+      "file": "packages/core/kernel/events/EventBus.ts",
+      "role": "Publish/subscribe internal domain events",
+      "emits": "* (via emit)",
+      "consumes": "n/a",
+      "dependencies": []
+    },
+    {
+      "name": "ResourceRepository",
+      "file": "packages/core/kernel/repository/ResourceRepository.ts",
+      "role": "Abstract persistence contract",
+      "emits": null,
+      "consumes": null,
+      "dependencies": []
+    },
+    {
+      "name": "SQLiteResourceRepository",
+      "file": "packages/core/kernel/repository/SQLiteResourceRepository.ts",
+      "role": "SQLite persistence (CRUD stub)",
+      "plannedExtensions": ["filters", "pagination", "fts"],
+      "dependencies": ["sqlite3"]
+    },
+    {
+      "name": "DataTypeRegistry",
+      "file": "packages/core/kernel/registry/DataTypeRegistry.ts",
+      "role": "Validation + migration lookup",
+      "dependencies": ["zod"],
+      "emits": null
+    },
+    {
+      "name": "MigrationService",
+      "file": "packages/core/kernel/services/MigrationService.ts",
+      "role": "Detect & apply schema migrations",
+      "dependencies": ["ResourceRepository", "DataTypeRegistry"],
+      "emits": []
+    },
+    {
+      "name": "ResourceService",
+      "file": "packages/core/kernel/services/ResourceService.ts",
+      "role": "Create/update/delete resources + optimistic locking",
+      "dependencies": ["ResourceRepository", "EventBus", "DataTypeRegistry", "AccessPolicy?"],
+      "emits": ["resource.created", "resource.updated", "resource.deleted", "resource.conflict"]
+    },
+    {
+      "name": "ToolExecutionService",
+      "file": "packages/core/kernel/services/ToolExecutionService.ts",
+      "role": "Executes registered tools with I/O validation",
+      "dependencies": ["ToolRegistry", "EventBus"],
+      "emits": ["tool.executed"]
+    },
+    {
+      "name": "MetricsService",
+      "file": "packages/core/kernel/services/MetricsService.ts",
+      "role": "Aggregate counters + tool execution timings",
+      "dependencies": ["EventBus", "Indexer?"],
+      "consumes": "* events"
+    },
+    {
+      "name": "HealthService",
+      "file": "packages/core/kernel/services/HealthService.ts",
+      "role": "Aggregate health snapshot (migrations, metrics, index size)",
+      "dependencies": ["MetricsService", "MigrationService?", "Indexer?", "EventBus"],
+      "emits": []
+    },
+    {
+      "name": "ExportService",
+      "file": "packages/core/kernel/services/ExportService.ts",
+      "role": "NDJSON export (workspace/all) + manifest",
+      "plannedExtensions": ["incremental", "chunked"],
+      "dependencies": ["ResourceRepository"]
+    },
+    {
+      "name": "DataEngine",
+      "file": "packages/core/data-engine/index.ts",
+      "role": "Legacy engine (workspaces + data entries + sync + indexing integration)",
+      "dependencies": ["StorageAdapter", "NetworkAdapter", "EventBus", "ResourceRepository?", "Indexer?", "MigrationService?"],
+      "emits": ["workspace.created", "workspace.updated", "data.created", "data.synced", "project.synced"],
+      "consumes": ["resource.conflict"]
+    },
+    {
+      "name": "DataEngineBridge",
+      "file": "packages/core/kernel/bridge/DataEngineBridge.ts",
+      "role": "Listen DataEngine events -> persist resources + index",
+      "dependencies": ["EventBus", "ResourceRepository", "Indexer"],
+      "consumes": ["data.created", "data.updated", "data.deleted"],
+      "emits": ["resource.created", "resource.updated"]
+    }
+  ]
+}

@@ -17,7 +17,7 @@
 - [x] Ajouter champ `version` incrémental aux Resources (déjà présent, validé)
 - [x] Refuser update si version divergente (émettre event `resource.conflict`)
 - [x] Exposer `conflicts` dans `syncStatus`
-- [ ] Ajouter script self-test conflits
+- [x] Ajouter script self-test conflits (`archi/scripts/conflict-selftest.ts`)
 
 ## 4. Auth & Access Policy
 - [ ] Étendre `AccessPolicy` pour supporter rôles (owner, editor, reader)
@@ -31,7 +31,7 @@
 - [ ] Rebuilder index à partir du repository (script `reindex-selftest`)
 
 ## 6. Export & Sauvegarde
-- [ ] Ajouter manifest export (metadata.json : date, count, types, version)
+- [x] Ajouter manifest export (metadata.json : date, count, types, version)
 - [ ] Export chunked (fichiers rotatifs après N lignes)
 - [ ] Export incrémental (since timestamp)
 - [ ] Validation de ré-import (esquisse futur ImportService)
