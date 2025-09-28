@@ -32,3 +32,8 @@ export * from './compat/WorkspaceKeyCompat.js';
 // Version info
 export const VERSION = '1.0.0';
 export const CORE_NAME = '@gestion-chantier/core';
+
+// Section 9: DevX Strict Mode toggle (env or runtime)
+export const CORE_STRICT_MODE = (
+	typeof process !== 'undefined' && process.env && process.env.GC_CORE_STRICT === '1'
+);

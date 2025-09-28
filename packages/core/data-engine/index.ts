@@ -5,17 +5,8 @@
  * Support offline, sync, cache intelligent
  */
 
-import type {
-  DataEntry,
-  DataQuery,
-  QueryResult,
-  Project,
-  Workspace,
-  CreateInput,
-  UpdateInput,
-  ApiResponse,
-  SyncStatus
-} from '../types/index.js';
+import type { DataEntry, DataQuery, QueryResult, Project, Workspace, CreateInput, UpdateInput, ApiResponse, SyncStatus } from '../types/index.js';
+import { CORE_STRICT_MODE } from '../index.js';
 // Event system (optionnel) – noyau
 import type { DomainEvent } from '../kernel/events/DomainEvent.js';
 import { EventBus, NoopEventBus } from '../kernel/events/EventBus.js';
@@ -81,6 +72,15 @@ export class DataEngine {
     });
   }
 
+  // Inject strict mode deprecation guards AFTER base constructor logic
+  private applyStrictModeGuards() {
+    if (CORE_STRICT_MODE) {
+      (this as any).createProject = () => { throw new Error('[STRICT_MODE] createProject déprécié. Utiliser createWorkspace.'); };
+      (this as any).getProject = () => { throw new Error('[STRICT_MODE] getProject déprécié. Utiliser getWorkspace.'); };
+      (this as any).getUserProjects = () => { throw new Error('[STRICT_MODE] getUserProjects déprécié. Utiliser getUserWorkspaces.'); };
+    }
+  }
+
   // ===== PROJECT MANAGEMENT =====
 
   // NEW canonical API
@@ -94,15 +94,15 @@ export class DataEngine {
       updated_at: timestamp
     };
     await this.storage.set(`project:${id}`, newWorkspace);
-    
+
     // Try to sync to server
     if (this.network.isOnline()) {
       try {
         const response = await this.network.request<Workspace>('POST', '/workspaces', newWorkspace);
         if (response.success && response.data) {
-          // Update with server response
           await this.storage.set(`project:${id}`, response.data);
           await this.emitEvent('workspace', response.data.id, 'created', response.data, response.data.updated_at, (workspace as any).owner);
+          this.applyStrictModeGuards();
           return response.data;
         }
       } catch (error) {
@@ -112,6 +112,7 @@ export class DataEngine {
     } else {
       this.pendingSync.add(`project:${id}`);
     }
+    this.applyStrictModeGuards();
     await this.emitEvent('workspace', newWorkspace.id, 'created', newWorkspace, newWorkspace.updated_at, (workspace as any).owner);
     return newWorkspace;
   }
@@ -124,7 +125,7 @@ export class DataEngine {
 
   async getWorkspace(id: string): Promise<Workspace | null> {
     // Check cache first
-  const cached = this.cache.get(`project:${id}`);
+    const cached = this.cache.get(`project:${id}`);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
       return cached.data;
     }
@@ -154,7 +155,7 @@ export class DataEngine {
   }
 
   async getUserWorkspaces(userId: string): Promise<Workspace[]> {
-  const cacheKey = `user_workspaces:${userId}`;
+    const cacheKey = `user_workspaces:${userId}`;
     
     // Check cache
     const cached = this.cache.get(cacheKey);
@@ -165,7 +166,7 @@ export class DataEngine {
     // Try server first if online
     if (this.network.isOnline()) {
       try {
-  const response = await this.network.request<Workspace[]>('GET', `/workspaces?owner=${userId}`);
+        const response = await this.network.request<Workspace[]>('GET', `/workspaces?owner=${userId}`);
         if (response.success && response.data) {
           // Cache server response
           this.cache.set(cacheKey, { data: response.data, timestamp: Date.now(), ttl: 60000 }); // 1min cache
@@ -184,8 +185,8 @@ export class DataEngine {
 
     // Fallback to local storage
     const keys = await this.storage.keys();
-  const projectKeys = keys.filter(key => key.startsWith('project:'));// keeping key prefix for compatibility
-  const workspaces: Workspace[] = [];
+    const projectKeys = keys.filter(key => key.startsWith('project:'));// keeping key prefix for compatibility
+    const workspaces: Workspace[] = [];
     
     for (const key of projectKeys) {
       const project = await this.storage.get(key);
@@ -308,7 +309,7 @@ export class DataEngine {
 
     for (const key of dataKeys) {
       const entry = await this.storage.get(key);
-  if (!entry || (entry.workspace_id || entry.project_id) !== project_id) continue;
+    if (!entry || (entry.workspace_id || entry.project_id) !== project_id) continue;
       
       // Filter by data types
       if (data_types && !data_types.includes(entry.data_type)) continue;
