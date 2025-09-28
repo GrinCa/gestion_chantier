@@ -9,6 +9,46 @@ import { readFileSync, existsSync } from 'node:fs';
 
 const ENHANCED = process.env.PR_ENHANCED !== 'false';
 
+// Load external config (optional) to keep script generic
+let prConfig = {};
+try {
+  if (existsSync('pr-automation.config.json')) {
+    prConfig = JSON.parse(readFileSync('pr-automation.config.json','utf8'));
+  }
+} catch { prConfig = {}; }
+
+function globToRegex(glob){
+  glob = glob.replace(/^\.\//,'');
+  let out='';
+  for (let i=0;i<glob.length;i++){
+    const ch = glob[i];
+    if (ch==='*'){
+      const dbl = glob[i+1]==='*';
+      if (dbl){ i++; out+='.*'; }
+      else out+='[^/]*';
+    } else if (/[-/\\^$+?.()|{}\[]/.test(ch)) {
+      out += '\\'+ch;
+    } else out += ch;
+  }
+  return new RegExp('^'+out+'$','i');
+}
+
+const categoryDefs = prConfig.categories || [
+  { name:'docs', patterns:['archi/**','**/*.md'] },
+  { name:'scripts', patterns:['scripts/**'] },
+  { name:'server', patterns:['server/**'] },
+  { name:'frontend', patterns:['src/**','public/**'] },
+  { name:'search', patterns:['**/*fts*','**/*MATCH*','**/*sqlite*'] }
+];
+for (const c of categoryDefs){ c._regex = c.patterns.map(globToRegex); }
+
+const highlightDefs = prConfig.highlights || [
+  { patterns:['**/*fts*','**/*MATCH*','**/*sqlite*'], message:'Recherche plein texte / SQLite FTS modifiée' },
+  { patterns:['scripts/create-pr.mjs','scripts/update-pr.mjs'], message:'Outillage PR modifié' },
+  { patterns:['archi/**','**/*.md'], message:'Documentation mise à jour' }
+];
+for (const h of highlightDefs){ h._regex = h.patterns.map(globToRegex); }
+
 // Optional lightweight env loaders (support priority: .env.pr > .env.local > .env)
 function parseEnvFile(path) {
   const map = {};
@@ -126,13 +166,9 @@ const additions = numstats.reduce((a,b)=>a+b.added,0);
 const deletions = numstats.reduce((a,b)=>a+b.removed,0);
 
 function classify(file){
-  if (file.startsWith('archi/')) return 'docs-archi';
-  if (file.endsWith('.md')) return 'docs';
-  if (file.startsWith('packages/core')) return 'core';
-  if (file.startsWith('packages/web')) return 'web';
-  if (file.startsWith('packages/server')) return 'server';
-  if (file.startsWith('scripts/')) return 'scripts';
-  if (file.includes('fts') || /fts|MATCH|sqlite/i.test(file)) return 'search';
+  for (const def of categoryDefs){
+    if (def._regex.some(r=>r.test(file))) return def.name;
+  }
   return 'other';
 }
 const categories = {};
@@ -154,11 +190,13 @@ if (existsSync(templatePath)) {
 
 // Heuristic context extraction
 function detectHighlights(files){
-  const notes=[];
-  if (files.some(f=>/fts|MATCH|sqlite/i.test(f))) notes.push('FTS / SQLite full-text modifications détectées');
-  if (files.some(f=>f.includes('scripts/create-pr.mjs'))) notes.push('Outillage PR automatisé modifié');
-  if (files.some(f=>f.startsWith('archi/'))) notes.push('Documentation architecture mise à jour');
-  return notes;
+  const notes=new Set();
+  for (const f of files){
+    for (const h of highlightDefs){
+      if (h._regex.some(r=>r.test(f))) notes.add(h.message);
+    }
+  }
+  return [...notes];
 }
 
 const highlights = detectHighlights(diffFiles);
@@ -166,17 +204,19 @@ const autoSummary = `Branche: ${headBranch}\nBase: ${baseBranch}\nFichiers: ${di
 
 function buildEnhancedBody(){
   const changedSelftests = diffFiles.filter(f=>/selftest/i.test(f));
-  const hasCore = !!categories.core;
+  const hasRiskCat = Object.keys(categories).some(k=>['server','search'].includes(k));
+  const riskRules = prConfig.riskRules || {};
+  const highRiskBySize = riskRules.highRiskIfAdditionsOver && additions > riskRules.highRiskIfAdditionsOver;
   const sections = {
-    resume: hasCore ? 'Extension du noyau + recherche plein texte + outillage PR.' : 'Mise à jour multi-surface.',
+    resume: highlights.length ? highlights.join(' | ') : 'Mise à jour multi-surface.',
     contexte: highlights.join(' | ') || 'Évolution incrémentale.',
     changements: diffFiles.slice(0,50).map(f=>`- ${f}`).join('\n') + (diffFiles.length>50?'\n- ...':'') ,
-    tests: changedSelftests.length ? `Self-tests modifiés/ajoutés:\n${changedSelftests.map(f=>' - '+f).join('\n')}` : 'Aucun nouveau self-test détecté (à vérifier).',
-    risques: hasCore ? 'Impact potentiel sur requêtes repository / scoring. Vérifier fallback LIKE.' : 'Faible.',
-    docs: Object.keys(categories).some(c=>c.startsWith('docs')) ? 'Docs mises à jour.' : 'Pas de docs modifiées (ajouter si nécessaire).',
-    perf: highlights.some(h=>h.includes('FTS')) ? 'FTS: surveiller temps de création index & latence requêtes.' : 'Pas d’impact majeur attendu.',
-    db: diffFiles.some(f=>/migration|sql/i.test(f)) ? 'Vérifier migrations.' : 'Pas de nouvelle migration détectée.',
-    securite: 'Aucun changement surface réseau. Token automation local uniquement.'
+    tests: changedSelftests.length ? `Self-tests modifiés/ajoutés:\n${changedSelftests.map(f=>' - '+f).join('\n')}` : 'Aucun nouveau self-test détecté.',
+    risques: highRiskBySize ? 'Risque ÉLEVÉ (volume important de changements).' : (hasRiskCat ? 'Risque modéré (zones sensibles touchées).' : 'Faible.'),
+    docs: Object.keys(categories).some(c=>c==='docs') ? 'Documentation mise à jour.' : 'Pas de docs modifiées.',
+    perf: Object.keys(categories).includes('search') ? 'Surveiller latence requêtes FTS.' : 'Impact performance négligeable.',
+    db: diffFiles.some(f=>/migration|sql/i.test(f)) ? 'Vérifier migrations.' : 'Pas de migration détectée.',
+    securite: 'Aucun changement surface réseau détecté.'
   };
   return [
     template ? '## (Pré-rempli) Template\n' : '## PR\n',
@@ -214,9 +254,7 @@ const title = process.env.PR_TITLE || latestSubject || `feat: ${headBranch}`;
 function deriveResume(){
   const parts=[];
   if (highlights.length) parts.push(highlights.join(' | '));
-  if (categories.core) parts.push('Modifications noyau');
-  if (categories.search) parts.push('FTS / recherche');
-  if (categories['docs-archi']) parts.push('Documentation architecture');
+  parts.push('Catégories: '+Object.keys(categories).filter(k=>k!=='other').join(', ')||'n/a');
   parts.push(`Δ +${additions}/-${deletions}`);
   return parts.join(' · ');
 }

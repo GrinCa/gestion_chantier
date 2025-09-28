@@ -7,6 +7,56 @@ import { readFileSync, existsSync } from 'node:fs';
 
 const ENHANCED = process.env.PR_ENHANCED !== 'false';
 
+// External config loading for generic behavior
+let prConfig = {};
+try {
+  if (existsSync('pr-automation.config.json')) {
+    prConfig = JSON.parse(readFileSync('pr-automation.config.json','utf8'));
+  }
+} catch { prConfig = {}; }
+
+function globToRegex(glob){
+  // Normalize leading ./
+  glob = glob.replace(/^\.\//,'');
+  // Escape regex special chars except *
+  let out = '';
+  for (let i=0;i<glob.length;i++){
+    const ch = glob[i];
+    if (ch === '*') {
+      // check if it's a double star
+      const isDouble = glob[i+1] === '*';
+      if (isDouble){
+        // Consume second *
+        i++;
+        out += '.*';
+      } else {
+        out += '[^/]*';
+      }
+    } else if (/[-/\\^$+?.()|{}\[]/.test(ch)) {
+      out += '\\' + ch;
+    } else {
+      out += ch;
+    }
+  }
+  return new RegExp('^'+out+'$','i');
+}
+
+const categoryDefs = prConfig.categories || [
+  { name:'docs', patterns:['archi/**','**/*.md'] },
+  { name:'scripts', patterns:['scripts/**'] },
+  { name:'server', patterns:['server/**'] },
+  { name:'frontend', patterns:['src/**','public/**'] },
+  { name:'search', patterns:['**/*fts*','**/*MATCH*','**/*sqlite*'] }
+];
+for (const c of categoryDefs){ c._regex = c.patterns.map(globToRegex); }
+
+const highlightDefs = prConfig.highlights || [
+  { patterns:['**/*fts*','**/*MATCH*','**/*sqlite*'], message:'Recherche plein texte / SQLite FTS modifiée' },
+  { patterns:['scripts/create-pr.mjs','scripts/update-pr.mjs'], message:'Outillage PR modifié' },
+  { patterns:['archi/**','**/*.md'], message:'Documentation mise à jour' }
+];
+for (const h of highlightDefs){ h._regex = h.patterns.map(globToRegex); }
+
 function sh(cmd){ return execSync(cmd,{encoding:'utf8'}).trim(); }
 function log(m){ process.stdout.write(m+'\n'); }
 function error(m){ process.stderr.write('\n[PR][ERROR] '+m+'\n'); }
@@ -70,14 +120,8 @@ const numstats = numstatRaw.split(/\n/).filter(Boolean).map(l=>{ const p=l.split
 const additions = numstats.reduce((a,b)=>a+b.added,0);
 const deletions = numstats.reduce((a,b)=>a+b.removed,0);
 
-function classify(f){
-  if (f.startsWith('archi/')) return 'docs-archi';
-  if (f.endsWith('.md')) return 'docs';
-  if (f.startsWith('packages/core')) return 'core';
-  if (f.startsWith('packages/web')) return 'web';
-  if (f.startsWith('packages/server')) return 'server';
-  if (f.startsWith('scripts/')) return 'scripts';
-  if (/fts|MATCH|sqlite/i.test(f)) return 'search';
+function classify(file){
+  for (const def of categoryDefs){ if (def._regex.some(r=>r.test(file))) return def.name; }
   return 'other';
 }
 const categories={};
@@ -93,10 +137,11 @@ if (existsSync('.github/pull_request_template.md')) {
 }
 
 function detectHighlights(files){
-  const notes=[]; if(files.some(f=>/fts|MATCH|sqlite/i.test(f))) notes.push('FTS / SQLite modifié');
-  if(files.some(f=>f.includes('scripts/create-pr.mjs')||f.includes('scripts/update-pr.mjs'))) notes.push('Outillage PR modifié');
-  if(files.some(f=>f.startsWith('archi/'))) notes.push('Docs architecture mises à jour');
-  return notes;
+  const notes = new Set();
+  for (const f of files){
+    for (const h of highlightDefs){ if (h._regex.some(r=>r.test(f))) notes.add(h.message); }
+  }
+  return [...notes];
 }
 const highlights = detectHighlights(diffFiles);
 const autoSummary = `Branche: ${headBranch}\nBase: ${baseBranch}\nFichiers: ${diffFiles.length}\nCatégories: ${catSummary||'n/a'}\nAdditions: ${additions}  Suppressions: ${deletions}`;
@@ -104,15 +149,17 @@ const autoSummary = `Branche: ${headBranch}\nBase: ${baseBranch}\nFichiers: ${di
 function buildBody(){
   if(!ENHANCED){ return [template ? '## (Pré-rempli) Template' : '## PR', template, '```', autoSummary,'```', latestSubject?`Dernier commit: ${latestSubject}`:''].join('\n'); }
   const changedSelftests = diffFiles.filter(f=>/selftest/i.test(f));
-  const hasCore = !!categories.core;
+  const riskRules = prConfig.riskRules || {};
+  const highRiskBySize = riskRules.highRiskIfAdditionsOver && additions > riskRules.highRiskIfAdditionsOver;
+  const sensitive = Object.keys(categories).some(k=> (riskRules.elevatedRiskCategories||['server','search']).includes(k));
   const sections={
-    resume: hasCore? 'Extension noyau + FTS + outillage.' : 'Évolution multi-surface.',
+    resume: highlights.length? highlights.join(' | ') : 'Évolution multi-surface.',
     contexte: highlights.join(' | ') || 'Évolution incrémentale.',
     changements: diffFiles.slice(0,60).map(f=>`- ${f}`).join('\n') + (diffFiles.length>60?'\n- ...':'') ,
-    tests: changedSelftests.length?`Self-tests touchés:\n${changedSelftests.map(f=>' - '+f).join('\n')}`:'Aucun self-test détecté (vérifier).',
-    risques: hasCore?'Vérifier impact sur requêtes repository / scoring / fallback LIKE.':'Faible.',
-    docs: Object.keys(categories).some(c=>c.startsWith('docs'))?'Docs modifiées.':'Pas de docs modifiées.',
-    perf: highlights.some(h=>h.includes('FTS'))?'Surveiller coût FTS & latence requêtes.':'Impact performance négligeable.',
+    tests: changedSelftests.length?`Self-tests touchés:\n${changedSelftests.map(f=>' - '+f).join('\n')}`:'Aucun self-test détecté.',
+    risques: highRiskBySize ? 'Risque ÉLEVÉ (volume important).' : (sensitive ? 'Risque modéré (zones sensibles).' : 'Faible.'),
+    docs: Object.keys(categories).includes('docs')?'Documentation modifiée.':'Pas de documentation modifiée.',
+    perf: Object.keys(categories).includes('search')?'Surveiller latence FTS.':'Impact performance négligeable.',
     db: diffFiles.some(f=>/migration|sql/i.test(f))?'Vérifier migrations.':'Pas de migration.',
     securite: 'Pas de nouvelle surface réseau.'
   };
@@ -138,9 +185,7 @@ const title = process.env.PR_TITLE || latestSubject || `feat: ${headBranch}`;
 function deriveResume(){
   const parts=[];
   if (highlights.length) parts.push(highlights.join(' | '));
-  if (categories.core) parts.push('Modifications noyau');
-  if (categories.search) parts.push('FTS / recherche');
-  if (categories['docs-archi']) parts.push('Documentation architecture');
+  parts.push('Catégories: '+Object.keys(categories).filter(k=>k!=='other').join(', ')||'n/a');
   parts.push(`Δ +${additions}/-${deletions}`);
   return parts.join(' · ');
 }

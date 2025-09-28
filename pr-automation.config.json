@@ -1,0 +1,19 @@
+{
+  "language": "fr",
+  "categories": [
+    { "name": "docs", "patterns": ["archi/**", "**/*.md"] },
+    { "name": "scripts", "patterns": ["scripts/**"] },
+    { "name": "server", "patterns": ["server/**"] },
+    { "name": "frontend", "patterns": ["src/**", "public/**"] },
+    { "name": "search", "patterns": ["**/*fts*", "**/*MATCH*", "**/*sqlite*"] }
+  ],
+  "highlights": [
+    { "patterns": ["**/*fts*", "**/*MATCH*", "**/*sqlite*"], "message": "Recherche plein texte / SQLite FTS modifiée" },
+    { "patterns": ["scripts/create-pr.mjs", "scripts/update-pr.mjs"], "message": "Outillage PR modifié" },
+    { "patterns": ["archi/**", "**/*.md"], "message": "Documentation mise à jour" }
+  ],
+  "riskRules": {
+    "highRiskIfAdditionsOver": 800,
+    "elevatedRiskCategories": ["server", "search"]
+  }
+}
