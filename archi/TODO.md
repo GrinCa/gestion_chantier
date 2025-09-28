@@ -57,6 +57,20 @@
 - [ ] Test intégration Export + Reindex + Migration enchaînés
 - [ ] Test chargement massif (1000 resources) métriques index
 
+## 11. Monorepo Extensions (Nouveaux Chantiers)
+- [ ] Script `changed-selftests.mjs` (analyse git diff → liste self-tests à exécuter)
+- [ ] Hook pre-commit (optionnel) lançant mapping minimal
+- [ ] Self-test serveur minimal (`packages/server/scripts/server-selftest.ts`) ping + CRUD user
+- [ ] Smoke test web (`packages/web/src/__selftests__/app-smoke.test.tsx`) – rend App sans crash
+- [ ] Smoke test mobile (`packages/mobile/src/__selftests__/app-smoke.test.tsx`) – logique basique (pas besoin appareil)
+- [ ] Event taxonomy selftest (collecte events émis vs ARCHITECTURE.md)
+- [ ] Manifest consistency check (scanner fichiers principaux vs MANIFEST.json)
+- [ ] Ajout hash SHA256 dans export manifest (manifest v2)
+- [ ] Métriques latence repository (wrap + metrics-selftest extension)
+- [ ] OpenAPI (ou doc minimal) pour endpoints server (futur swagger)
+- [ ] ESLint rule usage wrappers dépréciés (createProject etc.)
+
+
 ---
 
 ## Ordre d’Exécution Proposé (Vague 1)
