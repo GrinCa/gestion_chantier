@@ -1,38 +1,32 @@
 {
-  "name": "laser-app",
+  "name": "@gestion-chantier/monorepo",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Universal data/tools architecture - Web + Mobile",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.1.13",
-    "body-parser": "^2.2.0",
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "idb-keyval": "^6.2.2",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "sqlite3": "^5.1.7"
+    "dev": "npm run dev --workspace=packages/web",
+    "dev:web": "npm run dev --workspace=packages/web",
+    "dev:mobile": "npm run start --workspace=packages/mobile",
+    "dev:server": "cd packages/server && node index.js",
+    "build": "npm run build --workspaces --if-present",
+    "build:core": "npm run build --workspace=packages/core",
+    "build:web": "npm run build --workspace=packages/web",
+    "build:mobile": "npm run build:android --workspace=packages/mobile",
+    "clean": "npm run clean --workspaces --if-present",
+    "install:all": "npm install --workspaces",
+    "link:core": "npm link --workspace=packages/core && npm link @gestion-chantier/core --workspace=packages/web && npm link @gestion-chantier/core --workspace=packages/mobile",
+    "setup": "npm run install:all && npm run build:core && npm run link:core",
+    "setup:mobile": "npm run setup && npm run dev:mobile"
   },
   "devDependencies": {
-    "@eslint/js": "^9.36.0",
-    "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.1.9",
-    "@vitejs/plugin-react": "^5.0.3",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^9.36.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.4.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.13",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.44.0",
-    "vite": "^7.1.7"
+    "typescript": "~5.6.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
