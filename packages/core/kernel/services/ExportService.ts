@@ -61,4 +61,62 @@ export class ExportService {
       .catch(err => { stream.destroy(err); });
     return stream;
   }
+
+  /**
+   * Export chunké: découpe les resources en blocs de `chunkSize` (default 10k) et
+   * retourne un tableau d'objets { index, count, ndjson } + manifest enrichi.
+   * Utile pour très grands volumes sans charger tout en mémoire côté consommateur.
+   */
+  async exportWorkspaceChunked(workspaceId: string, opts?: { chunkSize?: number; limit?: number }): Promise<{ manifest: any; chunks: Array<{ index: number; count: number; ndjson: string }> }> {
+    const chunkSize = opts?.chunkSize && opts.chunkSize > 0 ? opts.chunkSize : 10000;
+    const limit = opts?.limit ?? 250000; // garde-fou
+    const all = await this.repo.list(workspaceId, { limit });
+    const chunks: Array<{ index: number; count: number; ndjson: string }> = [];
+    for (let i=0;i<all.data.length;i+=chunkSize) {
+      const slice = all.data.slice(i, i+chunkSize);
+      chunks.push({ index: chunks.length, count: slice.length, ndjson: slice.map(r=> JSON.stringify(r)).join('\n') });
+    }
+    const typeCounts: Record<string, number> = {};
+    for (const r of all.data) typeCounts[r.type] = (typeCounts[r.type]||0)+1;
+    const manifest = {
+      workspaceId,
+      generatedAt: Date.now(),
+      count: all.data.length,
+      chunkSize,
+      chunks: chunks.length,
+      types: typeCounts,
+      format: 'resource-ndjson-chunked',
+      version: 1
+    };
+    return { manifest, chunks };
+  }
+
+  /**
+   * Export incrémental: retourne uniquement les resources avec updatedAt >= since.
+   * On applique pagination interne multi-page via nextCursor jusqu'à épuisement.
+   */
+  async exportWorkspaceIncremental(workspaceId: string, since: number, opts?: { pageLimit?: number }): Promise<{ manifest: any; ndjson: string; count: number }> {
+    const pageLimit = opts?.pageLimit ?? 5000;
+    let cursor: string | undefined;
+    const collected: any[] = [];
+    for(;;) {
+      const page = await this.repo.list(workspaceId, { limit: pageLimit, cursor });
+      const filtered = page.data.filter(r => r.updatedAt >= since);
+      collected.push(...filtered);
+      if (!page.nextCursor) break;
+      // optimisation: si la page contient déjà un updatedAt < since et tri DESC, on peut arrêter
+      if (page.data.length && page.data[page.data.length-1].updatedAt < since) break;
+      cursor = page.nextCursor || undefined;
+    }
+    const ndjson = collected.map(r=> JSON.stringify(r)).join('\n');
+    const manifest = {
+      workspaceId,
+      generatedAt: Date.now(),
+      since,
+      count: collected.length,
+      format: 'resource-ndjson-incremental',
+      version: 1
+    };
+    return { manifest, ndjson, count: collected.length };
+  }
 }
