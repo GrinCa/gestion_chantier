@@ -1,6 +1,11 @@
 # Architectural Decisions (ADR Log)
 Format: reverse chronological (append at top). Keep entries short.
 
+## [2025-09-28] Universal Architecture Phase 1 Completed
+Reason: Extraire logique métier calculatrice du front pour réutilisation future (mobile / backend).
+Decision: Création package core avec Engine/DataManager/Tool; Web consomme core uniquement.
+Consequences: Phase 1 close; fichier de statut détaillé supprimé (contenu synthétisé ici). Prochaines phases: mobile package + tests + sync offline.
+
 ## [2025-09-28] Introduce Optimistic Locking
 Reason: Prevent lost updates & enable future merge strategies.
 Decision: `ResourceService.update` accepts `expectedVersion`; conflict → event + throw.

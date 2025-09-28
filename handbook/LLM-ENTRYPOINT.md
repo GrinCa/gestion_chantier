@@ -80,8 +80,8 @@ Inclure IDs de dette/issue si pertinent. Ex: `feat(core): split node/browser sur
 Uniquement quand un pattern durable change (architecture, workflow, dette prioritaire). Ne pas y injecter des erreurs éphémères (elles vivent dans KNOWN-ISSUES jusqu'à résolution).
 
 ## 12. Dépréciations
-- Ancien: `SESSION-PRIMER.md` (maintenant simple pointeur)
-- Script: `scripts/session-primer.mjs` (gardé transitoirement -> suppression future quand plus utilisé)
+- Ancien: `SESSION-PRIMER.md` (pointeur conservé)
+- Script: `scripts/session-primer.mjs` (supprimé)
 
 ---
 Mainteneur: Minimiser la taille; viser < 120 lignes stables.

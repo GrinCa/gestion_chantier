@@ -1,47 +1,23 @@
-CONSIGNES POUR LES LLM - GESTION CHANTIER
-==========================================
+NO-EMOJI POLICY (Règle Centrale)
+===============================
 
-ATTENTION : POLITIQUE NO-EMOJI STRICTE
-=====================================
+Interdictions (code & config):
+- Pas d'emoji dans .bat, .js, .ts, .tsx, .json, logs, messages d'erreur.
+- Pas d'emoji dans commentaires de code.
 
-Le propriétaire de ce projet a expressément demandé :
-- AUCUN EMOJI dans le code (.bat, .js, .ts, .tsx, .json, etc.)
-- AUCUN EMOJI dans les commentaires de code
-- AUCUN EMOJI dans les fichiers de configuration
-- AUCUN EMOJI dans les messages d'erreur ou de statut
+Exceptions limitées:
+- Markdown documentation (.md) & README: tolérés avec parcimonie.
 
-EXCEPTIONS AUTORISÉES :
-- Documentation Markdown (.md) : Emojis autorisés avec modération
-- README files : Emojis acceptés pour la lisibilité
+Rappels style:
+- Messages: sobres, factuels.
+- Scripts batch: sans décoration.
+- Logs debug: texte brut.
 
-STYLE DE CODE REQUIS :
-- Scripts .bat : Style professionnel, sobre, sans décoration
-- Commentaires : Clairs et factuels, sans emojis
-- Messages utilisateur : Informatifs mais sans emojis
-- Logs et debug : Format technique standard
+Motifs:
+- Compat consoles / CI
+- Lisibilité durable
+- Demande explicite propriétaire
 
-EXEMPLES À ÉVITER :
-❌ echo ✅ Build terminé !
-❌ echo 🚀 Lancement serveur...
-❌ rem 📱 Section mobile
-❌ console.log('🔧 Debug info');
+Si violation détectée → corriger dans le même commit ou revert.
 
-EXEMPLES CORRECTS :
-✅ echo Build terminé
-✅ echo Lancement serveur...
-✅ rem Section mobile
-✅ console.log('Debug info');
-
-RAISONS :
-- Compatibilité terminaux/consoles
-- Lisibilité professionnelle
-- Maintenance plus facile
-- Préférence explicite du développeur
-
-RESPECT ABSOLU DE CETTE RÈGLE REQUIS
-===================================
-
-Cette consigne doit être respectée dans TOUS les futurs développements, 
-modifications, corrections et ajouts de code.
-
-Le non-respect de cette règle constitue une violation des exigences du projet.
+Pour le reste des consignes LLM: voir `handbook/LLM-ENTRYPOINT.md`.
