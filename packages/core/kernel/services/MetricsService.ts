@@ -43,7 +43,7 @@ export interface MetricsSnapshot {
   /** Access denied counters */
   accessDenied?: { total: number; byAction: Record<string, number> };
   /** Export counters */
-  export?: { total: number; byKind: Record<string, { count: number; resources: number; lastDurationMs: number }> };
+  export?: { total: number; byKind: Record<string, { count: number; resources: number; lastDurationMs: number }>; rejected?: number; limits?: { maxResources?: number; maxBytes?: number } };
   /** Import counters */
   import?: { total: number; resources: number; lastDurationMs: number; errors: number };
   /** Migration counters */
@@ -68,6 +68,8 @@ export class MetricsService {
   // export metrics
   private exportByKind: Record<string, { count: number; resources: number; lastDurationMs: number }> = {};
   private exportTotal = 0;
+  private exportRejected = 0;
+  private exportLimits: { maxResources?: number; maxBytes?: number } = {};
   // import metrics
   private importTotal = 0;
   private importResources = 0;
@@ -106,6 +108,10 @@ export class MetricsService {
   }
 
   recordExport(kind: string, resourceCount: number, durationMs: number){
+    if (kind === 'rejected') {
+      this.exportRejected += 1;
+      return;
+    }
     this.exportTotal += 1;
     const k = this.exportByKind[kind] || { count: 0, resources: 0, lastDurationMs: 0 };
     k.count += 1;
@@ -113,6 +119,8 @@ export class MetricsService {
     k.lastDurationMs = durationMs;
     this.exportByKind[kind] = k;
   }
+
+  setExportLimits(limits: { maxResources?: number; maxBytes?: number }){ this.exportLimits = { ...limits }; }
 
   recordImport(resourceCount: number, durationMs: number, errors: number){
     this.importTotal += 1;
@@ -144,8 +152,8 @@ export class MetricsService {
       toolExec: { count: toolSnap.count, avgDurationMs: Math.round(toolSnap.avg), p95DurationMs: Math.round(toolSnap.p95) },
       indexSize: this.indexer?.size(),
       repository: Object.keys(repoOps).length ? { ops: repoOps, totalOps } : undefined,
-      accessDenied: this.accessDeniedTotal ? { total: this.accessDeniedTotal, byAction: { ...this.accessDeniedByAction } } : undefined,
-  export: this.exportTotal ? { total: this.exportTotal, byKind: { ...this.exportByKind } } : undefined,
+    accessDenied: this.accessDeniedTotal ? { total: this.accessDeniedTotal, byAction: { ...this.accessDeniedByAction } } : undefined,
+  export: (this.exportTotal || this.exportRejected) ? { total: this.exportTotal, byKind: { ...this.exportByKind }, rejected: this.exportRejected || undefined, limits: (this.exportLimits.maxResources!=null || this.exportLimits.maxBytes!=null) ? { ...this.exportLimits } : undefined } : undefined,
       import: this.importTotal ? { total: this.importTotal, resources: this.importResources, lastDurationMs: this.importLastDuration, errors: this.importErrors } : undefined,
       migration: this.migrationTotal ? { total: this.migrationTotal, resourcesTouched: this.migrationTouched, lastDurationMs: this.migrationLastDuration } : undefined,
       eventErrors: this.eventErrors || undefined
@@ -159,8 +167,7 @@ export class MetricsService {
     this.repoCounts = {};
     this.accessDeniedTotal = 0;
     this.accessDeniedByAction = {};
-    this.exportByKind = {};
-    this.exportTotal = 0;
+  this.exportByKind = {}; this.exportTotal = 0; this.exportRejected = 0; this.exportLimits = {};
     this.importTotal = 0; this.importResources = 0; this.importLastDuration = 0; this.importErrors = 0;
     this.migrationTotal = 0; this.migrationTouched = 0; this.migrationLastDuration = 0; this.eventErrors = 0;
   }

@@ -46,15 +46,19 @@ export class ExportService {
   private opts: ExportServiceOptions;
   constructor(private repo: ResourceRepository, private policy?: AccessPolicy, private metrics?: MetricsService, options?: ExportServiceOptions) {
     this.opts = { ...resolveDefaultOptions(), ...options };
+    // Publie les limites dans les métriques si dispo
+    this.metrics?.setExportLimits?.({ maxResources: this.opts.maxResources, maxBytes: this.opts.maxBytes });
   }
 
   private enforceLimits(kind: string, count: number, ndjson?: string){
     if (this.opts.maxResources != null && count > this.opts.maxResources) {
       this.metrics?.recordExport('rejected', 0, 0);
+      if (process?.env?.NODE_ENV !== 'test') console.warn(`[export][reject] kind=${kind} count=${count} limit=${this.opts.maxResources}`);
       throw new Error(`[export] resource limit exceeded for ${kind}: ${count} > ${this.opts.maxResources}`);
     }
     if (ndjson && this.opts.maxBytes != null && Buffer.byteLength(ndjson, 'utf8') > this.opts.maxBytes) {
       this.metrics?.recordExport('rejected', 0, 0);
+      if (process?.env?.NODE_ENV !== 'test') console.warn(`[export][reject] kind=${kind} bytes=${Buffer.byteLength(ndjson,'utf8')} limit=${this.opts.maxBytes}`);
       throw new Error(`[export] byte size limit exceeded for ${kind}: ${Buffer.byteLength(ndjson, 'utf8')} > ${this.opts.maxBytes}`);
     }
   }

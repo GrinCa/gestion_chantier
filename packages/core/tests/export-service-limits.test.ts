@@ -30,4 +30,12 @@ describe('ExportService limits', () => {
     const svc = new ExportService(repo as any, undefined, undefined, { maxResources: 3 });
     await expect(svc.exportWorkspaceIncremental('wL', base - 10000, { pageLimit: 2 })).rejects.toThrow(/resource limit exceeded/);
   });
+
+  it('rejects full export exceeding maxBytes', async () => {
+    const repo = createInMemoryRepository();
+    // Construire des payloads volumineux pour dépasser 500 octets
+    for (let i=0;i<20;i++) await repo.save({ id: 'b'+i, type: 'blob', workspaceId: 'wL', createdAt: Date.now(), updatedAt: Date.now(), version: 1, payload: { big: 'x'.repeat(80) } } as any);
+    const svc = new ExportService(repo as any, undefined, undefined, { maxBytes: 500 });
+    await expect(svc.exportWorkspace('wL')).rejects.toThrow(/byte size limit exceeded/);
+  });
 });
