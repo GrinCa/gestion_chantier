@@ -25,13 +25,15 @@ async function main(){
   let failed = false;
   try {
     await engine.createData(project.id, 'note', { text: '' }, 'tool:test'); // invalid (empty)
-  } catch {
+  } catch (e) {
     failed = true;
   }
   console.log('Invalid note rejected:', failed);
   if (!failed) {
-    console.error('Validation test FAILED');
+    console.error('Validation test FAILED (expected throw)');
     process.exit(1);
+  } else {
+    console.log('Validation self-test OK');
   }
 }
 main().catch(e=>{console.error(e);process.exit(1);});
