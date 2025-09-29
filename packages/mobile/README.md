@@ -90,9 +90,14 @@ npm start
 - Device physique via Expo Go  
 - Build IPA : `npm run build:ios`
 
-### 🌐 **Web** (bonus)
-- Expo web : `npm run web`
-- Version PWA de l'app mobile
+### 🌐 **Web / PWA**
+- Dev server : `npm run web`
+- Export statique (PWA) : `npm run build:web`
+- Alias : `npm run export:web` (identique)
+
+Notes:
+- L'ancienne commande `expo build:web` est dépréciée. Remplacée par `expo export --platform web`.
+- Le résultat est généré dans `packages/mobile/web-build/` prêt pour déploiement statique.
 
 ## 🔧 **Configuration**
 
