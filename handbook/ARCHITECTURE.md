@@ -210,6 +210,7 @@ Historical (some resolved by TD-002):
 ## 18. Changelog Anchor (Human + LLM)
 LLM Agents should append summarized deltas here (top):
 ```
+[2025-09-29] Advanced FTS delivered (OR, phrases, highlight, accent folding, AST parser, fallback LIKE) (TD-002).
 [2025-09-28] Added SQLite FTS multi-term search (AND + heuristic scoring), self-test script, PR template + documented mandatory PR process.
 [2025-09-28] Added optimistic locking + resource.conflict events, conflicts surfaced in SyncStatus.
 ```

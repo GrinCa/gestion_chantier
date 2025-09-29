@@ -47,13 +47,15 @@ Base modulaire orientée services (EventBus, ResourceService avec locking optimi
 - HEAD: (short SHA)
 - Build Web: FAIL (KI-001 Readable/stream leak) / ou OK si corrigé
 - Tests: (non lancés | OK | FAIL <résumé>)
-- FTS: Basique (AND multi-termes + heuristique). Améliorations (OR, phrase, highlight) différées.
+- FTS: Avancé (AND implicite + OR explicite + phrases + highlight mémoire). Limites restantes: pas de BM25, pas de proximity, pas de snippet contextuel.
 
 ## 3. Dette & Incidents Prioritaires
 | ID | Type | Résumé | Statut |
 |----|------|--------|--------|
 | TD-001 | Debt | Séparer surface export Node vs Browser | open |
 | KI-001 | Issue | Bundle web casse: dépendances Node importées | open |
+| TD-004 | Debt | Metrics repository latency instrumentation | planned |
+| TD-005 | Debt | Gate lint + tests intégrés | open |
 
 Toujours référencer ID exact dans les commits / prompts.
 
@@ -108,9 +110,9 @@ Inclure IDs de dette/issue si pertinent. Ex: `feat(core): split node/browser sur
 - Export NDJSON: garder flux paresseux (pas d'accumulation mémoire).
 
 ## 10. Prochain Grand Incrément (Contexte Futur, Ne Pas Agir Sans Demande)
-- Avancées FTS: OR, phrase search, highlight.
-- Metrics latence par service.
-- Gate élargi: lint + tests.
+- Metrics latence repository & services (TD-004)
+- Gate élargi: lint + tests (TD-005)
+- Scoring recherche avancé (BM25) & proximity (future TD)
 
 ## 11. Quand Mettre à Jour Ce Fichier ?
 Uniquement quand un pattern durable change (architecture, workflow, dette prioritaire). Ne pas y injecter des erreurs éphémères (elles vivent dans KNOWN-ISSUES jusqu'à résolution).

@@ -127,7 +127,7 @@ Cocher au fur et à mesure ; garder commits atomiques `feat(core): ...`, `chore(
 ---
 ## Dettes (référence croisée TECH-DEBT.md)
 - TD-001 Node/browser split (DONE)
-- TD-002 FTS avancé (OR/phrase/highlight)
+- TD-002 FTS avancé (OR/phrase/highlight) (DONE)
 - TD-003 Auto labels PR
 - TD-004 Metrics latence repo
 - TD-005 Gate lint/tests (partiellement amorcé: tests OK, lint manquant)
