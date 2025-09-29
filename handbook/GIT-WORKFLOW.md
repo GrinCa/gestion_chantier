@@ -99,18 +99,18 @@ Mécanisme:
 - Améliorations (counts en baisse) passent automatiquement.
 - Mise à jour baseline manuelle: `node scripts/lint-gate.mjs --update` (après refactor / cleanup substantiel).
 
-Intégration `pr-check`:
+Pipeline local (`local-check`):
 1. Lint Gate
 2. Build workspaces
 3. Tests core (vitest)
 
-Variables d'environnement pour sauts ciblés (urgence):
+Variables d'environnement (urgence seulement):
 ```
-PR_CHECK_SKIP_LINT=true
-PR_CHECK_SKIP_BUILD=true
-PR_CHECK_SKIP_TESTS=true
+LOCAL_CHECK_SKIP_LINT=true
+LOCAL_CHECK_SKIP_BUILD=true
+LOCAL_CHECK_SKIP_TESTS=true
 ```
-(À n'utiliser qu'en cas d'urgence ou investigation; éviter sur PR standard.)
+(Éviter en usage normal; ne pas committer avec un skip appliqué.)
 
 Objectif: Prévenir augmentation dette lint tout en fournissant feedback rapide (fail rapide). La réduction du stock (1357 → 0) est incrémentale et hors scope gating.
 

@@ -160,7 +160,7 @@ Historical (some resolved by TD-002):
 
 ---
 ## 12bis. Quality Gate & Lint Baseline (TD-005)
-Résumé: Gate lint no‑regression (baseline figée) exécuté avant build/tests dans `pr-check` via `scripts/lint-gate.mjs`. Empêche toute hausse du stock ESLint historique sans bloquer le flux.
+Résumé: Gate lint no‑regression (baseline figée) exécuté avant build/tests dans `local-check` via `scripts/lint-gate.mjs`. Empêche toute hausse du stock ESLint historique sans bloquer le flux.
 
 Contenu détaillé (phases de remédiation, stratégie, objectifs chiffrés) déplacé dans `TECH-DEBT.md` (section TD-005) pour respecter la séparation Architecture (concepts stables) / Opérations de réduction de dette (évolutif).
 
