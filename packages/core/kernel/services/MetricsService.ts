@@ -16,28 +16,30 @@ class DurationBucket {
     if (typeof v !== 'number' || Number.isNaN(v) || v < 0) return;
     this.values.push(v);
     if (this.values.length > this.maxSize) {
-      // drop oldest
+      // drop oldest (bulk splice to keep most recent distribution)
       this.values.splice(0, this.values.length - this.maxSize);
     }
   }
   snapshot(){
     const count = this.values.length;
-    if (!count) return { count: 0, avg: 0, p95: 0 };
+    if (!count) return { count: 0, avg: 0, p50: 0, p95: 0 };
     const sorted = [...this.values].sort((a,b)=> a-b);
-    const p95 = sorted[Math.floor(0.95*(count-1))];
+    const idx = (p: number) => sorted[Math.floor(p * (count - 1))];
+    const p50 = idx(0.50);
+    const p95 = idx(0.95);
     const avg = this.values.reduce((a,b)=> a+b, 0)/count;
-    return { count, avg, p95 };
+    return { count, avg, p50, p95 };
   }
 }
 
 export interface MetricsSnapshot {
   timestamp: number;
   events: Record<string, number>;
-  toolExec: { count: number; avgDurationMs: number; p95DurationMs: number; };
+  toolExec: { count: number; avgDurationMs: number; p50DurationMs: number; p95DurationMs: number; };
   indexSize?: number;
   /** Repository operation latencies */
   repository?: {
-    ops: Record<string, { count: number; avgMs: number; p95Ms: number }>;
+    ops: Record<string, { count: number; avgMs: number; p50Ms: number; p95Ms: number }>;
     totalOps: number;
   };
   /** Access denied counters */
@@ -131,17 +133,17 @@ export class MetricsService {
 
   snapshot(): MetricsSnapshot {
     const toolSnap = this.toolDurations.snapshot();
-    const repoOps: Record<string, { count: number; avgMs: number; p95Ms: number }> = {};
+  const repoOps: Record<string, { count: number; avgMs: number; p50Ms: number; p95Ms: number }> = {};
     let totalOps = 0;
     for (const op of Object.keys(this.repoCounts)) {
       const snap = this.repoDurations[op]?.snapshot();
       totalOps += this.repoCounts[op];
-      repoOps[op] = { count: this.repoCounts[op], avgMs: Math.round(snap.avg||0), p95Ms: Math.round(snap.p95||0) };
+      repoOps[op] = { count: this.repoCounts[op], avgMs: Math.round(snap.avg||0), p50Ms: Math.round(snap.p50||0), p95Ms: Math.round(snap.p95||0) };
     }
     return {
       timestamp: Date.now(),
       events: { ...this.eventCounts },
-      toolExec: { count: toolSnap.count, avgDurationMs: Math.round(toolSnap.avg), p95DurationMs: Math.round(toolSnap.p95) },
+      toolExec: { count: toolSnap.count, avgDurationMs: Math.round(toolSnap.avg), p50DurationMs: Math.round(toolSnap.p50), p95DurationMs: Math.round(toolSnap.p95) },
       indexSize: this.indexer?.size(),
       repository: Object.keys(repoOps).length ? { ops: repoOps, totalOps } : undefined,
       accessDenied: this.accessDeniedTotal ? { total: this.accessDeniedTotal, byAction: { ...this.accessDeniedByAction } } : undefined,

@@ -5,7 +5,7 @@
 | TD-001 | Build | Node vs Browser surface split | DONE | High | Dual bundles + guard script no forbidden modules |
 | TD-002 | Search | Advanced FTS (OR, phrase, highlight) | DONE | Medium | Selftests pass + relevance doc |
 | TD-003 | PR Automation | Auto label application | DONE | Low | Labels auto appliqués sur PR |
-| TD-004 | Metrics | Repository latency instrumentation | PLANNED | Low | p50/p95 exposés Health/Metrics |
+| TD-004 | Metrics | Repository latency instrumentation | DONE | Low | p50/p95 exposés Health/Metrics |
 | TD-005 | Quality Gate | Lint/tests integration | OPEN | Medium | pr-check supporte flags lint/test |
 
 ## TD-001 – Node vs Browser Surface Split
@@ -63,5 +63,25 @@ Exit Criteria Check:
 Deferred:
 - Suppression automatique de labels devenus obsolètes (choix: éviter de retirer un label ajouté manuellement)
 - Mapping score de complexité (ex: profondeur répertoires) -> futur possible
+
+Status: COMPLETE.
+
+## TD-004 – Repository Latency Percentiles
+Problem: Seule la moyenne et le p95 partiel (tool exec + repo) étaient disponibles – pas de p50 consolidé pour observer médiane ni p95 sur toutes les opérations out‑of‑the‑box.
+
+Delivered:
+- Extension `DurationBucket` → calcule maintenant p50 et p95.
+- `MetricsService.snapshot()` expose pour chaque op repo: `avgMs`, `p50Ms`, `p95Ms`.
+- `toolExec` inclut `p50DurationMs` + renommage interne cohérent.
+- `HealthService` relaie ces valeurs (pas de changement de structure additionnel, compat ascendante).
+- Self-test `metrics-selftest.ts` étendu: génère un jeu d'opérations pour valider présence p50/p95.
+
+Exit Criteria Check:
+- p50 / p95 visibles dans snapshot repository & toolExec: OK
+- Test de non-régression enrichi: OK
+
+Deferred:
+- p99 / histogrammes bucketisés (option déjà listée Section Observabilité Phase 2)
+- Export Prometheus / OpenMetrics (hors scope actuel)
 
 Status: COMPLETE.

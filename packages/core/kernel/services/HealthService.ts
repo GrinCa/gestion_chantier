@@ -40,7 +40,7 @@ export class HealthService {
         const m = this.metrics.snapshot();
         snap.metrics = {
           events: m.events,
-          toolExec: m.toolExec,
+          toolExec: m.toolExec, // contient maintenant avg, p50, p95
           indexSize: m.indexSize
         };
         if (m.repository) snap.repositoryLatency = m.repository;
