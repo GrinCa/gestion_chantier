@@ -19,7 +19,8 @@ import { EventBus, MetricsService, HealthService, InMemoryResourceRepository, In
 const CONFIG = {
   API_PORT: parseInt(process.env.API_PORT || process.env.PORT || '3001'),
   AUTH_SANS_MDP: process.env.AUTH_MODE !== 'strict', // true par défaut en dev  
-  DB_NAME: process.env.DB_NAME || './users.db'
+  DB_NAME: process.env.DB_NAME || './users.db',
+  DEV_AUTO_CREATE_USERS: process.env.DEV_AUTO_CREATE_USERS !== 'false' // activé par défaut (mettre false pour désactiver)
 };
 
 
@@ -252,8 +253,31 @@ app.post("/login", (req, res) => {
           row.tools = row.tools ? JSON.parse(row.tools) : [];
           return res.json(row);
         }
-        // Pas d'utilisateur -> 401 (le front proposera l'inscription)
-        return res.status(401).send();
+        // Auto-création en mode dev si activée
+        if (!CONFIG.DEV_AUTO_CREATE_USERS) {
+          return res.status(401).send();
+        }
+        // Déterminer rôle + outils par défaut
+        db.get("SELECT COUNT(*) as adminCount FROM users WHERE role = 'admin'", [], (err2, adminRow) => {
+          if (err2) {
+            console.error('Erreur comptage admin:', err2);
+            return res.status(500).json({ error: 'Erreur serveur' });
+          }
+          const isFirstAdmin = adminRow?.adminCount === 0 && username === 'admin';
+          const role = isFirstAdmin ? 'admin' : 'user';
+            const tools = isFirstAdmin ? ['releve','calculatrice','export'] : ['releve','calculatrice'];
+          db.run(
+            "INSERT INTO users (username, password, role, tools) VALUES (?, ?, ?, ?)",
+            [username, '', role, JSON.stringify(tools)],
+            (insErr) => {
+              if (insErr) {
+                console.error('Erreur création auto utilisateur:', insErr);
+                return res.status(500).json({ error: 'Erreur serveur' });
+              }
+              return res.json({ username, password: '', role, tools });
+            }
+          );
+        });
       }
     );
     return;
