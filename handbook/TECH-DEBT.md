@@ -107,3 +107,19 @@ Deferred / Next:
 - Couverture lint différentielle sur diff précis (git diff parsing) – amélioration potentielle (actuel: full scan + comparaison baseline).
 
 Status: COMPLETE – Quality Gate Phase 1 en place (prévention régression). Transition vers réduction incrémentale hors dette.
+
+Remédiation (plan suivi hors exit criteria initial):
+| Phase | Objectif | Méthode | Seuil Cible |
+|-------|----------|---------|-------------|
+| P0 (livré) | Prévenir régression | Baseline gate | 1357 (stable) |
+| P1 | Réduction bruit facile | `no-unused-vars`, préférences nullish/optional chain | < 1000 |
+| P2 | Durcissement types | Remplacer `any` évidents, introduire types intermédiaires | < 600 |
+| P3 | Sécurité runtime | Résorber `no-unsafe-*` via refactors d'accès | < 300 |
+| P4 | Zéro dette | Reste stylistique / restrictions templates | 0 |
+
+Guidelines:
+- Ne jamais augmenter baseline; seulement la régénérer après réduction significative.
+- Batches limités pour éviter gros diffs.
+- Prioriser règles à forte densité pour impact maximal par patch.
+
+Outils à venir: `lint-report` (tri par volume / règle) – si ajouté, référencer ici.

@@ -132,6 +132,8 @@ Cocher au fur et à mesure ; garder commits atomiques `feat(core): ...`, `chore(
 - TD-004 Metrics latence repo (DONE)
 - TD-005 Gate lint/tests (DONE – baseline no-regression active)
 
+Note Lint (TD-005 suite): Réductions progressives suivre plan phases P1→P4 dans `TECH-DEBT.md` (ne pas recréer plan ici). Avant chaque lot: vérifier diminution `totalProblems` via `npm run lint:gate`.
+
 ## 12. Migration Workspace (Phase 2+)
 - [ ] Web: Mettre à jour hooks (`useDataEngine`, `useCalculatrice`) pour accepter `workspaceId` prop & émettre warning si `projectId` utilisé
 - [ ] Web: Remplacer partout les objets query `{ project_id: ... }` par `{ workspace_id: ... }` (garder mapping interne si server encore /projects)

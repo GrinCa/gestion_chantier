@@ -160,44 +160,11 @@ Historical (some resolved by TD-002):
 
 ---
 ## 12bis. Quality Gate & Lint Baseline (TD-005)
-Rationale: Le code historique contient un stock significatif de violations ESLint (~1357 au 2025-09-29) rendant l'application stricte immédiate bloquante.
+Résumé: Gate lint no‑regression (baseline figée) exécuté avant build/tests dans `pr-check` via `scripts/lint-gate.mjs`. Empêche toute hausse du stock ESLint historique sans bloquer le flux.
 
-Approche Adoptée (Baseline No-Regression):
-- Script `scripts/lint-gate.mjs` exécute ESLint en JSON et agrège les counts par (fichier, règle).
-- Fichier `.lint-baseline.json` versionné capture l'état initial.
-- Gate échoue si un count dépasse la baseline ou si un nouveau fichier introduit une violation.
-- Réductions passent automatiquement (mécanisme d'assainissement progressif).
-- Mise à jour baseline: action manuelle post-réduction majeure (`--update`).
+Contenu détaillé (phases de remédiation, stratégie, objectifs chiffrés) déplacé dans `TECH-DEBT.md` (section TD-005) pour respecter la séparation Architecture (concepts stables) / Opérations de réduction de dette (évolutif).
 
-Cycle Qualité dans `pr-check`:
-1. Lint Gate (fail rapide sans régression permise)
-2. Build monorepo
-3. Tests (core) (Vitest + self-tests buildés)
-
-Remédiation Phasée:
-| Phase | Objectif | Méthode | Seuil Cible |
-|-------|----------|---------|-------------|
-| P0 (livré) | Prévenir régression | Baseline gate | Stable (1357) |
-| P1 | Réduction facile (bruit) | Suppression variables non utilisées, prefer-nullish | < 1000 |
-| P2 | Sécurité types | Remplacer any évidents par types dédiés | < 600 |
-| P3 | Robustesse runtime | Traiter no-unsafe-* (refactor accès dynamiques) | < 300 |
-| P4 | Finalisation | Reste (template-expr restrictions, chain optional) | 0 |
-
-Stratégies de Réduction:
-- Ciblage par règle dominante (trié via futur script `lint-report`).
-- Batches petits (<150 modifications) pour éviter bruit review.
-- Refactor guidé par usage: introduire types intermédiaires (e.g. ResourceIndexEntry) pour éliminer `any` + cascades de no-unsafe.*.
-
-Pourquoi Baseline vs Changed Files Only?
-- Changed-files seul laisse possible dérive sur fichiers rarement touchés (pas de pression de cleanup).
-- Baseline fournit un objectif mesurable global et autorise la dette restante sans la figer.
-
-Future Enhancements:
-- Rapport hebdo (delta baseline vs actuel) via script planifié.
-- Mode diff ciblé (limiter exécution complète si performance devient un facteur).
-- Intégration scoreboard dans Health (exposition totalProblems courant). 
-
-Exit Criteria TD-005: atteint (gate intégré). Réduction continue = activité d'amélioration, hors scope de la dette d'origine.
+Mise à jour baseline (après refactor substantiel): `node scripts/lint-gate.mjs --update`.
 
 ---
 ## 13. Planned Scripts
