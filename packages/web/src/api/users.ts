@@ -5,6 +5,8 @@ export async function deleteFromWhitelist(username: string) {
 
 // ===== API PROJETS ET MESURES =====
 
+import type { GroupeMesures } from '@gestion-chantier/core';
+
 export type Projet = {
   id: string;
   nom: string;
@@ -12,32 +14,6 @@ export type Projet = {
   username: string;
   created_at: number;
   updated_at: number;
-};
-
-export type GroupeMesures = {
-  id: string;
-  label: string;
-  sections: Section[];
-  refToPrevId?: string | null;
-  refToNextId?: string | null;
-  storedRelOffset?: number | null;
-};
-
-export type Section = {
-  id: string;
-  label: string;
-  mesures: Mesure[];
-  createdAt: number;
-};
-
-export type Mesure = {
-  id: string;
-  raw: number;
-  isRef: boolean;
-  createdAt: number;
-  sectionId: string;
-  label?: string;
-  includeInStats?: boolean;
 };
 
 // Créer un projet (nouvelle terminologie workspace avec fallback legacy)

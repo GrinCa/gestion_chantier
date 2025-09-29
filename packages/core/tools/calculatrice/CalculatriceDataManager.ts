@@ -133,7 +133,6 @@ export class CalculatriceDataManager {
   getDefaultData(): GroupeMesures[] {
     return [
       this.createGroupe("Position 1"),
-      this.createGroupe("Position 2")
     ];
   }
 

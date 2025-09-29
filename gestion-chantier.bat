@@ -11,7 +11,7 @@ echo   GESTION CHANTIER - Architecture Universelle
 echo ==========================================
 echo.
 echo  DEMARRAGE RAPIDE:
-echo [1] Start Full Stack (API + Web + Browser)
+echo [1] Start Full Stack (API + Web)
 echo [2] Start Dev Mode (API + Web --host pour mobile)
 echo [3] Start Mobile (Expo + React Native)
 echo [4] Start All (Full Stack + Mobile)
@@ -74,11 +74,10 @@ rem ==========================================
 
 :START_FULL
 echo.
-echo Demarrage Full Stack (API + Web + Browser)
+echo Demarrage Full Stack (API + Web)
 echo ==========================================
 echo.
-
-echo [1/5] Demarrage API Server (hot reload si nodemon present)...
+echo [1/3] Demarrage API Server (hot reload si nodemon present)...
 cd /d "%~dp0\packages\server"
 where nodemon >nul 2>&1
 if %errorlevel%==0 (
@@ -90,39 +89,33 @@ if %errorlevel%==0 (
     start "API Server" cmd /k "echo API Server - Gestion Chantier && node index.js"
 )
 
-echo [2/5] Attente API Server...
-timeout /t 3 /nobreak >nul
+echo [2/3] Demarrage Core Watch (tsc --watch pour packages/core)...
+cd /d "%~dp0\packages\core"
+start "Core Watch" cmd /k "echo Core Watch - tsc --watch && npm run dev && pause"
 
-echo [3/5] Demarrage Web Dev Server (port 5173, HMR actif)...
+echo [3/3] Demarrage Web Dev Server (port 5173, HMR actif)...
 cd /d "%~dp0\packages\web"
-start "Web Dev Server" cmd /k "echo Web Dev Server - Gestion Chantier && npm run dev"
-
-echo [4/5] Attente Web Server...
-timeout /t 5 /nobreak >nul
-
-echo [5/5] Ouverture / Focus navigateur (http://localhost:5173)...
-start "Browser" "http://localhost:5173"
+where nodemon >nul 2>&1
+if %errorlevel%==0 (
+    echo ▶ Utilisation de nodemon pour relancer le dev server quand packages/core/dist change
+    rem nodemon va relancer "npm run dev" quand les fichiers JS de core/dist changent
+    start "Web Dev Server" cmd /k "echo Web Dev Server (watch core) - Gestion Chantier && npx nodemon --watch ..\core\dist --ext js,json --signal SIGTERM --exec \"npm run dev\""
+) else (
+    echo ⚠ nodemon non trouve — demarrage sans watcher (Vite HMR reste actif pour changements front)
+    start "Web Dev Server" cmd /k "echo Web Dev Server - Gestion Chantier && npm run dev"
+)
 
 echo.
-echo 🔁 HOT RELOAD ACTIF:
-echo    - Front: Vite (modifs dans packages/web)
-echo    - API: nodemon (si installe) (modifs dans packages/server)
+echo 🔁 HOT RELOAD SUGGERE:
+echo    - Front: Vite (packages/web) HMR actif
+echo    - Core: tentative d'un "build --watch" pour packages/core (reconstruit dist/ si supporte)
+echo    - API: nodemon (si installe)
 echo.
-echo 💡 Pour activer le hot reload serveur si absent:
-echo    cd packages\server && npm install --save-dev nodemon
-echo    (ou npm i -g nodemon)
-
 echo.
 echo ARCHITECTURE CORE DeMARReE !
 echo.
 echo  Web App: http://localhost:5173
 echo  API Server: http://localhost:3001
-echo.
-echo  TESTS DISPONIBLES:
-echo    → Calculatrice > Test Core (validation imports)
-echo    → Calculatrice > Nouvelle Architecture (interface moderne)
-echo    → Calculatrice > Ancienne Version (legacy)
-echo.
 pause
 goto MAIN_MENU
 

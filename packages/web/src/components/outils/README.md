@@ -21,7 +21,6 @@ Dans chaque dossier d'outil :
 src/components/outils/calculatrice/
   OutilCalculatriceMoyenne.tsx   // UI et logique de la calculatrice
   CalculatriceRoute.tsx          // Page/route, gère l'accès, le retour
-  CalculatriceView.tsx           // (optionnel) Vue avec bouton retour
 ```
 
 ## 4. Intégration dans l'app

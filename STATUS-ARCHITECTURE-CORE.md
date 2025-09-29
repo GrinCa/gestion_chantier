@@ -23,7 +23,6 @@ Extraction complète de la logique métier de la calculatrice du package web ver
 │   └── outils/calculatrice/
 │       ├── CalculatriceSimple.tsx ✅ UI moderne avec core
 │       ├── CalculatriceRoute.tsx  ✅ Navigation multi-versions
-│       └── OutilCalculatriceMoyenne.tsx 📦 Legacy (conservé)
 ```
 
 ### packages/server/ - API backend

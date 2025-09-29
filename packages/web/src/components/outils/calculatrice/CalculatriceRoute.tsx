@@ -1,6 +1,6 @@
 import React from "react";
 import { type Projet } from "../../../api/users";
-import CalculatriceUI from "./CalculatriceUI";
+import OutilMesureMultiRef from "./OutilMesureMultiRef";
 
 /*
   Composant CalculatriceRoute :
@@ -42,7 +42,7 @@ export function CalculatriceRoute({
       </div>
       <div className="flex justify-center">
         <div className="bg-white p-4 md:p-6 rounded-xl shadow w-full max-w-7xl">
-          <CalculatriceUI selectedProject={selectedProject} />
+          <OutilMesureMultiRef selectedProject={selectedProject} />
         </div>
       </div>
     </div>

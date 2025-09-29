@@ -4,9 +4,7 @@
  * Point d'entrée pour l'outil calculatrice
  */
 
-// Classes principales
-export { CalculatriceEngine } from './CalculatriceEngine.js';
-export { CalculatriceDataManager } from './CalculatriceDataManager.js';
+// Export public: uniquement le Tool (engine / data manager sont internes)
 export { CalculatriceTool, calculatriceTool } from './CalculatriceTool.js';
 
 // Types

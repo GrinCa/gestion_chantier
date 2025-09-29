@@ -7,14 +7,7 @@
 // Labels prédéfinis pour les mesures spécifiques
 export const LABELS_PREDEFINIS = [
   "Porte",
-  "Baie vitree", 
-  "Fenêtre",
-  "Cloison",
-  "Mur porteur", 
-  "Placard",
-  "Radiateur",
-  "Escalier",
-  "Autre"
+  "Baie vitree",
 ] as const;
 
 export type LabelPredefini = typeof LABELS_PREDEFINIS[number];

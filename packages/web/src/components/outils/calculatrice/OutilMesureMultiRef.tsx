@@ -1,45 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { saveMesures, loadMesures, type Projet, type GroupeMesures as APIGroupeMesures, type Section as APISection, type Mesure as APIMesure } from '../../../api/users';
-
-// Labels prédéfinis pour les mesures spécifiques
-const LABELS_PREDEFINIS = [
-  "Porte",
-  "Baie vitree",
-  "Fenêtre", 
-  "Cloison",
-  "Mur porteur",
-  "Placard",
-  "Radiateur",
-  "Escalier",
-  "Autre"
-] as const;
-
-// Types
-export interface Mesure {
-  id: string;
-  raw: number;
-  isRef: boolean;
-  createdAt: number;
-  sectionId: string;  // Lien vers la section parente
-  label?: string;     // Label optionnel (ex: "Baie vitrée")
-  includeInStats?: boolean; // Inclure dans les statistiques (défaut: true)
-}
-
-export interface Section {
-  id: string;
-  label: string;
-  mesures: Mesure[];
-  createdAt: number;
-}
-
-export interface GroupeMesures {
-  id: string;
-  label: string;
-  sections: Section[];  // Remplace mesures par sections
-  refToPrevId?: string | null;  // ID de mesure (across all sections)
-  refToNextId?: string | null;  // ID de mesure (across all sections)
-  storedRelOffset?: number | null;
-}
+import { saveMesures, loadMesures, type Projet } from '@gestion-chantier/web/src/api/users';
+import type {GroupeMesures, Section, Mesure} from '@gestion-chantier/core'
+import { LABELS_PREDEFINIS } from '@gestion-chantier/core';
 
 interface OutilMesureMultiRefProps {
   selectedProject: Projet | null;
