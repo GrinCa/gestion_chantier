@@ -21,132 +21,43 @@ Actuellement: (aucune dette ouverte listée ici – ajouter nouvelle entrée ci-
 | TD-005 | Quality Gate | Lint/tests integration | Medium | pr-check + lint gate baseline |
 
 ### Vue Chronologique (résumé)
-- TD-005 (Qualité) → Gate lint baseline no‑regression opérationnel.
-- TD-004 (Metrics) → p50/p95 latences repo & tool exposés.
-- TD-003 (Automation) → Auto-label PR.
-- TD-002 (Search) → FTS avancé (OR, phrases, highlight positions, normalisation).
-- TD-001 (Build) → Séparation surfaces Node / Browser.
+- TD-005 → Gate lint baseline no‑regression.
+- TD-004 → Latences p50/p95 repo & tool.
+- TD-003 → Auto-label PR.
+- TD-002 → FTS avancé (OR / phrase / highlight / accents).
+- TD-001 → Split Node vs Browser.
 
 ---
 
-## TD-001 – Node vs Browser Surface Split
-Problem: Build web tire des modules Node. Plan: dual entries + stubs + conditional exports.
+---
+## Processus & Conventions
 
-Status final:
-- Dual entries + conditional exports
-- Guard runtime
-- Stub browser SQLite + test surface
-- CJS wrapper généré
-- Critères de sortie atteints
+États:
+| État | Rôle | Entrée | Sortie |
+|------|------|--------|--------|
+| OPEN | Définie & priorisée | Ajout Dashboard | Dev démarre → ACTIVE |
+| ACTIVE | En cours | 1er commit | Exit Criteria atteints → COOLDOWN |
+| COOLDOWN | Récemment DONE | Passage ACTIVE | Archive (14j ou >5 cooldown) |
+| ARCHIVED | Historique | Script / manuel | Jamais modifiée |
 
-## TD-002 – Advanced FTS (OR, phrase, highlight)
-Problem: Recherche limitée au multi-terme AND + scoring naïf, pas d'opérateur OR, pas de phrases, pas de highlight.
+Ajout nouvelle dette:
+1. Ajouter ligne dans OPEN.
+2. Définir Exit Criteria clair + priorité.
+3. Lors du premier commit → déplacer en ACTIVE (indiquer progression % dans commit si besoin).
 
-Delivered:
-- QueryParser AST (terms, phrases, operators AND/OR, groupes parenthésés)
-- Normalisation accent folding (NFKD + strip diacritics)
-- InMemoryIndexer: OR explicite, phrases exactes, highlight positions (term & phrase)
-- SQLite repository: traduction AST → requête MATCH (AND/OR, phrases)
-- Fallback LIKE conservant la logique booléenne quand FTS indisponible
-- Scoring heuristique (terms = freq, phrase = freq * longueur) + agrégation AND(sum)/OR(max)
-- Self-test avancé `scripts/fts-advanced-selftest.ts` couvrant : basique, OR, phrases, combinaisons, highlight, edge cases
-- Documentation mise à jour (ARCHITECTURE.md §7) incluant tableau des capacités
+Archivage:
+```
+node scripts/debt-maintain.mjs --archive-stale
+```
 
-Exit Criteria Check:
-- Selftests pass: OK (voir sortie script)
-- Relevance doc: OK (section Index Strategy mise à jour)
+Historique détaillé: voir `TECH-DEBT-ARCHIVE.md` (TD-001 → TD-005 déjà déplacées).
 
-Deferred (hors scope TD-002):
-- BM25 / proximity scoring
-- Field weighting
-- Snippet contextual / windowed highlight
-- Prefix / wildcard matching
+Scripts prévus:
+- `--list` (dashboard console)
+- `--archive-stale` (déplacer COOLDOWN expirées)
+- `--new` (génération stub TD-XXX)
 
-Status: COMPLETE – aucun action immédiate restante.
-
-## TD-003 – Auto Label Application
-Problem: Manque de cohérence et rapidité dans la catégorisation des PR (revue plus lente, filtres imprécis).
-
-Delivered:
-- Workflow GitHub Actions `auto-label.yml` (événements: opened / synchronize / reopened / ready_for_review)
-- Script `scripts/apply-pr-labels.mjs` (Node 18) réutilisant la config `pr-automation.config.json`
-- Catégories → labels `scope:<cat>` (docs, scripts, server, frontend, mobile, core, web, search)
-- Détection type commit → `type:<feat|fix|docs|chore|refactor|test|perf|ci|build>`
-- Heuristiques taille additions → `size:s|m|l|xl`
-- Règles risque: volume (`risk:high`) ou surface sensible (`risk:elevated`)
-- Détection dettes / issues via motifs `TD-00X` → `debt:TD-00X`, `KI-00X` → `issue:KI-00X`
-- Création automatique des labels manquants (couleur neutre)
-- Idempotent (n'ajoute pas les labels déjà présents)
-
-Exit Criteria Check:
-- PR reçoit automatiquement les labels lors des mises à jour: OK
-
-Deferred:
-- Suppression automatique de labels devenus obsolètes (choix: éviter de retirer un label ajouté manuellement)
-- Mapping score de complexité (ex: profondeur répertoires) -> futur possible
-
-Status: COMPLETE.
-
-## TD-004 – Repository Latency Percentiles
-Problem: Seule la moyenne et le p95 partiel (tool exec + repo) étaient disponibles – pas de p50 consolidé pour observer médiane ni p95 sur toutes les opérations out‑of‑the‑box.
-
-Delivered:
-- Extension `DurationBucket` → calcule maintenant p50 et p95.
-- `MetricsService.snapshot()` expose pour chaque op repo: `avgMs`, `p50Ms`, `p95Ms`.
-- `toolExec` inclut `p50DurationMs` + renommage interne cohérent.
-- `HealthService` relaie ces valeurs (pas de changement de structure additionnel, compat ascendante).
-- Self-test `metrics-selftest.ts` étendu: génère un jeu d'opérations pour valider présence p50/p95.
-
-Exit Criteria Check:
-- p50 / p95 visibles dans snapshot repository & toolExec: OK
-- Test de non-régression enrichi: OK
-
-Deferred:
-- p99 / histogrammes bucketisés (option déjà listée Section Observabilité Phase 2)
-- Export Prometheus / OpenMetrics (hors scope actuel)
-
-Status: COMPLETE.
-
-## TD-005 – Quality Gate (Lint / Tests Integration)
-Problem: Aucune barrière de régression lint – exécution brute (`eslint .`) échouait (~1350 violations) bloquant adoption. Besoin d'une approche progressive sans freiner le flux.
-
-Delivered:
-- Script `scripts/lint-gate.mjs` implémentant un mode baseline no‑regression.
-- Génération fichier `.lint-baseline.json` (snapshot counts par (fichier, règle)).
-- Commande npm `lint:gate` utilisée par `pr-check` (lint avant build/tests).
-- Politique: aucun (file,rule) ne doit dépasser son count baseline; nouveaux fichiers doivent être propres; améliorations (réduction) acceptées sans mise à jour.
-- Option mise à jour contrôlée: `node scripts/lint-gate.mjs --update` (ou env `LINT_GATE_UPDATE=1`) pour régénérer baseline après refactor massif.
-- Intégration dans `scripts/pr-check.mjs` (step "Lint Gate").
-
-Exit Criteria Check:
-- pr-check exécute lint gate + tests: OK
-- Flags de skip (`PR_CHECK_SKIP_LINT`, `PR_CHECK_SKIP_BUILD`, `PR_CHECK_SKIP_TESTS`) fonctionnels: OK
-
-Deferred / Next:
-- Réduire progressivement le total (1357 → 0) via refactors ciblés (pas partie de cette dette, suivi continu Section 10 / Section 11 selon surface).
-- Ajout d'un rapport delta positif automatisé (stat slack / console détaillée) – optionnel futur.
-- Couverture lint différentielle sur diff précis (git diff parsing) – amélioration potentielle (actuel: full scan + comparaison baseline).
-
-Status: COMPLETE – Quality Gate Phase 1 en place (prévention régression). Transition vers réduction incrémentale hors dette.
-
-Remédiation (plan suivi hors exit criteria initial):
-| Phase | Objectif | Méthode | Seuil Cible |
-|-------|----------|---------|-------------|
-| P0 (livré) | Prévenir régression | Baseline gate | 1357 (stable) |
-| P1 | Réduction bruit facile | `no-unused-vars`, préférences nullish/optional chain | < 1000 |
-| P2 | Durcissement types | Remplacer `any` évidents, introduire types intermédiaires | < 600 |
-| P3 | Sécurité runtime | Résorber `no-unsafe-*` via refactors d'accès | < 300 |
-| P4 | Zéro dette | Reste stylistique / restrictions templates | 0 |
-
-Guidelines:
-- Ne jamais augmenter baseline; seulement la régénérer après réduction significative.
-- Batches limités pour éviter gros diffs.
-- Prioriser règles à forte densité pour impact maximal par patch.
-
-Outils à venir: `lint-report` (tri par volume / règle) – si ajouté, référencer ici.
+Politique LLM: Charger uniquement ce fichier pour l’état courant; ouvrir archive seulement si une ancienne TD est requise.
 
 ---
-Fin du registre actuel. Pour ajouter une nouvelle dette:
-1. Ajouter ligne dans tableau OPEN (section 0) avec ID suivant (ex: TD-006).
-2. Créer section détaillée plus bas sur le modèle existant (Problem / Delivered / Exit Criteria / Deferred / Status).
-3. Mettre à jour le résumé chronologique si pertinent.
+Document minimisé pour rester léger (<10KB). Détails historiques → fichier d'archive.
