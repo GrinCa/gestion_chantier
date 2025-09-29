@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { OutilCalculatriceMoyenne } from "./OutilCalculatriceMoyenne";
+// Ancienne implémentation remplacée par CalculatriceUI (fusion avec hook avancé)
+// import { OutilCalculatriceMoyenne } from "./OutilCalculatriceMoyenne";
 import { CalculatriceSimple } from "./CalculatriceSimple";
 import { TestCoreImport } from "../../TestCoreImport";
 import { type Projet } from "../../../api/users";
+import CalculatriceUI from "./CalculatriceUI";
 
 /*
   Composant CalculatriceRoute :
@@ -101,14 +103,8 @@ export function CalculatriceRoute({
 
       {version === "legacy" && (
         <div className="flex justify-center">
-          <div className="bg-white p-6 rounded-xl shadow w-full max-w-md">
-            <OutilCalculatriceMoyenne 
-              selectedProject={selectedProject}
-              // Désactive la sélection de projet si l'utilisateur connecté est admin (il ne gère pas les projets ici)
-              onSelectProject={onSelectProject}
-              onShowProjectManager={onShowProjectManager}
-              onBack={onBack} 
-            />
+          <div className="bg-white p-6 rounded-xl shadow w-full max-w-7xl">
+            <CalculatriceUI selectedProject={selectedProject} />
           </div>
         </div>
       )}
