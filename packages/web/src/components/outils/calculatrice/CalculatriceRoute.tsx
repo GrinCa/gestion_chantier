@@ -1,8 +1,4 @@
-import React, { useState } from "react";
-// Ancienne implémentation remplacée par CalculatriceUI (fusion avec hook avancé)
-// import { OutilCalculatriceMoyenne } from "./OutilCalculatriceMoyenne";
-import { CalculatriceSimple } from "./CalculatriceSimple";
-import { TestCoreImport } from "../../TestCoreImport";
+import React from "react";
 import { type Projet } from "../../../api/users";
 import CalculatriceUI from "./CalculatriceUI";
 
@@ -25,15 +21,12 @@ export function CalculatriceRoute({
   onShowProjectManager?: () => void;
   onBack: () => void;
 }) {
-  const [version, setVersion] = useState<"legacy" | "core" | "test">("test");
-
   if (!userTools.includes("calculatrice")) {
     return <div className="p-4">Pas d'accès à cette fonction.</div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      {/* Header de navigation */}
       <div className="mb-4 flex items-center gap-4">
         <button
           onClick={onBack}
@@ -41,77 +34,17 @@ export function CalculatriceRoute({
         >
           ← Retour
         </button>
-        
-        <div className="flex gap-2 bg-white rounded-lg p-1 shadow">
-          <button
-            onClick={() => setVersion("test")}
-            className={`px-3 py-1 rounded text-sm ${
-              version === "test" ? "bg-blue-500 text-white" : "text-gray-600"
-            }`}
-          >
-            🧪 Test Core
-          </button>
-          <button
-            onClick={() => setVersion("core")}
-            className={`px-3 py-1 rounded text-sm ${
-              version === "core" ? "bg-green-500 text-white" : "text-gray-600"
-            }`}
-            title="Nouvelle architecture avec l'interface avancée (ancienne UI modernisée)"
-          >
-            ✅ Nouvelle Architecture
-          </button>
-          <button
-            onClick={() => setVersion("legacy")}
-            className={`px-3 py-1 rounded text-sm ${
-              version === "legacy" ? "bg-yellow-500 text-white" : "text-gray-600"
-            }`}
-            title="Ancienne version simplifiée (mode debug / core brut)"
-          >
-            🧪 Mode Simple (Core brut)
-          </button>
-        </div>
-
-        {/* Affichage projet uniquement pour un utilisateur final */}
         {selectedProject && (
           <div className="text-sm text-gray-600">
             Projet: <span className="font-medium">{selectedProject.nom}</span>
           </div>
         )}
       </div>
-
-      {/* Contenu selon la version */}
-      {version === "test" && (
-        <div className="space-y-4">
-          <TestCoreImport />
-          <div className="p-4 bg-white rounded-lg shadow">
-            <h2 className="text-lg font-bold mb-2">🔬 Test de l'architecture</h2>
-            <p className="text-gray-600 mb-4">
-              Ce test vérifie que le package core peut être importé et utilisé correctement.
-            </p>
-            <p className="text-sm text-blue-600">
-              ✅ Build package web: SUCCESS<br/>
-              ✅ Import package core: OK<br/>
-              🔄 Test runtime: En cours...
-            </p>
-          </div>
+      <div className="flex justify-center">
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow w-full max-w-7xl">
+          <CalculatriceUI selectedProject={selectedProject} />
         </div>
-      )}
-
-      {version === "core" && (
-        <div className="flex justify-center">
-          <div className="bg-white p-6 rounded-xl shadow w-full max-w-7xl">
-            {/* Nouvelle architecture = ancienne interface visuelle branchée sur le hook avancé */}
-            <CalculatriceUI selectedProject={selectedProject} />
-          </div>
-        </div>
-      )}
-
-      {version === "legacy" && (
-        <div className="max-w-7xl mx-auto">
-          {/* Mode simple de démonstration (ancienne implémentation core directe) */}
-          <CalculatriceSimple selectedProject={selectedProject} />
-        </div>
-      )}
+      </div>
     </div>
   );
 }
