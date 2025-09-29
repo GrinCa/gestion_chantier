@@ -2,9 +2,15 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+// Alias sqlite3 -> stub (empêche inclusion modules Node dans bundle browser)
+const alias = {
+  sqlite3: '/src/stubs/sqlite3-browser-stub.ts'
+};
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  resolve: { alias },
   
   // Configuration pour les variables d'environnement
   define: {
