@@ -57,6 +57,25 @@ export const CalculatriceUI: React.FC<CalculatriceUIProps> = ({ selectedProject 
   const [showControlsForMesure, setShowControlsForMesure] = useState<string | null>(null);
   const [pendingLabels, setPendingLabels] = useState<Record<string, string>>({});
   const [candidateReferenceId, setCandidateReferenceId] = useState<string | null>(null);
+  // Dev helper visibility
+  const [showCodePanel, setShowCodePanel] = useState(false);
+
+  // Build vscode file URI (Windows path -> forward slashes)
+  const toVsCodeUri = (absPath: string, line?: number, col?: number) => {
+    const normalized = absPath.replace(/\\/g, '/');
+    return `vscode://file/${normalized}${line ? `:${line}${col ? `:${col}` : ''}` : ''}`;
+  };
+
+  // Liste des fichiers pertinents (ajoute / ajuste les numéros si besoin)
+  const codeLinks = [
+    { label: 'UI (ce fichier)', path: 'c:/Users/Julien/Documents/Script/gestion_chantier/packages/web/src/components/outils/calculatrice/CalculatriceUI.tsx' },
+    { label: 'Hook avancé', path: 'c:/Users/Julien/Documents/Script/gestion_chantier/packages/web/src/hooks/useCalculatriceAdvanced.ts' },
+    { label: 'Hook simple', path: 'c:/Users/Julien/Documents/Script/gestion_chantier/packages/web/src/hooks/useCalculatrice.tsx' },
+    { label: 'Core Tool', path: 'c:/Users/Julien/Documents/Script/gestion_chantier/packages/core/tools/calculatrice/CalculatriceTool.ts' },
+    { label: 'Core Engine', path: 'c:/Users/Julien/Documents/Script/gestion_chantier/packages/core/tools/calculatrice/CalculatriceEngine.ts' },
+    { label: 'Core DataManager', path: 'c:/Users/Julien/Documents/Script/gestion_chantier/packages/core/tools/calculatrice/CalculatriceDataManager.ts' },
+    { label: 'Types', path: 'c:/Users/Julien/Documents/Script/gestion_chantier/packages/core/tools/calculatrice/types.ts' }
+  ];
 
   // ===== Helpers =====
   const parsePad = useCallback((s: string): number | null => {
@@ -96,7 +115,7 @@ export const CalculatriceUI: React.FC<CalculatriceUIProps> = ({ selectedProject 
   return (
     <div className="p-4 rounded-xl border bg-white shadow max-w-7xl mx-auto flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-2 relative">
         <div>
           <h2 className="text-xl font-bold">Mesures multi-références</h2>
           <div className="text-sm text-gray-600">📁 {selectedProject.nom}</div>
@@ -119,6 +138,37 @@ export const CalculatriceUI: React.FC<CalculatriceUIProps> = ({ selectedProject 
             disabled={!currentGroupId || groups.length <= 1}
             className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
           >Supprimer</button>
+          {import.meta.env.DEV && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowCodePanel(v => !v)}
+                className="px-3 py-1 text-sm rounded bg-gray-700 text-white hover:bg-gray-800"
+                title="Ouvrir les fichiers sources dans VS Code"
+              ></button>
+              {showCodePanel && (
+                <div className="absolute right-0 mt-2 z-50 w-72 max-h-96 overflow-auto bg-white border shadow-lg rounded-md p-2 text-xs">
+                  <div className="flex items-center justify-between mb-1 font-semibold text-gray-700">
+                    <span>Teleport Code (VS Code)</span>
+                    <button onClick={() => setShowCodePanel(false)} className="text-gray-500 hover:text-black">✕</button>
+                  </div>
+                  <p className="mb-2 text-[10px] text-gray-500 leading-snug">Clique sur un lien pour ouvrir le fichier dans VS Code (schéma vscode://). Confirme l'ouverture si le navigateur demande.</p>
+                  <ul className="space-y-1">
+                    {codeLinks.map(link => (
+                      <li key={link.path}>
+                        <a
+                          href={toVsCodeUri(link.path)}
+                          className="block px-2 py-1 rounded hover:bg-gray-100 text-blue-600 break-all"
+                          onClick={() => setShowCodePanel(false)}
+                        >{link.label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2 pt-2 border-t text-[10px] text-gray-500">Ajuster les chemins si ton dossier a changé.</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
