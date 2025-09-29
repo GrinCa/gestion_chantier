@@ -150,12 +150,16 @@ export function useCalculatriceAdvanced(opts: UseCalculatriceAdvancedOptions = {
 
   // ===== OPERATIONS MESURES =====
   const addMesure = useCallback((raw: number) => {
-    if (!currentGroup || !currentSection) return { error: 'Aucune position ou section active' };
-    if (!isLastGroup(currentGroup.id)) return { error: 'Ajout uniquement sur la dernière position' };
+    if (!currentGroup || !currentSection) {
+      const msg = 'Aucune position ou section active';
+      setLastError(msg);
+      return { error: msg };
+    }
+    // Ancienne contrainte supprimée: on autorise désormais l'ajout sur n'importe quelle position sélectionnée.
     const updated = calculatriceTool.addMesure(groups, currentGroup.id, currentSection.id, raw);
     updateGroups(updated);
     return { ok: true };
-  }, [groups, currentGroup, currentSection, isLastGroup, updateGroups]);
+  }, [groups, currentGroup, currentSection, updateGroups]);
 
   const removeMesure = useCallback((groupId: string, mesureId: string) => {
     const updated = calculatriceTool.removeMesure(groups, groupId, mesureId);
