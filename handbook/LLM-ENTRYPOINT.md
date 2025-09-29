@@ -36,7 +36,7 @@ Context:
 Si un de ces éléments ne peut être obtenu, indiquer `UNK` au lieu d'inventer.
 
 
-Ce fichier est la SEULE source à coller / condenser au démarrage d'une nouvelle session LLM. Il remplace `SESSION-PRIMER.md` et le script `session-primer.mjs` (dépréciés). Objectif: contexte suffisant pour agir immédiatement sans relecture intégrale du handbook.
+Ce fichier est la SEULE source à coller / condenser au démarrage d'une nouvelle session LLM. (Ancien `SESSION-PRIMER.md` et script `session-primer.mjs` supprimés TD-006.)
 
 ---
 ## 1. Vision Courte du Projet
