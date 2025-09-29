@@ -18,7 +18,7 @@ Actuellement: 1 dette ouverte.
 | TD-002 | Search | Advanced FTS (OR, phrase, highlight) | Medium | Selftests pass + relevance doc |
 | TD-003 | PR Automation | Auto label application | Low | Labels auto appliqués sur PR |
 | TD-004 | Metrics | Repository latency instrumentation | Low | p50/p95 exposés Health/Metrics |
-| TD-005 | Quality Gate | Lint/tests integration | Medium | pr-check + lint gate baseline |
+| TD-005 | Quality Gate | Lint/tests integration | Medium | local-check + lint gate baseline |
 
 ### Vue Chronologique (résumé)
 - TD-005 → Gate lint baseline no‑regression.
@@ -78,7 +78,7 @@ Surface actuelle:
 | create-pr.mjs | Ouvre une PR via API (supposé) | Faible | Supprimer |
 | update-pr.mjs | Mets à jour description/labels | Faible | Supprimer |
 | apply-pr-labels.mjs | Applique labels PR (TD-003) | Faible | Supprimer (archivé via TD-003) |
-| pr-check.mjs | Pipeline lint → build → tests | Moyenne | Renommer `local-check.mjs` + simplifier sortie |
+| local-check.mjs (ex pr-check) | Pipeline lint → build → tests | Moyenne | (Renommage effectué) |
 | lint-gate.mjs | Lint baseline no-regression | Haute | Conserver |
 | debt-maintain.mjs | Gestion lifecycle dettes | Haute | Étendre (implémenter --new / --archive-stale) |
 | prepare-handoff.mjs | Génère bloc handoff brut | Moyenne | Fusionner logique dans save-session |
@@ -86,17 +86,17 @@ Surface actuelle:
 | session-primer.mjs | Ancien primer (déprécié) | Nulle | Supprimer |
 
 Plan Remédiation (phases):
-1. Phase A (Nettoyage): Supprimer scripts PR + session-primer.
-2. Phase B (Renommage): Copier `pr-check.mjs` → `local-check.mjs` (adapter README/doc) puis supprimer ancien nom.
-3. Phase C (Fusion): Intégrer génération handoff de `prepare-handoff.mjs` directement dans `save-session.mjs` (option `--raw` pour sortie sans autosave) puis supprimer `prepare-handoff.mjs`.
+1. Phase A (Nettoyage): Supprimer scripts PR + session-primer. ✔
+2. Phase B (Renommage): pr-check → local-check (docs + scripts). ✔
+3. Phase C (Fusion): Intégrer génération handoff de `prepare-handoff.mjs` dans `save-session.mjs` (option `--raw`) puis supprimer `prepare-handoff.mjs`.
 4. Phase D (Étendre debt-maintain): Implémenter `--new` (scaffold TD-XXX) et `--archive-stale` (cooldown >14j).
 
 Exit Criteria (détaillé):
-- create-pr.mjs, update-pr.mjs, apply-pr-labels.mjs, session-primer.mjs supprimés.
-- pr-check.mjs remplacé par local-check.mjs (scripts npm mis à jour).
-- prepare-handoff.mjs supprimé, fonctionnalité accessible via `node scripts/save-session.mjs --raw`.
-- README / GIT-WORKFLOW / LLM-ENTRYPOINT ne mentionnent plus PR / scripts retirés.
-- debt-maintain fournit `--list --new --archive-stale` opérationnels.
+- (Phase A) create-pr.mjs, update-pr.mjs, apply-pr-labels.mjs, session-primer.mjs supprimés. ✔
+- (Phase B) pr-check.mjs remplacé par local-check.mjs (scripts npm mis à jour). ✔
+- (Phase C) prepare-handoff.mjs supprimé, fonctionnalité accessible via `node scripts/save-session.mjs --raw`.
+- (Phase D) debt-maintain fournit `--list --new --archive-stale` opérationnels.
+- README / GIT-WORKFLOW / LLM-ENTRYPOINT ne mentionnent plus scripts retirés (en cours au fil des phases).
 
 Notes:
 - TD-003 (auto-label) reste archivée; suppression des artefacts ne remet pas en cause l'historique.
