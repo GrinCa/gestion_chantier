@@ -3,9 +3,11 @@
  * ---------------------------------------------------------------------------
  * Implémentation expérimentale d'un ResourceRepository persistant via sqlite3.
  * Version Lite: opérations basiques get/save/delete/list (liste sans filtres avancés au début).
+ * Version 2: Support avancé FTS avec opérateurs OR, phrases et highlight.  
  */
 import type { Resource } from '../domain/Resource.js';
 import type { QueryOptions, ResourceListResult, ResourceRepository, QueryFilter } from './ResourceRepository.js';
+import { QueryParser, type ParsedQuery, type HighlightMatch } from '../indexer/QueryParser.js';
 import sqlite3 from 'sqlite3';
 
 export interface SQLiteResourceRepositoryOptions {
@@ -15,9 +17,11 @@ export interface SQLiteResourceRepositoryOptions {
 export class SQLiteResourceRepository implements ResourceRepository {
   private db: sqlite3.Database;
   private ftsReady = false;
+  private queryParser: QueryParser;
   private static CURRENT_SCHEMA_VERSION = 2; // bump when schema changes
   constructor(opts?: SQLiteResourceRepositoryOptions){
     this.db = new sqlite3.Database(opts?.filename || ':memory:');
+    this.queryParser = new QueryParser();
     this.init();
   }
   private init(){
@@ -111,17 +115,38 @@ export class SQLiteResourceRepository implements ResourceRepository {
     // Decide if we will run FTS path
     if (q.fullText) {
       const raw = q.fullText.trim();
-      const tokens = raw.split(/\s+/).filter(t=> t.length);
-      const normalized = tokens.join(' ');
-      if (this.ftsReady && tokens.length) {
-        useFts = true;
-        ftsTerm = tokens.length > 1 ? tokens.map(t=> t).join(' AND ') : tokens[0];
-      } else {
-        // Fallback LIKE across tokens (AND semantics): each token must appear in payload OR metadata OR type
-        for (const t of tokens) {
-          where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
-          const like = `%${t}%`;
-          params.push(like, like, like);
+      if (this.ftsReady) {
+        try {
+          // Nouveau parser avancé
+          const parsedQuery = this.queryParser.parse(raw);
+          const queryResult = this.buildFtsQuery(parsedQuery);
+          if (queryResult) {
+            ftsTerm = queryResult;
+            useFts = true;
+          }
+        } catch (parseError) {
+          // Fallback vers l'ancienne logique en cas d'erreur de parsing
+          const tokens = raw.split(/\s+/).filter(t=> t.length);
+          if (tokens.length) {
+            useFts = true;
+            ftsTerm = tokens.length > 1 ? tokens.map(t=> t).join(' AND ') : tokens[0];
+          }
+        }
+      }
+      
+      if (!useFts) {
+        // Fallback LIKE avec support du nouveau parser
+        try {
+          const parsedQuery = this.queryParser.parse(raw);
+          this.addLikeFilters(parsedQuery, where, params);
+        } catch {
+          // Double fallback vers logique legacy
+          const tokens = raw.split(/\s+/).filter(t=> t.length);
+          for (const t of tokens) {
+            where.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
+            const like = `%${t}%`;
+            params.push(like, like, like);
+          }
         }
       }
     }
@@ -270,6 +295,89 @@ export class SQLiteResourceRepository implements ResourceRepository {
       metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
       payload: row.payload ? JSON.parse(row.payload) : undefined
     };
+  }
+
+  /**
+   * Convertit une ParsedQuery en requête FTS5 compatible
+   */
+  private buildFtsQuery(parsedQuery: ParsedQuery): string | null {
+    if (parsedQuery.nodes.length === 0) return null;
+    
+    const buildNodeQuery = (nodes: any[]): string => {
+      const parts: string[] = [];
+      let currentOperator = 'AND';
+      
+      for (const node of nodes) {
+        if (node.type === 'operator') {
+          currentOperator = node.operator;
+          continue;
+        }
+        
+        let part = '';
+        if (node.type === 'term') {
+          part = `"${node.value}"`;
+        } else if (node.type === 'phrase') {
+          part = `"${node.value}"`;
+        } else if (node.type === 'group') {
+          const groupQuery = buildNodeQuery(node.nodes);
+          if (groupQuery) {
+            part = `(${groupQuery})`;
+          }
+        }
+        
+        if (part) {
+          if (parts.length > 0) {
+            parts.push(currentOperator === 'OR' ? 'OR' : 'AND');
+          }
+          parts.push(part);
+        }
+      }
+      
+      return parts.join(' ');
+    };
+    
+    return buildNodeQuery(parsedQuery.nodes);
+  }
+
+  /**
+   * Ajoute des filtres LIKE pour le fallback sans FTS
+   */
+  private addLikeFilters(parsedQuery: ParsedQuery, where: string[], params: any[]): void {
+    const addNodeFilters = (nodes: any[], operator: 'AND' | 'OR' = 'AND'): void => {
+      const conditions: string[] = [];
+      let currentOp = operator;
+      
+      for (const node of nodes) {
+        if (node.type === 'operator') {
+          currentOp = node.operator;
+          continue;
+        }
+        
+        if (node.type === 'term') {
+          const like = `%${node.value}%`;
+          conditions.push('(payload LIKE ? OR metadata LIKE ? OR type LIKE ?)');
+          params.push(like, like, like);
+        } else if (node.type === 'phrase') {
+          const like = `%${node.value}%`;
+          conditions.push('(payload LIKE ? OR metadata LIKE ?)');
+          params.push(like, like);
+        } else if (node.type === 'group') {
+          // Récursion pour les groupes - ajout temporaire à where
+          const tempWhere: string[] = [];
+          const tempParams: any[] = [];
+          addNodeFilters(node.nodes, node.operator);
+          if (tempWhere.length > 0) {
+            conditions.push(`(${tempWhere.join(` ${currentOp} `)})`);
+          }
+        }
+      }
+      
+      if (conditions.length > 0) {
+        where.push(`(${conditions.join(` ${currentOp} `)})`);
+      }
+    };
+    
+    addNodeFilters(parsedQuery.nodes, parsedQuery.defaultOperator);
   }
 }
 
