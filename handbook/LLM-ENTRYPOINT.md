@@ -124,7 +124,9 @@ Avant de quitter une session active, générer un bloc de handoff:
 Option manuelle (fine):
   1. `node scripts/prepare-handoff.mjs`
   2. Compléter ProposedDeliverable + Risks.
-  3. Coller le bloc final.
+  3. Vérifier `git status -s` (doit être propre après le commit handoff).
+  4. `git push origin <branch>` (OBLIGATOIRE avant de quitter) – sinon le prochain agent ne verra pas les changements.
+  5. Coller le bloc final dans le dernier message.
 
 Option automatisée (recommandée):
   1. `node scripts/save-session.mjs`
@@ -132,7 +134,8 @@ Option automatisée (recommandée):
      - Génère handoff + suggestion deliverable (TD-001)
      - Produit snippet démarrage prochaine session
      - Écrit `handbook/LAST-HANDOFF.md`
-  2. Copier le snippet "NEXT SESSION" dans le dernier message.
+  2. `git push origin <branch>` (si le script a committé)
+  3. Copier le snippet "NEXT SESSION" dans le dernier message.
 
 Note: Ancien fichier `HANDFOFF.md` supprimé (intégré ici le 2025-09-28) pour éviter duplication.
 
@@ -152,6 +155,8 @@ Handoff:
     3. ...
   ProposedDeliverable: feat(core): node/browser export skeleton (TD-001, KI-001)
   Risks: fuite import Node dans bundle web
+
+Rappel impératif: Aucun handoff n'est valide tant que le dernier commit local n'est pas poussé.
 ```
 La prochaine session commence en appliquant la Checklist 0 puis en validant que ce bloc est encore cohérent (sinon le régénérer).
 
