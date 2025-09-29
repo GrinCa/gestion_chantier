@@ -236,8 +236,30 @@ app.put("/users/:username/tools", (req, res) => {
 // Authentification
 app.post("/login", (req, res) => {
   let { username, password } = req.body;
-  username = username.toLowerCase();
-  // Vérifie d'abord la whitelist
+  username = (username || '').toLowerCase();
+
+  // MODE DEV (AUTH_SANS_MDP): on ignore complètement la whitelist
+  if (CONFIG.AUTH_SANS_MDP) {
+    db.get(
+      "SELECT * FROM users WHERE username = ?",
+      [username],
+      (err, row) => {
+        if (err) {
+          console.error("Erreur SQLite:", err);
+          return res.status(500).json({ error: "Erreur serveur" });
+        }
+        if (row) {
+          row.tools = row.tools ? JSON.parse(row.tools) : [];
+          return res.json(row);
+        }
+        // Pas d'utilisateur -> 401 (le front proposera l'inscription)
+        return res.status(401).send();
+      }
+    );
+    return;
+  }
+
+  // MODE STRICT: whitelist obligatoire
   db.get(
     "SELECT username FROM whitelist WHERE username = ?",
     [username],
@@ -247,30 +269,9 @@ app.post("/login", (req, res) => {
         return res.status(500).json({ error: "Erreur serveur" });
       }
       if (!whitelistRow) {
-        // Identifiant non autorisé
         return res.status(403).json({ error: "Identifiant non autorisé" });
       }
-      if (CONFIG.AUTH_SANS_MDP) {
-        // Auth sans mot de passe : on ignore le champ password
-        db.get(
-          "SELECT * FROM users WHERE username = ?",
-          [username],
-          (err, row) => {
-            if (err) {
-              console.error("Erreur SQLite:", err);
-              return res.status(500).json({ error: "Erreur serveur" });
-            }
-            if (row) {
-              row.tools = row.tools ? JSON.parse(row.tools) : [];
-              res.json(row);
-            } else {
-              res.status(401).send();
-            }
-          }
-        );
-        return;
-      }
-      // Auth classique avec mot de passe
+      // Auth classique avec mot de passe en mode strict
       db.get(
         "SELECT * FROM users WHERE username = ? AND password = ?",
         [username, password],
@@ -279,12 +280,12 @@ app.post("/login", (req, res) => {
             console.error("Erreur SQLite:", err);
             return res.status(500).json({ error: "Erreur serveur" });
           }
-          if (row) {
-            row.tools = row.tools ? JSON.parse(row.tools) : [];
-            res.json(row);
-          } else {
-            res.status(401).send();
-          }
+            if (row) {
+              row.tools = row.tools ? JSON.parse(row.tools) : [];
+              res.json(row);
+            } else {
+              res.status(401).send();
+            }
         }
       );
     }
