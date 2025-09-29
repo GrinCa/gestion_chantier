@@ -5,10 +5,11 @@ Ce fichier distingue clairement ce qui RESTE À FAIRE (OPEN) de ce qui est ACHEV
 ## 0. Tableau de Bord Synthétique
 
 ### OPEN (à traiter)
-Actuellement: 0 dette ouverte.
+Actuellement: 1 dette ouverte.
 
 | ID | Catégorie | Titre | Priorité | Exit Criteria |
 |----|-----------|-------|----------|---------------|
+| TD-007 | DevX | Self-test subset runner (changed-selftests) | Medium | Script `changed-selftests.mjs` detecte fichiers modifiés → map tests pertinents, options `--since`, `--list`, `--run` + doc intégrée |
 
 ### DONE (historique)
 | ID | Catégorie | Titre | Priorité | Exit Criteria (atteint) |
@@ -103,4 +104,44 @@ Notes:
 - Garder commit séparé par phase pour lisibilité.
 
 Priorité: Medium (réduction dette cognitive), peut précéder toute nouvelle fonctionnalité majeure.
+
+---
+## TD-007 Self-test subset runner (OPEN)
+Contexte:
+La commande actuelle `npm run selftest:all --workspace=packages/core` exécute l'ensemble des self-tests, même lorsque peu de fichiers changent. Cela rallonge le feedback loop et décourage la création de nouveaux scripts selftests granulaires.
+
+Objectifs:
+- Détecter dynamiquement l'ensemble minimal de self-tests affectés par un diff récent.
+- Offrir un mode `--list` (affichage sans exécution) et `--run` (exécution séquentielle avec résumé).
+- Paramètre `--since <ref>` (par défaut HEAD~1) + support `--staged` pour utiliser l'index Git.
+- Mapping extensible (table interne: glob(s)/prefix → scripts selftest).
+
+Surface initiale (mapping proposé):
+| Paths changé contient | Selftests à inclure |
+|-----------------------|---------------------|
+| kernel/repository | repository-selftest, metrics-selftest, deletion-selftest |
+| kernel/services/MetricsService | metrics-selftest |
+| kernel/services/HealthService | health-selftest |
+| kernel/services/ExportService | export-selftest, export-manifest-selftest |
+| kernel/indexer | indexer-selftest, reindex-selftest |
+| tools/calculatrice | tool-execution-selftest |
+| migration | migration-selftest, measurement-migration-selftest, sqlite-migration-selftest |
+| sqlite | sqlite-filters-selftest, sqlite-migration-selftest |
+| data-engine | bridge-selftest, bootstrap-selftest |
+| scripts/ (core) | kernel-selftest |
+
+Exit Criteria:
+- Script `scripts/changed-selftests.mjs` implémenté avec: parse args, git diff collection, mapping, exécution ordonnée, codes de sortie clairs (0 si succès, 1 si échec test, 2 si aucun test mappé mais changement détecté).
+- Affichage final: tableau synthèse (Test | Status | Duration ms).
+- Documentation ajoutée (GIT-WORKFLOW.md) section Outils.
+- Intégration simple dans pipeline local (optionnel: mention dans README ou commentaire).
+
+Non-Objectifs (hors scope initial):
+- Cache intelligent multi-commit.
+- Détection transitive fine via graphe d'import.
+- Parallélisation (une version séquentielle suffit d'abord).
+
+Priorité: Medium – Gains de productivité pour chaque itération core.
+
+Prochaine étape après 1er commit: passer TD-007 en ACTIVE.
 

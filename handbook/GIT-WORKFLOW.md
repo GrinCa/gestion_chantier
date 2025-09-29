@@ -73,9 +73,32 @@ Jamais de merge commit non nécessaire (éviter graph bruité).
 - Préparer rebase tôt (avant >5 commits divergence).
 - Conflit persistant => isoler commit de résolution clair (`chore(resolve-conflict): ...`).
 
+## Outils Disponibles
+### changed-selftests (TD-007)
+But: Exécuter uniquement les self-tests core impactés par un diff.
+
+Usage de base:
+```
+node scripts/changed-selftests.mjs --list          # Liste tests impactés (diff HEAD~1)
+node scripts/changed-selftests.mjs --since origin/main --run
+node scripts/changed-selftests.mjs --staged --run   # Sur l'index (pré-commit)
+```
+Options:
+| Option | Description |
+|--------|-------------|
+| --since <ref> | Base du diff (défaut HEAD~1) |
+| --staged | Utilise git diff --cached (exclusif avec --since) |
+| --list | N'affiche que les tests | 
+| --run | Exécute les tests mappés |
+| --verbose | Montre fichiers changés utilisés pour mapping |
+| --json | Sortie machine (CI future) |
+
+Codes sortie: 0 (OK), 1 (échecs tests), 2 (aucun test mappé), 3 (erreur script).
+
+Intégration future possible: hook pré-commit combinant lint + subset tests.
+
 ## Outils Futurs
-- Script `changed-selftests` pour déterminer sous-ensemble de scripts à exécuter.
-- Hook pré-commit (lint + subset tests).
+- Hook pré-commit (lint + subset tests) encore à implémenter.
 
 ## Auto-Labeling PR (TD-003)
 Un workflow GitHub Actions applique automatiquement des labels aux Pull Requests selon:
