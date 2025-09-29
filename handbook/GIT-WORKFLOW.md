@@ -89,6 +89,31 @@ Les labels sont ajoutés de façon idempotente et créés s'ils n'existent pas. 
 
 But: accélérer tri des PR, filtrage revue, priorisation risques.
 
+## Lint Gate (TD-005)
+Un garde-fou lint progressif empêche toute régression tout en laissant le stock historique être résorbé progressivement.
+
+Mécanisme:
+- Fichier `.lint-baseline.json` généré (snapshot compte des violations par (fichier, règle)).
+- Commande `npm run lint:gate` exécute ESLint (format JSON), agrège les counts et compare.
+- Échec si un count actuel > baseline (même fichier/règle) ou si un nouveau fichier introduit des violations.
+- Améliorations (counts en baisse) passent automatiquement.
+- Mise à jour baseline manuelle: `node scripts/lint-gate.mjs --update` (après refactor / cleanup substantiel).
+
+Intégration `pr-check`:
+1. Lint Gate
+2. Build workspaces
+3. Tests core (vitest)
+
+Variables d'environnement pour sauts ciblés (urgence):
+```
+PR_CHECK_SKIP_LINT=true
+PR_CHECK_SKIP_BUILD=true
+PR_CHECK_SKIP_TESTS=true
+```
+(À n'utiliser qu'en cas d'urgence ou investigation; éviter sur PR standard.)
+
+Objectif: Prévenir augmentation dette lint tout en fournissant feedback rapide (fail rapide). La réduction du stock (1357 → 0) est incrémentale et hors scope gating.
+
 
 ## Check Final Avant Merge
 Checklist rapide:

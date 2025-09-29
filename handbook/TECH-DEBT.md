@@ -6,7 +6,7 @@
 | TD-002 | Search | Advanced FTS (OR, phrase, highlight) | DONE | Medium | Selftests pass + relevance doc |
 | TD-003 | PR Automation | Auto label application | DONE | Low | Labels auto appliqués sur PR |
 | TD-004 | Metrics | Repository latency instrumentation | DONE | Low | p50/p95 exposés Health/Metrics |
-| TD-005 | Quality Gate | Lint/tests integration | OPEN | Medium | pr-check supporte flags lint/test |
+| TD-005 | Quality Gate | Lint/tests integration | DONE | Medium | pr-check supporte flags lint/test + lint gate baseline |
 
 ## TD-001 – Node vs Browser Surface Split
 Problem: Build web tire des modules Node. Plan: dual entries + stubs + conditional exports.
@@ -85,3 +85,25 @@ Deferred:
 - Export Prometheus / OpenMetrics (hors scope actuel)
 
 Status: COMPLETE.
+
+## TD-005 – Quality Gate (Lint / Tests Integration)
+Problem: Aucune barrière de régression lint – exécution brute (`eslint .`) échouait (~1350 violations) bloquant adoption. Besoin d'une approche progressive sans freiner le flux.
+
+Delivered:
+- Script `scripts/lint-gate.mjs` implémentant un mode baseline no‑regression.
+- Génération fichier `.lint-baseline.json` (snapshot counts par (fichier, règle)).
+- Commande npm `lint:gate` utilisée par `pr-check` (lint avant build/tests).
+- Politique: aucun (file,rule) ne doit dépasser son count baseline; nouveaux fichiers doivent être propres; améliorations (réduction) acceptées sans mise à jour.
+- Option mise à jour contrôlée: `node scripts/lint-gate.mjs --update` (ou env `LINT_GATE_UPDATE=1`) pour régénérer baseline après refactor massif.
+- Intégration dans `scripts/pr-check.mjs` (step "Lint Gate").
+
+Exit Criteria Check:
+- pr-check exécute lint gate + tests: OK
+- Flags de skip (`PR_CHECK_SKIP_LINT`, `PR_CHECK_SKIP_BUILD`, `PR_CHECK_SKIP_TESTS`) fonctionnels: OK
+
+Deferred / Next:
+- Réduire progressivement le total (1357 → 0) via refactors ciblés (pas partie de cette dette, suivi continu Section 10 / Section 11 selon surface).
+- Ajout d'un rapport delta positif automatisé (stat slack / console détaillée) – optionnel futur.
+- Couverture lint différentielle sur diff précis (git diff parsing) – amélioration potentielle (actuel: full scan + comparaison baseline).
+
+Status: COMPLETE – Quality Gate Phase 1 en place (prévention régression). Transition vers réduction incrémentale hors dette.

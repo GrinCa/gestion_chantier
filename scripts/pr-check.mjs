@@ -20,12 +20,14 @@ function run(cmd, label){
 }
 
 const steps = [];
-// Build step (monorepo aware)
-steps.push({ label:'Build (workspaces)', cmd: 'npm run build --if-present' });
-
-// Placeholder for lint (future). If eslint configured later, we can enable automatically.
-if (process.env.PR_CHECK_INCLUDE_LINT === 'true') {
-  steps.push({ label:'Lint', cmd: 'npm run lint' });
+// Lint first (fast fail) unless skipped
+if (process.env.PR_CHECK_SKIP_LINT !== 'true') {
+  // Use lint gate (no-regression) instead of full strict lint
+  steps.push({ label:'Lint Gate', cmd: 'npm run lint:gate' });
+}
+// Build (monorepo aware) unless skipped
+if (process.env.PR_CHECK_SKIP_BUILD !== 'true') {
+  steps.push({ label:'Build (workspaces)', cmd: 'npm run build --if-present' });
 }
 // Core tests now available; run by default (can skip with PR_CHECK_SKIP_TESTS=true)
 if (process.env.PR_CHECK_SKIP_TESTS !== 'true') {
