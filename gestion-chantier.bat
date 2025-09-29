@@ -78,20 +78,39 @@ echo Demarrage Full Stack (API + Web + Browser)
 echo ==========================================
 echo.
 
-echo [1/4] Demarrage API Server (port 3001)...
+echo [1/5] Demarrage API Server (hot reload si nodemon present)...
 cd /d "%~dp0\packages\server"
-start "API Server" cmd /k "echo API Server - Gestion Chantier && node index.js"
+where nodemon >nul 2>&1
+if %errorlevel%==0 (
+    echo ▶ Utilisation de nodemon pour rechargement a chaud du serveur
+    start "API Server" cmd /k "echo API Server (nodemon) - Gestion Chantier && npx nodemon --watch . --ext js,mjs,cjs,json --signal SIGTERM index.js"
+) else (
+    echo ⚠ nodemon non trouve (npm i -g nodemon ou npm i --save-dev nodemon dans packages/server)
+    echo ▶ Demarrage sans hot reload
+    start "API Server" cmd /k "echo API Server - Gestion Chantier && node index.js"
+)
 
-echo [2/4] Attente API Server...
+echo [2/5] Attente API Server...
 timeout /t 3 /nobreak >nul
 
-echo [3/4] Demarrage Web Dev Server (port 5173)...
+echo [3/5] Demarrage Web Dev Server (port 5173, HMR actif)...
 cd /d "%~dp0\packages\web"
 start "Web Dev Server" cmd /k "echo Web Dev Server - Gestion Chantier && npm run dev"
 
-echo [4/4] Attente Web Server et ouverture navigateur...
+echo [4/5] Attente Web Server...
 timeout /t 5 /nobreak >nul
+
+echo [5/5] Ouverture / Focus navigateur (http://localhost:5173)...
 start "Browser" "http://localhost:5173"
+
+echo.
+echo 🔁 HOT RELOAD ACTIF:
+echo    - Front: Vite (modifs dans packages/web)
+echo    - API: nodemon (si installe) (modifs dans packages/server)
+echo.
+echo 💡 Pour activer le hot reload serveur si absent:
+echo    cd packages\server && npm install --save-dev nodemon
+echo    (ou npm i -g nodemon)
 
 echo.
 echo ARCHITECTURE CORE DeMARReE !
