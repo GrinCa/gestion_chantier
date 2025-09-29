@@ -5,11 +5,11 @@ Ce fichier distingue clairement ce qui RESTE À FAIRE (OPEN) de ce qui est ACHEV
 ## 0. Tableau de Bord Synthétique
 
 ### OPEN (à traiter)
-Actuellement: (aucune dette ouverte listée ici – ajouter nouvelle entrée ci-dessous si nécessaire)
+Actuellement: 1 dette ouverte.
 
 | ID | Catégorie | Titre | Priorité | Exit Criteria |
 |----|-----------|-------|----------|---------------|
-| (vide) |  |  |  |  |
+| TD-006 | Tooling | Simplifier scripts PR-centric inutilisés | Medium | Scripts PR retirés (create-pr/update-pr/apply-pr-labels), pr-check renommé local-check, handoff scripts fusionnés ou nettoyés, doc mise à jour |
 
 ### DONE (historique)
 | ID | Catégorie | Titre | Priorité | Exit Criteria (atteint) |
@@ -61,3 +61,46 @@ Politique LLM: Charger uniquement ce fichier pour l’état courant; ouvrir arch
 
 ---
 Document minimisé pour rester léger (<10KB). Détails historiques → fichier d'archive.
+
+---
+## TD-006 Simplifier scripts PR-centric inutilisés (OPEN)
+Contexte:
+Le répertoire `scripts/` contient plusieurs scripts conçus pour un flux GitHub Pull Request (create-pr, update-pr, apply-pr-labels) et des scripts de passation redondants (session-primer vs prepare-handoff vs save-session). Le flux actuel n'utilise pas les PR ni l'auto-labelling → surcharge cognitive et bruit.
+
+Objectifs:
+- Réduire le set de scripts au strict nécessaire pour le travail local + dette.
+- Éviter confusion pour un nouvel agent (scripts non pertinents).
+- Garder un point d'entrée unique pour handoff / session.
+
+Surface actuelle:
+| Script | Rôle actuel | Pertinence | Action proposée |
+|--------|-------------|------------|-----------------|
+| create-pr.mjs | Ouvre une PR via API (supposé) | Faible | Supprimer |
+| update-pr.mjs | Mets à jour description/labels | Faible | Supprimer |
+| apply-pr-labels.mjs | Applique labels PR (TD-003) | Faible | Supprimer (archivé via TD-003) |
+| pr-check.mjs | Pipeline lint → build → tests | Moyenne | Renommer `local-check.mjs` + simplifier sortie |
+| lint-gate.mjs | Lint baseline no-regression | Haute | Conserver |
+| debt-maintain.mjs | Gestion lifecycle dettes | Haute | Étendre (implémenter --new / --archive-stale) |
+| prepare-handoff.mjs | Génère bloc handoff brut | Moyenne | Fusionner logique dans save-session |
+| save-session.mjs | Autosave + handoff + snippet | Haute | Conserver (intégrer prepare-handoff) |
+| session-primer.mjs | Ancien primer (déprécié) | Nulle | Supprimer |
+
+Plan Remédiation (phases):
+1. Phase A (Nettoyage): Supprimer scripts PR + session-primer.
+2. Phase B (Renommage): Copier `pr-check.mjs` → `local-check.mjs` (adapter README/doc) puis supprimer ancien nom.
+3. Phase C (Fusion): Intégrer génération handoff de `prepare-handoff.mjs` directement dans `save-session.mjs` (option `--raw` pour sortie sans autosave) puis supprimer `prepare-handoff.mjs`.
+4. Phase D (Étendre debt-maintain): Implémenter `--new` (scaffold TD-XXX) et `--archive-stale` (cooldown >14j).
+
+Exit Criteria (détaillé):
+- create-pr.mjs, update-pr.mjs, apply-pr-labels.mjs, session-primer.mjs supprimés.
+- pr-check.mjs remplacé par local-check.mjs (scripts npm mis à jour).
+- prepare-handoff.mjs supprimé, fonctionnalité accessible via `node scripts/save-session.mjs --raw`.
+- README / GIT-WORKFLOW / LLM-ENTRYPOINT ne mentionnent plus PR / scripts retirés.
+- debt-maintain fournit `--list --new --archive-stale` opérationnels.
+
+Notes:
+- TD-003 (auto-label) reste archivée; suppression des artefacts ne remet pas en cause l'historique.
+- Garder commit séparé par phase pour lisibilité.
+
+Priorité: Medium (réduction dette cognitive), peut précéder toute nouvelle fonctionnalité majeure.
+
