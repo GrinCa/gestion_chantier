@@ -5,11 +5,10 @@ Ce fichier distingue clairement ce qui RESTE À FAIRE (OPEN) de ce qui est ACHEV
 ## 0. Tableau de Bord Synthétique
 
 ### OPEN (à traiter)
-Actuellement: 1 dette ouverte.
+Actuellement: 0 dette ouverte.
 
 | ID | Catégorie | Titre | Priorité | Exit Criteria |
 |----|-----------|-------|----------|---------------|
-| TD-006 | Tooling | Simplifier scripts PR-centric inutilisés | Medium | Scripts PR retirés (create-pr/update-pr/apply-pr-labels), pr-check renommé local-check, handoff scripts fusionnés ou nettoyés, doc mise à jour |
 
 ### DONE (historique)
 | ID | Catégorie | Titre | Priorité | Exit Criteria (atteint) |
@@ -19,6 +18,7 @@ Actuellement: 1 dette ouverte.
 | TD-003 | PR Automation | Auto label application | Low | Labels auto appliqués sur PR |
 | TD-004 | Metrics | Repository latency instrumentation | Low | p50/p95 exposés Health/Metrics |
 | TD-005 | Quality Gate | Lint/tests integration | Medium | local-check + lint gate baseline |
+| TD-006 | Tooling | Simplifier scripts PR-centric inutilisés | Medium | Scripts PR retirés, pr-check renommé local-check, handoff fusionné (--raw), debt-maintain Phase D (--list --new --archive-stale) |
 
 ### Vue Chronologique (résumé)
 - TD-005 → Gate lint baseline no‑regression.
@@ -63,7 +63,7 @@ Politique LLM: Charger uniquement ce fichier pour l’état courant; ouvrir arch
 Document minimisé pour rester léger (<10KB). Détails historiques → fichier d'archive.
 
 ---
-## TD-006 Simplifier scripts PR-centric inutilisés (OPEN)
+## TD-006 Simplifier scripts PR-centric inutilisés (DONE)
 Contexte:
 Le répertoire `scripts/` contient plusieurs scripts conçus pour un flux GitHub Pull Request (create-pr, update-pr, apply-pr-labels) et des scripts de passation redondants (session-primer vs prepare-handoff vs save-session). Le flux actuel n'utilise pas les PR ni l'auto-labelling → surcharge cognitive et bruit.
 
@@ -89,14 +89,14 @@ Plan Remédiation (phases):
 1. Phase A (Nettoyage): Supprimer scripts PR + session-primer. ✔
 2. Phase B (Renommage): pr-check → local-check (docs + scripts). ✔
 3. Phase C (Fusion): Intégrer génération handoff de `prepare-handoff.mjs` dans `save-session.mjs` (option `--raw`) puis supprimer `prepare-handoff.mjs`. ✔
-4. Phase D (Étendre debt-maintain): Implémenter `--new` (scaffold TD-XXX) et `--archive-stale` (cooldown >14j).
+4. Phase D (Étendre debt-maintain): Implémenter `--new` (scaffold TD-XXX) et `--archive-stale` (cooldown >14j). ✔
 
 Exit Criteria (détaillé):
 - (Phase A) create-pr.mjs, update-pr.mjs, apply-pr-labels.mjs, session-primer.mjs supprimés. ✔
 - (Phase B) pr-check.mjs remplacé par local-check.mjs (scripts npm mis à jour). ✔
 - (Phase C) prepare-handoff.mjs supprimé, fonctionnalité accessible via `node scripts/save-session.mjs --raw`. ✔
-- (Phase D) debt-maintain fournit `--list --new --archive-stale` opérationnels.
-- README / GIT-WORKFLOW / LLM-ENTRYPOINT ne mentionnent plus scripts retirés (en cours au fil des phases).
+- (Phase D) debt-maintain fournit `--list --new --archive-stale` opérationnels. ✔
+- README / GIT-WORKFLOW / LLM-ENTRYPOINT ne mentionnent plus scripts retirés. ✔
 
 Notes:
 - TD-003 (auto-label) reste archivée; suppression des artefacts ne remet pas en cause l'historique.
