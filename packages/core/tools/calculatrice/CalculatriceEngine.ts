@@ -198,14 +198,12 @@ export class CalculatriceEngine {
     error?: string;
   } {
     const groupIndex = groups.findIndex(g => g.id === groupId);
-    
-    if (groupIndex === groups.length - 1) {
-      return {
-        valid: false,
-        error: "Impossible de pointer vers le bas depuis la dernière position."
-      };
+    // Ancienne règle: interdiction sur la dernière position. On l'autorise désormais
+    // pour préparer l'ajout d'une future position (la mesure servira de refToNext
+    // quand une nouvelle position sera créée et définira sa refToPrev).
+    if (groupIndex === -1) {
+      return { valid: false, error: 'Groupe introuvable' };
     }
-
     return { valid: true };
   }
 
