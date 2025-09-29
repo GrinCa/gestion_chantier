@@ -13,7 +13,8 @@ export * from './kernel/registry/DataTypeRegistry.js';
 export * from './kernel/registry/builtins.js';
 export * from './kernel/tools/ToolRegistry.js';
 export * from './kernel/domain/Resource.js';
-export * from './kernel/repository/ResourceRepository.js';
+// Export uniquement les symboles safe du repository (évite import implicite d'autres impls Node)
+export { InMemoryResourceRepository, InstrumentedResourceRepository, createInMemoryRepository } from './kernel/repository/ResourceRepository.js';
 export * from './kernel/KernelContext.js';
 export * from './kernel/bridge/DataEngineBridge.js';
 export * from './kernel/services/ResourceService.js';

@@ -278,7 +278,7 @@ echo Web build OK
 
 echo [3/3] Build Mobile package...
 cd /d "%~dp0\packages\mobile"
-call npx expo build:web
+call npx expo export --platform web --output-dir web-build
 if %errorlevel% neq 0 (
     echo Warning: Mobile web build echoue (optionnel)
 ) else (
@@ -346,8 +346,8 @@ if "%buildchoice%"=="1" (
 ) else if "%buildchoice%"=="2" (
     echo.
     echo 🌐 Build Web (PWA)...
-    call npx expo build:web
-    echo ✅ Build PWA termine: packages/mobile/web-build/
+    call npx expo export --platform web --output-dir web-build
+    echo ✅ Export PWA termine: packages/mobile/web-build/
 ) else if "%buildchoice%"=="3" (
     echo.
     echo ☁️  EAS Build (cloud)...

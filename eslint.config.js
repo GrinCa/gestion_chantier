@@ -33,8 +33,8 @@ const deprecatedWrappersRule = {
 };
 
 export default [
-  // Ignore dist outputs
-  { ignores: ['**/dist/**','**/node_modules/**'] },
+  // Ignore dist outputs & build/helper mjs scripts (non-typed gating scope)
+  { ignores: ['**/dist/**','**/node_modules/**','**/*.mjs'] },
   ...tseslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.strictTypeChecked,

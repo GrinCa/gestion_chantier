@@ -1,0 +1,467 @@
+{
+  "version": 1,
+  "generatedAt": "2025-09-29T08:42:38.070Z",
+  "totalProblems": 1357,
+  "rulesByFile": {
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/compat/WorkspaceKeyCompat.ts": {
+      "@typescript-eslint/no-explicit-any": 10,
+      "@typescript-eslint/no-unsafe-assignment": 17,
+      "@typescript-eslint/no-unnecessary-type-assertion": 6,
+      "@typescript-eslint/no-unsafe-member-access": 29,
+      "@typescript-eslint/no-unsafe-return": 11,
+      "@typescript-eslint/no-unsafe-call": 20,
+      "@typescript-eslint/restrict-template-expressions": 5,
+      "no-empty": 5,
+      "@typescript-eslint/prefer-nullish-coalescing": 2,
+      "@typescript-eslint/require-await": 1,
+      "@typescript-eslint/prefer-optional-chain": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/config/index.ts": {
+      "@typescript-eslint/no-unsafe-assignment": 2,
+      "@typescript-eslint/no-unsafe-member-access": 4,
+      "@typescript-eslint/no-inferrable-types": 1,
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/prefer-nullish-coalescing": 5,
+      "@typescript-eslint/no-unsafe-return": 2,
+      "@typescript-eslint/restrict-template-expressions": 3
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/data-engine/index.ts": {
+      "no-unused-vars": 12,
+      "@typescript-eslint/no-unused-vars": 3,
+      "@typescript-eslint/no-explicit-any": 23,
+      "@typescript-eslint/array-type": 1,
+      "@typescript-eslint/no-unnecessary-condition": 2,
+      "@typescript-eslint/no-unsafe-member-access": 25,
+      "@typescript-eslint/no-unsafe-assignment": 18,
+      "@typescript-eslint/prefer-nullish-coalescing": 4,
+      "@typescript-eslint/no-floating-promises": 1,
+      "deprecated-wrappers/no-deprecated-project-wrappers": 6,
+      "@typescript-eslint/no-unsafe-argument": 11,
+      "@typescript-eslint/require-await": 4,
+      "@typescript-eslint/no-unsafe-return": 8,
+      "@typescript-eslint/restrict-template-expressions": 2,
+      "@typescript-eslint/no-unnecessary-type-arguments": 3,
+      "@typescript-eslint/no-deprecated": 2,
+      "prefer-const": 1,
+      "@typescript-eslint/ban-ts-comment": 5
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/index.ts": {
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "@typescript-eslint/no-unsafe-member-access": 2
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/auth/AccessPolicy.ts": {
+      "@typescript-eslint/no-explicit-any": 2,
+      "no-unused-vars": 11,
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "@typescript-eslint/no-unnecessary-condition": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/bootstrap/KernelBootstrap.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/bridge/DataEngineBridge.ts": {
+      "no-unused-vars": 2,
+      "@typescript-eslint/no-unsafe-assignment": 9,
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "@typescript-eslint/no-unsafe-member-access": 8,
+      "@typescript-eslint/prefer-nullish-coalescing": 2
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/domain/Resource.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/events/DomainEvent.ts": {
+      "@typescript-eslint/no-explicit-any": 2,
+      "no-unused-vars": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/events/EventBus.ts": {
+      "@typescript-eslint/consistent-generic-constructors": 1,
+      "no-unused-vars": 3,
+      "@typescript-eslint/no-unused-vars": 2,
+      "@typescript-eslint/no-unnecessary-condition": 2,
+      "@typescript-eslint/no-useless-constructor": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/indexer/IndexSubscriber.ts": {
+      "no-unused-vars": 3
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/indexer/Indexer.ts": {
+      "no-unused-vars": 12,
+      "@typescript-eslint/no-unused-vars": 1,
+      "@typescript-eslint/require-await": 2,
+      "@typescript-eslint/consistent-generic-constructors": 1,
+      "@typescript-eslint/no-explicit-any": 2,
+      "@typescript-eslint/no-unsafe-argument": 2
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/indexer/QueryParser.ts": {
+      "no-unused-vars": 1,
+      "@typescript-eslint/no-unused-vars": 1,
+      "prefer-const": 1,
+      "@typescript-eslint/no-unnecessary-condition": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/registry/DataTypeRegistry.ts": {
+      "@typescript-eslint/no-explicit-any": 8,
+      "no-unused-vars": 4,
+      "@typescript-eslint/no-unsafe-call": 1,
+      "@typescript-eslint/no-unsafe-member-access": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/registry/builtins.ts": {
+      "@typescript-eslint/no-unsafe-assignment": 16,
+      "@typescript-eslint/no-unsafe-call": 20,
+      "@typescript-eslint/no-unsafe-member-access": 27,
+      "@typescript-eslint/no-explicit-any": 4,
+      "@typescript-eslint/no-unsafe-return": 2,
+      "@typescript-eslint/prefer-nullish-coalescing": 3,
+      "prefer-const": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/registry/migrations/measurement_v2.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "prefer-const": 1,
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/no-unsafe-return": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/repository/ResourceRepository.ts": {
+      "@typescript-eslint/no-explicit-any": 6,
+      "no-unused-vars": 10,
+      "@typescript-eslint/no-unsafe-return": 1,
+      "@typescript-eslint/no-unsafe-call": 1,
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/require-await": 4,
+      "@typescript-eslint/no-non-null-assertion": 5,
+      "@typescript-eslint/no-unsafe-assignment": 5,
+      "@typescript-eslint/restrict-template-expressions": 1,
+      "@typescript-eslint/no-unsafe-argument": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/repository/SQLiteResourceRepository.browser.ts": {
+      "@typescript-eslint/no-extraneous-class": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/repository/SQLiteResourceRepository.ts": {
+      "no-unused-vars": 4,
+      "@typescript-eslint/no-unused-vars": 4,
+      "@typescript-eslint/prefer-nullish-coalescing": 9,
+      "@typescript-eslint/no-explicit-any": 15,
+      "@typescript-eslint/no-unsafe-argument": 7,
+      "@typescript-eslint/no-unsafe-member-access": 45,
+      "@typescript-eslint/no-confusing-void-expression": 10,
+      "@typescript-eslint/prefer-optional-chain": 3,
+      "@typescript-eslint/no-non-null-assertion": 2,
+      "@typescript-eslint/no-unnecessary-type-assertion": 4,
+      "@typescript-eslint/no-unsafe-assignment": 17,
+      "@typescript-eslint/restrict-template-expressions": 6
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/services/ExportService.browser.ts": {
+      "@typescript-eslint/no-extraneous-class": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/services/ExportService.ts": {
+      "@typescript-eslint/no-explicit-any": 6,
+      "@typescript-eslint/no-unsafe-assignment": 3,
+      "@typescript-eslint/no-require-imports": 1,
+      "@typescript-eslint/no-unsafe-call": 5,
+      "@typescript-eslint/no-unsafe-member-access": 4,
+      "no-unused-vars": 3,
+      "@typescript-eslint/no-empty-function": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1,
+      "@typescript-eslint/array-type": 2
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/services/HealthService.ts": {
+      "@typescript-eslint/no-explicit-any": 11,
+      "no-unused-vars": 6,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "@typescript-eslint/no-unused-vars": 3
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/services/ImportService.ts": {
+      "@typescript-eslint/no-explicit-any": 4,
+      "no-unused-vars": 1,
+      "@typescript-eslint/no-unsafe-assignment": 3,
+      "@typescript-eslint/restrict-template-expressions": 9,
+      "@typescript-eslint/no-unsafe-member-access": 15,
+      "@typescript-eslint/no-unsafe-argument": 3,
+      "@typescript-eslint/array-type": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/services/MetricsService.ts": {
+      "no-unused-vars": 1,
+      "@typescript-eslint/no-confusing-void-expression": 1,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "@typescript-eslint/no-unsafe-member-access": 1,
+      "@typescript-eslint/no-unnecessary-condition": 3
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/services/MigrationService.ts": {
+      "no-unused-vars": 2,
+      "@typescript-eslint/no-unnecessary-condition": 4,
+      "@typescript-eslint/no-unsafe-assignment": 2,
+      "@typescript-eslint/no-unnecessary-type-assertion": 1,
+      "@typescript-eslint/prefer-optional-chain": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/services/ResourceService.ts": {
+      "@typescript-eslint/no-explicit-any": 8,
+      "no-unused-vars": 4,
+      "@typescript-eslint/no-unsafe-assignment": 5,
+      "@typescript-eslint/prefer-nullish-coalescing": 4,
+      "@typescript-eslint/restrict-template-expressions": 2,
+      "@typescript-eslint/no-unsafe-call": 1,
+      "@typescript-eslint/no-unnecessary-condition": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/services/ToolExecutionService.ts": {
+      "no-unused-vars": 5,
+      "@typescript-eslint/no-unused-vars": 1,
+      "@typescript-eslint/no-explicit-any": 5,
+      "@typescript-eslint/prefer-function-type": 1,
+      "@typescript-eslint/no-unnecessary-type-parameters": 1,
+      "@typescript-eslint/no-unsafe-member-access": 13,
+      "@typescript-eslint/no-unsafe-assignment": 8,
+      "@typescript-eslint/no-unsafe-call": 4,
+      "@typescript-eslint/prefer-nullish-coalescing": 3
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/kernel/tools/ToolRegistry.ts": {
+      "@typescript-eslint/no-explicit-any": 6,
+      "no-unused-vars": 2
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/runtime/env-guard.ts": {
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/bootstrap-selftest.ts": {
+      "no-unused-vars": 1,
+      "@typescript-eslint/no-unused-vars": 1,
+      "@typescript-eslint/await-thenable": 1,
+      "@typescript-eslint/no-confusing-void-expression": 1,
+      "@typescript-eslint/require-await": 2,
+      "@typescript-eslint/no-unsafe-member-access": 3,
+      "@typescript-eslint/no-unsafe-call": 2,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/bridge-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 3,
+      "@typescript-eslint/no-empty-function": 1,
+      "@typescript-eslint/require-await": 1,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "@typescript-eslint/no-unsafe-call": 2,
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/browser-surface-selftest.ts": {
+      "@typescript-eslint/no-unsafe-assignment": 2,
+      "@typescript-eslint/no-unsafe-call": 4,
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/no-unsafe-argument": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/cli.ts": {
+      "@typescript-eslint/no-explicit-any": 3,
+      "@typescript-eslint/no-unsafe-member-access": 7,
+      "@typescript-eslint/no-unsafe-call": 5,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "@typescript-eslint/require-await": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/deletion-selftest.ts": {
+      "@typescript-eslint/no-unsafe-call": 3,
+      "@typescript-eslint/no-unsafe-member-access": 3,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/export-manifest-selftest.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 4,
+      "@typescript-eslint/no-unsafe-assignment": 3,
+      "@typescript-eslint/no-unsafe-member-access": 6,
+      "@typescript-eslint/no-unsafe-call": 2,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/export-selftest.ts": {
+      "@typescript-eslint/no-unsafe-call": 2,
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/fts-advanced-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 16,
+      "@typescript-eslint/require-await": 2,
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "@typescript-eslint/restrict-template-expressions": 15,
+      "@typescript-eslint/no-unsafe-assignment": 19,
+      "@typescript-eslint/no-unsafe-call": 25,
+      "@typescript-eslint/no-unsafe-member-access": 65,
+      "@typescript-eslint/no-unsafe-return": 7,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/fts-query-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 2,
+      "no-unused-vars": 1,
+      "@typescript-eslint/no-unused-vars": 1,
+      "@typescript-eslint/no-unsafe-call": 7,
+      "@typescript-eslint/no-unsafe-member-access": 14,
+      "@typescript-eslint/no-unsafe-assignment": 3,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/health-selftest.ts": {
+      "@typescript-eslint/require-await": 1,
+      "@typescript-eslint/no-unsafe-member-access": 4,
+      "@typescript-eslint/no-unsafe-call": 3,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/indexer-selftest.ts": {
+      "no-unused-vars": 1,
+      "@typescript-eslint/no-unused-vars": 1,
+      "@typescript-eslint/no-unsafe-call": 2,
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/kernel-selftest.ts": {
+      "no-unused-vars": 5,
+      "@typescript-eslint/no-unused-vars": 5,
+      "@typescript-eslint/no-explicit-any": 6,
+      "@typescript-eslint/require-await": 6,
+      "@typescript-eslint/no-unsafe-return": 2,
+      "@typescript-eslint/no-unnecessary-type-parameters": 1,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "@typescript-eslint/no-unsafe-assignment": 3,
+      "@typescript-eslint/no-unsafe-member-access": 5,
+      "@typescript-eslint/ban-ts-comment": 1,
+      "@typescript-eslint/restrict-template-expressions": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1,
+      "@typescript-eslint/no-unsafe-call": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/measurement-migration-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unsafe-member-access": 6,
+      "@typescript-eslint/no-unsafe-call": 4,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/metrics-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 4,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "@typescript-eslint/require-await": 1,
+      "@typescript-eslint/no-unsafe-assignment": 3,
+      "@typescript-eslint/restrict-plus-operands": 2,
+      "@typescript-eslint/no-unsafe-call": 6,
+      "@typescript-eslint/no-unsafe-member-access": 9,
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "@typescript-eslint/no-unnecessary-condition": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/migration-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unsafe-member-access": 5,
+      "@typescript-eslint/no-unsafe-call": 3,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/quickstart-demo.ts": {
+      "@typescript-eslint/no-explicit-any": 2,
+      "@typescript-eslint/no-unsafe-member-access": 11,
+      "@typescript-eslint/no-unsafe-assignment": 6,
+      "@typescript-eslint/no-unsafe-call": 6,
+      "@typescript-eslint/require-await": 2,
+      "@typescript-eslint/restrict-plus-operands": 2,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/reindex-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unsafe-call": 3,
+      "@typescript-eslint/no-unsafe-member-access": 3,
+      "@typescript-eslint/restrict-plus-operands": 2,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/repository-selftest.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 2,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "no-unused-vars": 3,
+      "@typescript-eslint/no-unused-vars": 3,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1,
+      "@typescript-eslint/no-unsafe-call": 1,
+      "@typescript-eslint/no-unsafe-member-access": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/resource-service-selftest.ts": {
+      "@typescript-eslint/no-unsafe-call": 2,
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/sqlite-filters-selftest.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 6,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1,
+      "@typescript-eslint/no-unsafe-call": 1,
+      "@typescript-eslint/no-unsafe-member-access": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/sqlite-migration-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 4,
+      "@typescript-eslint/no-unsafe-call": 5,
+      "@typescript-eslint/no-unsafe-member-access": 7,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "@typescript-eslint/no-confusing-void-expression": 5,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "@typescript-eslint/no-unsafe-return": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/tool-execution-selftest.ts": {
+      "@typescript-eslint/require-await": 1,
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unnecessary-type-assertion": 1,
+      "@typescript-eslint/no-unsafe-member-access": 5,
+      "@typescript-eslint/no-unsafe-call": 3,
+      "@typescript-eslint/no-unsafe-assignment": 1,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/validate-config.ts": {
+      "no-unused-vars": 3,
+      "@typescript-eslint/no-unused-vars": 3,
+      "@typescript-eslint/no-unsafe-assignment": 2,
+      "@typescript-eslint/no-unsafe-call": 4,
+      "@typescript-eslint/no-unsafe-member-access": 5,
+      "@typescript-eslint/restrict-template-expressions": 10,
+      "@typescript-eslint/no-confusing-void-expression": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/scripts/validation-selftest.ts": {
+      "@typescript-eslint/no-explicit-any": 3,
+      "@typescript-eslint/no-empty-function": 1,
+      "@typescript-eslint/require-await": 1,
+      "@typescript-eslint/no-unsafe-argument": 1,
+      "no-unused-vars": 1,
+      "@typescript-eslint/no-unused-vars": 1,
+      "@typescript-eslint/no-unsafe-call": 2,
+      "@typescript-eslint/no-unsafe-member-access": 2,
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/tools-registry/index.ts": {
+      "@typescript-eslint/no-explicit-any": 3,
+      "no-unused-vars": 5,
+      "@typescript-eslint/no-unnecessary-condition": 3,
+      "@typescript-eslint/no-unused-vars": 1,
+      "@typescript-eslint/no-confusing-void-expression": 1,
+      "@typescript-eslint/restrict-template-expressions": 1,
+      "@typescript-eslint/prefer-nullish-coalescing": 2,
+      "@typescript-eslint/no-unsafe-assignment": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/tools/calculatrice/CalculatriceDataManager.ts": {
+      "no-unused-vars": 3,
+      "@typescript-eslint/no-unused-vars": 3,
+      "@typescript-eslint/no-unnecessary-type-assertion": 3,
+      "@typescript-eslint/no-unsafe-assignment": 3,
+      "@typescript-eslint/no-unsafe-member-access": 3,
+      "@typescript-eslint/prefer-nullish-coalescing": 4,
+      "@typescript-eslint/no-unsafe-call": 1,
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unsafe-return": 2,
+      "@typescript-eslint/restrict-template-expressions": 2,
+      "prefer-const": 1,
+      "@typescript-eslint/no-unsafe-argument": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/tools/calculatrice/CalculatriceEngine.ts": {
+      "no-unused-vars": 3,
+      "@typescript-eslint/no-unused-vars": 3
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/tools/calculatrice/types.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/types/index.ts": {
+      "@typescript-eslint/no-explicit-any": 13,
+      "@typescript-eslint/no-empty-object-type": 1,
+      "no-unused-vars": 1
+    },
+    "C:/Users/User/Desktop/gestion-chantier/packages/core/vitest.config.ts": {
+      "@typescript-eslint/no-unsafe-call": 1
+    }
+  }
+}

@@ -10,7 +10,7 @@ Checklist impérative, aucune modification tant que chaque point n'a pas une ré
    - Lire SHA court: `git rev-parse --short HEAD`
    - Vérifier diff en cours: `git status -s` (si modifications → demander clarification avant d'écrire autre chose)
 2. Santé Build (optionnel si coût): tenter `npm run build` (ou signaler "non vérifié" si trop long).
-3. Debt / Issues Focus: ouvrir `handbook/TECH-DEBT.md` & `handbook/KNOWN-ISSUES.md` → relever IDs en statut OPEN/ACCEPTED prioritaire (TD-001 / KI-001).
+3. Debt Focus: ouvrir `handbook/TECH-DEBT.md` → relever IDs en statut OPEN/ACTIVE prioritaire (ex: TD-006).
 4. Tâches Actives: dans `handbook/TODO.md` récupérer les 3 premières cases non cochées pertinentes pour le domaine ciblé (ignorer sections non liées si hors scope).
 5. Derniers Commits: récupérer les 2 derniers messages (`git log -2 --oneline`) pour voir le contexte immédiat (ex: nettoyage, refactor, feature en cours).
 6. Vérification Surface: confirmer si objectif demandé par l'utilisateur correspond bien à la priorité actuelle (sinon proposer réalignement).
@@ -36,7 +36,7 @@ Context:
 Si un de ces éléments ne peut être obtenu, indiquer `UNK` au lieu d'inventer.
 
 
-Ce fichier est la SEULE source à coller / condenser au démarrage d'une nouvelle session LLM. Il remplace `SESSION-PRIMER.md` et le script `session-primer.mjs` (dépréciés). Objectif: contexte suffisant pour agir immédiatement sans relecture intégrale du handbook.
+Ce fichier est la SEULE source à coller / condenser au démarrage d'une nouvelle session LLM. (Ancien `SESSION-PRIMER.md` et script `session-primer.mjs` supprimés TD-006.)
 
 ---
 ## 1. Vision Courte du Projet
@@ -47,13 +47,12 @@ Base modulaire orientée services (EventBus, ResourceService avec locking optimi
 - HEAD: (short SHA)
 - Build Web: FAIL (KI-001 Readable/stream leak) / ou OK si corrigé
 - Tests: (non lancés | OK | FAIL <résumé>)
-- FTS: Basique (AND multi-termes + heuristique). Améliorations (OR, phrase, highlight) différées.
+- FTS: Avancé (AND implicite + OR explicite + phrases + highlight mémoire). Limites restantes: pas de BM25, pas de proximity, pas de snippet contextuel.
 
 ## 3. Dette & Incidents Prioritaires
 | ID | Type | Résumé | Statut |
 |----|------|--------|--------|
-| TD-001 | Debt | Séparer surface export Node vs Browser | open |
-| KI-001 | Issue | Bundle web casse: dépendances Node importées | open |
+| (voir TECH-DEBT.md pour liste active) |  |  |  |
 
 Toujours référencer ID exact dans les commits / prompts.
 
@@ -77,7 +76,7 @@ Session:
   Branch: <nom> @ <sha>
   Build: <OK|FAIL + cause courte>
   Tests: <non lancés|OK|FAIL + 1 test>
-  Focus: TD-001 ; KI-001
+  Focus: TD-001
   Tasks:
     1. ...
     2. ...
@@ -108,9 +107,9 @@ Inclure IDs de dette/issue si pertinent. Ex: `feat(core): split node/browser sur
 - Export NDJSON: garder flux paresseux (pas d'accumulation mémoire).
 
 ## 10. Prochain Grand Incrément (Contexte Futur, Ne Pas Agir Sans Demande)
-- Avancées FTS: OR, phrase search, highlight.
-- Metrics latence par service.
-- Gate élargi: lint + tests.
+- Metrics latence repository & services (TD-004)
+- Gate élargi: lint + tests (TD-005)
+- Scoring recherche avancé (BM25) & proximity (future TD)
 
 ## 11. Quand Mettre à Jour Ce Fichier ?
 Uniquement quand un pattern durable change (architecture, workflow, dette prioritaire). Ne pas y injecter des erreurs éphémères (elles vivent dans KNOWN-ISSUES jusqu'à résolution).
@@ -122,17 +121,19 @@ Uniquement quand un pattern durable change (architecture, workflow, dette priori
 ## 13. Fin de Session (Préparer la Reprise)
 Avant de quitter une session active, générer un bloc de handoff:
 Option manuelle (fine):
-  1. `node scripts/prepare-handoff.mjs`
+  1. `node scripts/save-session.mjs --raw`
   2. Compléter ProposedDeliverable + Risks.
-  3. Coller le bloc final.
+  3. Vérifier `git status -s` (si changements, commit manuel ou relancer sans --raw pour autosave).
+  4. `git push origin <branch>` (OBLIGATOIRE avant de quitter).
+  5. Coller le bloc final dans le dernier message.
 
 Option automatisée (recommandée):
   1. `node scripts/save-session.mjs`
-     - Commit autosave si changes
-     - Génère handoff + suggestion deliverable (TD-001)
-     - Produit snippet démarrage prochaine session
-     - Écrit `handbook/LAST-HANDOFF.md`
-  2. Copier le snippet "NEXT SESSION" dans le dernier message.
+    - Autosave si modifications
+    - Génère handoff + suggestion deliverable
+    - Produit snippet démarrage prochaine session
+  2. `git push origin <branch>` (si le script a committé)
+  3. Copier le snippet "NEXT SESSION" dans le dernier message.
 
 Note: Ancien fichier `HANDFOFF.md` supprimé (intégré ici le 2025-09-28) pour éviter duplication.
 
@@ -152,6 +153,8 @@ Handoff:
     3. ...
   ProposedDeliverable: feat(core): node/browser export skeleton (TD-001, KI-001)
   Risks: fuite import Node dans bundle web
+
+Rappel impératif: Aucun handoff n'est valide tant que le dernier commit local n'est pas poussé.
 ```
 La prochaine session commence en appliquant la Checklist 0 puis en validant que ce bloc est encore cohérent (sinon le régénérer).
 

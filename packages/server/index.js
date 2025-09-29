@@ -11,10 +11,8 @@ import sqlite3 from "sqlite3";
 import bodyParser from "body-parser";
 import { createObservabilityRouter } from './observability.js';
 // Import minimal core services (lazy CJS fallback if needed)
-import { EventBus } from '../core/kernel/events/EventBus.js';
-import { MetricsService } from '../core/kernel/services/MetricsService.js';
-import { HealthService } from '../core/kernel/services/HealthService.js';
-import { InMemoryResourceRepository, InstrumentedResourceRepository } from '../core/kernel/repository/ResourceRepository.js';
+// Import depuis la surface officielle du core (évite les chemins internes fragiles)
+import { EventBus, MetricsService, HealthService, InMemoryResourceRepository, InstrumentedResourceRepository } from '@gestion-chantier/core/node';
 
 // Configuration centralisée depuis le core
 // Note: En attendant l'import ES modules, on reproduit la logique ici

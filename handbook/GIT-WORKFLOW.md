@@ -33,7 +33,7 @@ Règles:
 1. Créer branche: `git checkout -b feat/nom-clair` depuis `main` à jour.
 2. Implémenter + ajouter self-test (ou étendre un existant).
 3. `npm run selftest:all --workspace=packages/core` (ou ciblé via futur changed-selftests).
-4. Mettre à jour `handbook/TEST-MATRIX.md` et/ou `handbook/TODO.md` si surface couverte change.
+4. Mettre à jour `handbook/TODO.md` si surface couverte change (TEST-MATRIX supprimé).
 5. Commit atomique.
 6. Push + PR (review rapide: <400 lignes diff ideal).
 7. Rebase sur main si plus de 2 jours passent / conflits apparaissent.
@@ -62,7 +62,7 @@ Jamais de merge commit non nécessaire (éviter graph bruité).
 - Ajouter règle .gitignore correspondante.
 
 ## Self-Tests & Couverture
-- Chaque nouvelle surface => ligne dans `TEST-MATRIX.md`.
+- Ajouter un self-test dédié pour chaque nouvelle surface significative.
 - Migration => self-test spécifique.
 - Reindex/opérations lourdes => self-test dédié.
 
@@ -73,14 +73,75 @@ Jamais de merge commit non nécessaire (éviter graph bruité).
 - Préparer rebase tôt (avant >5 commits divergence).
 - Conflit persistant => isoler commit de résolution clair (`chore(resolve-conflict): ...`).
 
+## Outils Disponibles
+### changed-selftests (TD-007)
+But: Exécuter uniquement les self-tests core impactés par un diff.
+
+Usage de base:
+```
+node scripts/changed-selftests.mjs --list          # Liste tests impactés (diff HEAD~1)
+node scripts/changed-selftests.mjs --since origin/main --run
+node scripts/changed-selftests.mjs --staged --run   # Sur l'index (pré-commit)
+```
+Options:
+| Option | Description |
+|--------|-------------|
+| --since <ref> | Base du diff (défaut HEAD~1) |
+| --staged | Utilise git diff --cached (exclusif avec --since) |
+| --list | N'affiche que les tests | 
+| --run | Exécute les tests mappés |
+| --verbose | Montre fichiers changés utilisés pour mapping |
+| --json | Sortie machine (CI future) |
+
+Codes sortie: 0 (OK), 1 (échecs tests), 2 (aucun test mappé), 3 (erreur script).
+
+Intégration future possible: hook pré-commit combinant lint + subset tests.
+
 ## Outils Futurs
-- Script `changed-selftests` pour déterminer sous-ensemble de scripts à exécuter.
-- Hook pré-commit (lint + subset tests).
+- Hook pré-commit (lint + subset tests) encore à implémenter.
+
+## Auto-Labeling PR (TD-003)
+Un workflow GitHub Actions applique automatiquement des labels aux Pull Requests selon:
+- Scope fichiers modifiés → `scope:docs|scripts|server|frontend|mobile|core|web|search`
+- Type (dernier commit conventionnel) → `type:feat|fix|docs|chore|refactor|test|perf|ci|build`
+- Taille (additions) → `size:s|m|l|xl`
+- Risque → `risk:elevated` (surface sensible) ou `risk:high` (volume > seuil config)
+- Dettes / issues détectées → `debt:TD-00X`, `issue:KI-00X`
+
+Les labels sont ajoutés de façon idempotente et créés s'ils n'existent pas. Ne retire pas les labels manuels.
+
+But: accélérer tri des PR, filtrage revue, priorisation risques.
+
+## Lint Gate (TD-005)
+Un garde-fou lint progressif empêche toute régression tout en laissant le stock historique être résorbé progressivement.
+
+Mécanisme:
+- Fichier `.lint-baseline.json` généré (snapshot compte des violations par (fichier, règle)).
+- Commande `npm run lint:gate` exécute ESLint (format JSON), agrège les counts et compare.
+- Échec si un count actuel > baseline (même fichier/règle) ou si un nouveau fichier introduit des violations.
+- Améliorations (counts en baisse) passent automatiquement.
+- Mise à jour baseline manuelle: `node scripts/lint-gate.mjs --update` (après refactor / cleanup substantiel).
+
+Pipeline local (`local-check`):
+1. Lint Gate
+2. Build workspaces
+3. Tests core (vitest)
+
+Variables d'environnement (urgence seulement):
+```
+LOCAL_CHECK_SKIP_LINT=true
+LOCAL_CHECK_SKIP_BUILD=true
+LOCAL_CHECK_SKIP_TESTS=true
+```
+(Éviter en usage normal; ne pas committer avec un skip appliqué.)
+
+Objectif: Prévenir augmentation dette lint tout en fournissant feedback rapide (fail rapide). La réduction du stock (1357 → 0) est incrémentale et hors scope gating.
+
 
 ## Check Final Avant Merge
 Checklist rapide:
 - [ ] Tests ✅
-- [ ] Docs (TODO / TEST-MATRIX) à jour
+- [ ] Docs (TODO) à jour
 - [ ] Pas de fichiers runtime accidentels
 - [ ] Commit messages conformes
 - [ ] Rebase sur main récent

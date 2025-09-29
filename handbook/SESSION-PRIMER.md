@@ -8,7 +8,7 @@ Nouvelle source unique: `handbook/LLM-ENTRYPOINT.md`.
 2. Suivre le format de session défini (section 6).
 3. Supprimer toute référence future à ce fichier dans la doc / scripts.
 
-Script générateur `scripts/session-primer.mjs` également déprécié.
+Script supprimé (TD-006 Phase A) – utiliser uniquement `LLM-ENTRYPOINT.md`.
 
 — Mainteneur
 
@@ -62,12 +62,7 @@ Deliverable: feat(core): node/browser export skeleton
 - Mettre 15 tâches: le modèle découpera mal. Sélectionner 3 max pour la salve initiale.
 
 ## Script d'Aide (session-primer)
-Un script `scripts/session-primer.mjs` génère un brouillon basé sur HEAD + extraits TODO / dettes.
-Exécution:
-```
-node scripts/session-primer.mjs
-```
-Coller ensuite la sortie en complétant les zones `<...>`.
+Ancienne section supprimée: génération automatisée désormais centralisée via `save-session.mjs` (ou future fusion Phase C TD-006).
 
 ## Mise à Jour
 Si le format évolue, modifier ce fichier puis adapter le script. Toujours conserver une version minimale en tête.

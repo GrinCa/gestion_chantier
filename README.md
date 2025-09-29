@@ -1,13 +1,42 @@
-# React + TypeScript + Vite
+# Workspace Overview
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Monorepo multi-surfaces (core, web, mobile, server) avec scripts minimalistes pour qualité locale et gestion de la dette.
 
-Currently, two official plugins are available:
+## Qualité Locale
+Pipeline unique:
+```
+npm run check   # alias local-check (lint baseline → build → tests core)
+```
+Skips urgents (à éviter):
+```
+LOCAL_CHECK_SKIP_LINT=true LOCAL_CHECK_SKIP_BUILD=true LOCAL_CHECK_SKIP_TESTS=true node scripts/local-check.mjs
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Gestion Dette Technique
+Fichier actif: `handbook/TECH-DEBT.md` (tableau OPEN/DONE + sections). Archive: `handbook/TECH-DEBT-ARCHIVE.md`.
 
-## Expanding the ESLint configuration
+Lister:
+```
+node scripts/debt-maintain.mjs --list
+```
+Nouvelle dette (ID auto):
+```
+node scripts/debt-maintain.mjs --new "Refactor repository layer" --category Core --priority High --exit "Couche isolée + tests migration"
+```
+Archiver COOLDOWN expirées (>14j par défaut):
+```
+node scripts/debt-maintain.mjs --archive-stale
+```
+
+## Frontend (Vite + React)
+Stack minimale avec HMR et ESLint rules.
+
+Plugins disponibles:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) (Babel Fast Refresh)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) (SWC Fast Refresh)
+
+## ESLint Type-Aware (exemple)
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 

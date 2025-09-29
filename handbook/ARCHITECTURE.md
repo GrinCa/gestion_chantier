@@ -75,8 +75,39 @@ Planned extensions:
 
 ---
 ## 7. Index Strategy
-Current: InMemory index keyed by id with extracted searchable tokens (basic).  
-Future: Weighted scoring, FTS integration, incremental rebuild script.
+Current: InMemory index (token frequency) + SQLite FTS5 (if available).  
+Advanced query features (TD-002 delivered):
+| Feature | InMemory | SQLite FTS |
+|---------|----------|------------|
+| Multi-term AND | Yes (implicit) | Yes (MATCH + AND) |
+| Explicit OR | Yes (AST parser) | Translated to MATCH query | 
+| Phrase search ("...") | Yes (sequential substring check) | Yes (quoted in MATCH) |
+| Grouping () | Yes (recursive AST) | Yes (parenthesized MATCH) |
+| Highlight positions | Yes (manual offsets) | TODO (future: FTS snippet()) |
+| Accent folding | Yes (NFKD + strip diacritics) | Depends on compile (fallback manual) |
+| Scoring | Term/phrase frequency heuristic | Sum of token frequency expression |
+
+Scoring Heuristic:
+- Term score = occurrence count
+- Phrase score = occurrence count * number of terms (favor exact phrases)
+- AND aggregates by sum; OR aggregates by max
+
+Fallback Path (no FTS):
+- Parses query → builds normalized LIKE filters (AND/OR preserved)
+- Phrase becomes single LIKE pattern
+- Scores recomputed in-memory for ranking
+
+Limitations / Next (Not part of TD-002 scope):
+- No proximity scoring or BM25
+- No partial prefix matching (`iso*`)
+- No weighting by field (type vs payload)
+- No snippet truncation / contextual highlighting
+
+Planned (Future TD):
+- BM25 style scoring
+- Field weighting & boosts
+- Proximity ranking for phrases
+- Rich highlight via FTS snippet / window extractor
 
 ---
 ## 8. Export
@@ -120,12 +151,20 @@ AccessPolicy (allow-all stub). Planned:
 
 ---
 ## 12. Technical Debt / Limitations
-- No advanced query filtering (TODO)
-- No pagination in list(repository)
-- No conflict self-test script yet
-- Export lacks manifest
-- No repository latency metrics
-- No FTS or scoring beyond naive index
+Historical (some resolved by TD-002):
+- (Resolved TD-002) Lack of OR / phrase / highlight support
+- No advanced query filtering (complex boolean on structured fields) (OPEN)
+- No pagination cursor beyond basic offset (partial)
+- No repository latency metrics (TD-004)
+- Scoring still heuristic (BM25 missing)
+
+---
+## 12bis. Quality Gate & Lint Baseline (TD-005)
+Résumé: Gate lint no‑regression (baseline figée) exécuté avant build/tests dans `local-check` via `scripts/lint-gate.mjs`. Empêche toute hausse du stock ESLint historique sans bloquer le flux.
+
+Contenu détaillé (phases de remédiation, stratégie, objectifs chiffrés) déplacé dans `TECH-DEBT.md` (section TD-005) pour respecter la séparation Architecture (concepts stables) / Opérations de réduction de dette (évolutif).
+
+Mise à jour baseline (après refactor substantiel): `node scripts/lint-gate.mjs --update`.
 
 ---
 ## 13. Planned Scripts
@@ -179,6 +218,8 @@ AccessPolicy (allow-all stub). Planned:
 ## 18. Changelog Anchor (Human + LLM)
 LLM Agents should append summarized deltas here (top):
 ```
+[2025-09-29] TD-005 Quality Gate: added baseline lint gate (no regression), integrated into pr-check (lint → build → tests), documented phased remediation strategy.
+[2025-09-29] Advanced FTS delivered (OR, phrases, highlight, accent folding, AST parser, fallback LIKE) (TD-002).
 [2025-09-28] Added SQLite FTS multi-term search (AND + heuristic scoring), self-test script, PR template + documented mandatory PR process.
 [2025-09-28] Added optimistic locking + resource.conflict events, conflicts surfaced in SyncStatus.
 ```
@@ -202,7 +243,7 @@ Tout contributeur (humain ou LLM) doit utiliser le template PR standard lors de 
 - **Emplacement du template** : `.github/pull_request_template.md`
 - **Obligation** :
   - Remplir chaque section du template (contexte, changements, tests, perf, DB, sécurité, checklist, etc.).
-  - Synchroniser la documentation (TEST-MATRIX.md, ARCHITECTURE.md, etc.) avant soumission.
+  - Synchroniser la documentation (ARCHITECTURE.md, TODO.md, TECH-DEBT.md) avant soumission.
   - Respecter la checklist finale (build, lint, self-tests, doc, atomicité des commits, etc.).
   - Utiliser la variante hotfix ou courte si approprié (voir template).
 - **But** :
