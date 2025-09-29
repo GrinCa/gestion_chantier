@@ -1,12 +1,33 @@
 # Technical Debt Register
 
-| ID | Category | Title | Status | Priority | Exit Criteria |
-|----|----------|-------|--------|----------|---------------|
-| TD-001 | Build | Node vs Browser surface split | DONE | High | Dual bundles + guard script no forbidden modules |
-| TD-002 | Search | Advanced FTS (OR, phrase, highlight) | DONE | Medium | Selftests pass + relevance doc |
-| TD-003 | PR Automation | Auto label application | DONE | Low | Labels auto appliqués sur PR |
-| TD-004 | Metrics | Repository latency instrumentation | DONE | Low | p50/p95 exposés Health/Metrics |
-| TD-005 | Quality Gate | Lint/tests integration | DONE | Medium | pr-check supporte flags lint/test + lint gate baseline |
+Ce fichier distingue clairement ce qui RESTE À FAIRE (OPEN) de ce qui est ACHEVÉ (DONE). Les sections détaillées (TD-XXX) restent inchangées plus bas.
+
+## 0. Tableau de Bord Synthétique
+
+### OPEN (à traiter)
+Actuellement: (aucune dette ouverte listée ici – ajouter nouvelle entrée ci-dessous si nécessaire)
+
+| ID | Catégorie | Titre | Priorité | Exit Criteria |
+|----|-----------|-------|----------|---------------|
+| (vide) |  |  |  |  |
+
+### DONE (historique)
+| ID | Catégorie | Titre | Priorité | Exit Criteria (atteint) |
+|----|-----------|-------|----------|-------------------------|
+| TD-001 | Build | Node vs Browser surface split | High | Dual bundles + guard script no forbidden modules |
+| TD-002 | Search | Advanced FTS (OR, phrase, highlight) | Medium | Selftests pass + relevance doc |
+| TD-003 | PR Automation | Auto label application | Low | Labels auto appliqués sur PR |
+| TD-004 | Metrics | Repository latency instrumentation | Low | p50/p95 exposés Health/Metrics |
+| TD-005 | Quality Gate | Lint/tests integration | Medium | pr-check + lint gate baseline |
+
+### Vue Chronologique (résumé)
+- TD-005 (Qualité) → Gate lint baseline no‑regression opérationnel.
+- TD-004 (Metrics) → p50/p95 latences repo & tool exposés.
+- TD-003 (Automation) → Auto-label PR.
+- TD-002 (Search) → FTS avancé (OR, phrases, highlight positions, normalisation).
+- TD-001 (Build) → Séparation surfaces Node / Browser.
+
+---
 
 ## TD-001 – Node vs Browser Surface Split
 Problem: Build web tire des modules Node. Plan: dual entries + stubs + conditional exports.
@@ -123,3 +144,9 @@ Guidelines:
 - Prioriser règles à forte densité pour impact maximal par patch.
 
 Outils à venir: `lint-report` (tri par volume / règle) – si ajouté, référencer ici.
+
+---
+Fin du registre actuel. Pour ajouter une nouvelle dette:
+1. Ajouter ligne dans tableau OPEN (section 0) avec ID suivant (ex: TD-006).
+2. Créer section détaillée plus bas sur le modèle existant (Problem / Delivered / Exit Criteria / Deferred / Status).
+3. Mettre à jour le résumé chronologique si pertinent.
