@@ -77,6 +77,19 @@ Jamais de merge commit non nécessaire (éviter graph bruité).
 - Script `changed-selftests` pour déterminer sous-ensemble de scripts à exécuter.
 - Hook pré-commit (lint + subset tests).
 
+## Auto-Labeling PR (TD-003)
+Un workflow GitHub Actions applique automatiquement des labels aux Pull Requests selon:
+- Scope fichiers modifiés → `scope:docs|scripts|server|frontend|mobile|core|web|search`
+- Type (dernier commit conventionnel) → `type:feat|fix|docs|chore|refactor|test|perf|ci|build`
+- Taille (additions) → `size:s|m|l|xl`
+- Risque → `risk:elevated` (surface sensible) ou `risk:high` (volume > seuil config)
+- Dettes / issues détectées → `debt:TD-00X`, `issue:KI-00X`
+
+Les labels sont ajoutés de façon idempotente et créés s'ils n'existent pas. Ne retire pas les labels manuels.
+
+But: accélérer tri des PR, filtrage revue, priorisation risques.
+
+
 ## Check Final Avant Merge
 Checklist rapide:
 - [ ] Tests ✅

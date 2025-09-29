@@ -4,7 +4,7 @@
 |----|----------|-------|--------|----------|---------------|
 | TD-001 | Build | Node vs Browser surface split | DONE | High | Dual bundles + guard script no forbidden modules |
 | TD-002 | Search | Advanced FTS (OR, phrase, highlight) | DONE | Medium | Selftests pass + relevance doc |
-| TD-003 | PR Automation | Auto label application | PLANNED | Low | Labels auto appliqués sur PR |
+| TD-003 | PR Automation | Auto label application | DONE | Low | Labels auto appliqués sur PR |
 | TD-004 | Metrics | Repository latency instrumentation | PLANNED | Low | p50/p95 exposés Health/Metrics |
 | TD-005 | Quality Gate | Lint/tests integration | OPEN | Medium | pr-check supporte flags lint/test |
 
@@ -42,3 +42,26 @@ Deferred (hors scope TD-002):
 - Prefix / wildcard matching
 
 Status: COMPLETE – aucun action immédiate restante.
+
+## TD-003 – Auto Label Application
+Problem: Manque de cohérence et rapidité dans la catégorisation des PR (revue plus lente, filtres imprécis).
+
+Delivered:
+- Workflow GitHub Actions `auto-label.yml` (événements: opened / synchronize / reopened / ready_for_review)
+- Script `scripts/apply-pr-labels.mjs` (Node 18) réutilisant la config `pr-automation.config.json`
+- Catégories → labels `scope:<cat>` (docs, scripts, server, frontend, mobile, core, web, search)
+- Détection type commit → `type:<feat|fix|docs|chore|refactor|test|perf|ci|build>`
+- Heuristiques taille additions → `size:s|m|l|xl`
+- Règles risque: volume (`risk:high`) ou surface sensible (`risk:elevated`)
+- Détection dettes / issues via motifs `TD-00X` → `debt:TD-00X`, `KI-00X` → `issue:KI-00X`
+- Création automatique des labels manquants (couleur neutre)
+- Idempotent (n'ajoute pas les labels déjà présents)
+
+Exit Criteria Check:
+- PR reçoit automatiquement les labels lors des mises à jour: OK
+
+Deferred:
+- Suppression automatique de labels devenus obsolètes (choix: éviter de retirer un label ajouté manuellement)
+- Mapping score de complexité (ex: profondeur répertoires) -> futur possible
+
+Status: COMPLETE.
