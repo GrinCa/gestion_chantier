@@ -36,16 +36,7 @@ function extractDebts(){
     .slice(0,3)
     .map(cols=> cols[1]);
 }
-function extractIssues(){
-  const path = 'handbook/KNOWN-ISSUES.md';
-  if(!existsSync(path)) return [];
-  return readFileSync(path,'utf8').split(/\r?\n/)
-    .filter(l=> /^\| KI-/.test(l))
-    .map(l=> l.split('|').map(s=> s.trim()))
-    .filter(cols=> /ACCEPTED|OPEN/i.test(cols[4]||''))
-    .slice(0,2)
-    .map(cols=> cols[1]);
-}
+function extractIssues(){ return []; } // issues file removed
 
 const tasks = extractTasks();
 const debts = extractDebts();
@@ -62,7 +53,7 @@ if(dirty.length){
   dirty.slice(0,8).forEach(l=> lines.push('    - '+l));
   if(dirty.length>8) lines.push('    - ...');
 }
-lines.push(`  Focus: ${[...debts, ...issues].join(', ') || 'NONE'}`);
+lines.push(`  Focus: ${[...debts].join(', ') || 'NONE'}`);
 lines.push('  LastCommits:');
 lastCommits.forEach(c=> lines.push('    - '+c));
 lines.push('  NextTasks:');

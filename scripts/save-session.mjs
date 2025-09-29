@@ -4,7 +4,7 @@
 // 1. Commit auto (si sale) avec message horodaté
 // 2. Génère handoff (réutilise prepare-handoff.mjs)
 // 3. Ajoute une suggestion de ProposedDeliverable si vide (TD-001 prioritaire)
-// 4. Écrit handbook/LAST-HANDOFF.md
+// 4. (Supprimé) LAST-HANDOFF.md n'est plus maintenu
 // 5. Affiche un snippet minimal à coller en ouverture de prochaine session.
 
 import { execSync } from 'node:child_process';
@@ -44,7 +44,7 @@ for (let i=0;i<lines.length;i++) {
   if (/^\s*ProposedDeliverable:/.test(lines[i])) { hasDeliverable = true; deliverableIndex = i; break; }
 }
 
-// Déterminer suggestion si TD-001 dans Focus
+// Déterminer suggestion si TD-001 dans Focus (issues supprimées)
 let focusLine = lines.find(l=> /Focus:/.test(l))||'';
 const suggestTD001 = /TD-001/.test(focusLine);
 let suggestion = '';
@@ -86,11 +86,8 @@ function buildNextSessionSnippet() {
 handoff = lines.join('\n');
 const nextSnippet = buildNextSessionSnippet();
 
-const out = '# LAST HANDOFF\n\n````\n'+handoff+'\n\n---\n'+nextSnippet+'\n````\n';
-writeFileSync('handbook/LAST-HANDOFF.md', out, 'utf8');
-
-console.log('\n=== HANDOFF BLOCK ===');
+console.log('\n=== HANDOFF BLOCK (no file persisted) ===');
 console.log(handoff);
 console.log('\n=== NEXT SESSION SNIPPET ===');
 console.log(nextSnippet);
-console.log('\n(Handoff écrit dans handbook/LAST-HANDOFF.md)');
+console.log('\n(NOTE: LAST-HANDOFF.md deprecated, nothing written)');

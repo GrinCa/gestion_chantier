@@ -60,7 +60,7 @@ Si oui : décrire l'impact + stratégie de migration.
 - Accès / permissions modifiés ?
 
 ## 📄 Documentation Mise à Jour
-- TEST-MATRIX.md : [ ] Oui / [ ] N/A
+<!-- TEST-MATRIX supprimé -->
 - ARCHITECTURE.md : [ ] Oui / [ ] N/A
 - GLOSSARY.md / DECISIONS.md : [ ] Oui / [ ] N/A
 - README / Usage : [ ] Oui / [ ] N/A
@@ -117,7 +117,7 @@ feat: corrige tri FTS multi-termes ordre de score
 
 Changement: Ajuste expression de scoring pour pondérer occurrences exactes.
 Tests: fts-query-selftest étendu (PASS).
-Docs: TEST-MATRIX.md mis à jour.
+Docs: TODO.md mis à jour.
 Risque: Faible (scoring seulement, pas de modification des résultats inclusifs).
 -->
 

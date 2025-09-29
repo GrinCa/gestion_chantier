@@ -10,7 +10,7 @@ Checklist impérative, aucune modification tant que chaque point n'a pas une ré
    - Lire SHA court: `git rev-parse --short HEAD`
    - Vérifier diff en cours: `git status -s` (si modifications → demander clarification avant d'écrire autre chose)
 2. Santé Build (optionnel si coût): tenter `npm run build` (ou signaler "non vérifié" si trop long).
-3. Debt / Issues Focus: ouvrir `handbook/TECH-DEBT.md` & `handbook/KNOWN-ISSUES.md` → relever IDs en statut OPEN/ACCEPTED prioritaire (TD-001 / KI-001).
+3. Debt Focus: ouvrir `handbook/TECH-DEBT.md` → relever IDs en statut OPEN/ACTIVE prioritaire (ex: TD-006).
 4. Tâches Actives: dans `handbook/TODO.md` récupérer les 3 premières cases non cochées pertinentes pour le domaine ciblé (ignorer sections non liées si hors scope).
 5. Derniers Commits: récupérer les 2 derniers messages (`git log -2 --oneline`) pour voir le contexte immédiat (ex: nettoyage, refactor, feature en cours).
 6. Vérification Surface: confirmer si objectif demandé par l'utilisateur correspond bien à la priorité actuelle (sinon proposer réalignement).
@@ -52,10 +52,7 @@ Base modulaire orientée services (EventBus, ResourceService avec locking optimi
 ## 3. Dette & Incidents Prioritaires
 | ID | Type | Résumé | Statut |
 |----|------|--------|--------|
-| TD-001 | Debt | Séparer surface export Node vs Browser | open |
-| KI-001 | Issue | Bundle web casse: dépendances Node importées | open |
-| TD-004 | Debt | Metrics repository latency instrumentation | planned |
-| TD-005 | Debt | Gate lint + tests intégrés | open |
+| (voir TECH-DEBT.md pour liste active) |  |  |  |
 
 Toujours référencer ID exact dans les commits / prompts.
 
@@ -79,7 +76,7 @@ Session:
   Branch: <nom> @ <sha>
   Build: <OK|FAIL + cause courte>
   Tests: <non lancés|OK|FAIL + 1 test>
-  Focus: TD-001 ; KI-001
+  Focus: TD-001
   Tasks:
     1. ...
     2. ...

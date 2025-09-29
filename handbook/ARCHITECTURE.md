@@ -243,7 +243,7 @@ Tout contributeur (humain ou LLM) doit utiliser le template PR standard lors de 
 - **Emplacement du template** : `.github/pull_request_template.md`
 - **Obligation** :
   - Remplir chaque section du template (contexte, changements, tests, perf, DB, sécurité, checklist, etc.).
-  - Synchroniser la documentation (TEST-MATRIX.md, ARCHITECTURE.md, etc.) avant soumission.
+  - Synchroniser la documentation (ARCHITECTURE.md, TODO.md, TECH-DEBT.md) avant soumission.
   - Respecter la checklist finale (build, lint, self-tests, doc, atomicité des commits, etc.).
   - Utiliser la variante hotfix ou courte si approprié (voir template).
 - **But** :

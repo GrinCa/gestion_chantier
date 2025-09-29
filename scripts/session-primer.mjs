@@ -31,19 +31,9 @@ if(debtRaw){
     .slice(0,3);
 }
 
-// Known issues IDs
-let issuesRaw = safe(()=> readFileSync('handbook/KNOWN-ISSUES.md','utf8'));
-let issues = [];
-if(issuesRaw){
-  issues = issuesRaw.split(/\r?\n/)
-    .filter(l=> /^\| KI-/.test(l))
-    .map(l=> l.split('|').map(s=> s.trim()))
-    .map(cols=> ({ id: cols[1], title: cols[2], status: cols[5] }))
-    .slice(0,2);
-}
-
+// Issues deprecated: KNOWN-ISSUES.md removed -> fallback placeholder only
 const debtFocus = debts.length ? debts[0].id : 'TD-XXX';
-const issueFocus = issues.length ? issues[0].id : 'KI-XXX';
+const issueFocus = 'N/A';
 
 const primer = `Session Primer Draft (complete the <...> parts)\n\n`+
 `Objectif principal: <décrire en une phrase>\n`+
@@ -51,7 +41,7 @@ const primer = `Session Primer Draft (complete the <...> parts)\n\n`+
 `Branche: ${branch} @ ${head}\n`+
 `Build: <OK|FAIL + résumé>\n`+
 `Tests: <non lancés|OK|FAIL + test clé>\n`+
-`Focus Debt/Issue: ${debtFocus}, ${issueFocus}\n`+
+`Focus Debt: ${debtFocus}\n`+
 `Tâches ciblées:\n`+
 candidateTasks.map((t,i)=>`  ${i+1}. ${t}`).join('\n') + (candidateTasks.length? '\n': '') +
 `Contraintes: <ne pas toucher X / style commit>\n`+

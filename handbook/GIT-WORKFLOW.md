@@ -33,7 +33,7 @@ Règles:
 1. Créer branche: `git checkout -b feat/nom-clair` depuis `main` à jour.
 2. Implémenter + ajouter self-test (ou étendre un existant).
 3. `npm run selftest:all --workspace=packages/core` (ou ciblé via futur changed-selftests).
-4. Mettre à jour `handbook/TEST-MATRIX.md` et/ou `handbook/TODO.md` si surface couverte change.
+4. Mettre à jour `handbook/TODO.md` si surface couverte change (TEST-MATRIX supprimé).
 5. Commit atomique.
 6. Push + PR (review rapide: <400 lignes diff ideal).
 7. Rebase sur main si plus de 2 jours passent / conflits apparaissent.
@@ -62,7 +62,7 @@ Jamais de merge commit non nécessaire (éviter graph bruité).
 - Ajouter règle .gitignore correspondante.
 
 ## Self-Tests & Couverture
-- Chaque nouvelle surface => ligne dans `TEST-MATRIX.md`.
+- Ajouter un self-test dédié pour chaque nouvelle surface significative.
 - Migration => self-test spécifique.
 - Reindex/opérations lourdes => self-test dédié.
 
@@ -118,7 +118,7 @@ Objectif: Prévenir augmentation dette lint tout en fournissant feedback rapide 
 ## Check Final Avant Merge
 Checklist rapide:
 - [ ] Tests ✅
-- [ ] Docs (TODO / TEST-MATRIX) à jour
+- [ ] Docs (TODO) à jour
 - [ ] Pas de fichiers runtime accidentels
 - [ ] Commit messages conformes
 - [ ] Rebase sur main récent
