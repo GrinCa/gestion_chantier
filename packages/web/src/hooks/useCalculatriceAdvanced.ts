@@ -155,11 +155,15 @@ export function useCalculatriceAdvanced(opts: UseCalculatriceAdvancedOptions = {
       setLastError(msg);
       return { error: msg };
     }
-    // Ancienne contrainte supprimée: on autorise désormais l'ajout sur n'importe quelle position sélectionnée.
+    if (!isLastGroup(currentGroup.id)) {
+      const msg = 'Ajout uniquement sur la dernière position';
+      setLastError(msg);
+      return { error: msg };
+    }
     const updated = calculatriceTool.addMesure(groups, currentGroup.id, currentSection.id, raw);
     updateGroups(updated);
     return { ok: true };
-  }, [groups, currentGroup, currentSection, updateGroups]);
+  }, [groups, currentGroup, currentSection, isLastGroup, updateGroups]);
 
   const removeMesure = useCallback((groupId: string, mesureId: string) => {
     const updated = calculatriceTool.removeMesure(groups, groupId, mesureId);
