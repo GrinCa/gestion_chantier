@@ -121,18 +121,17 @@ Uniquement quand un pattern durable change (architecture, workflow, dette priori
 ## 13. Fin de Session (Préparer la Reprise)
 Avant de quitter une session active, générer un bloc de handoff:
 Option manuelle (fine):
-  1. `node scripts/prepare-handoff.mjs`
+  1. `node scripts/save-session.mjs --raw`
   2. Compléter ProposedDeliverable + Risks.
-  3. Vérifier `git status -s` (doit être propre après le commit handoff).
-  4. `git push origin <branch>` (OBLIGATOIRE avant de quitter) – sinon le prochain agent ne verra pas les changements.
+  3. Vérifier `git status -s` (si changements, commit manuel ou relancer sans --raw pour autosave).
+  4. `git push origin <branch>` (OBLIGATOIRE avant de quitter).
   5. Coller le bloc final dans le dernier message.
 
 Option automatisée (recommandée):
   1. `node scripts/save-session.mjs`
-     - Commit autosave si changes
-     - Génère handoff + suggestion deliverable (TD-001)
-     - Produit snippet démarrage prochaine session
-     - Écrit `handbook/LAST-HANDOFF.md`
+    - Autosave si modifications
+    - Génère handoff + suggestion deliverable
+    - Produit snippet démarrage prochaine session
   2. `git push origin <branch>` (si le script a committé)
   3. Copier le snippet "NEXT SESSION" dans le dernier message.
 

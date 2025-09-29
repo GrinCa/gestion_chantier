@@ -88,13 +88,13 @@ Surface actuelle:
 Plan Remédiation (phases):
 1. Phase A (Nettoyage): Supprimer scripts PR + session-primer. ✔
 2. Phase B (Renommage): pr-check → local-check (docs + scripts). ✔
-3. Phase C (Fusion): Intégrer génération handoff de `prepare-handoff.mjs` dans `save-session.mjs` (option `--raw`) puis supprimer `prepare-handoff.mjs`.
+3. Phase C (Fusion): Intégrer génération handoff de `prepare-handoff.mjs` dans `save-session.mjs` (option `--raw`) puis supprimer `prepare-handoff.mjs`. ✔
 4. Phase D (Étendre debt-maintain): Implémenter `--new` (scaffold TD-XXX) et `--archive-stale` (cooldown >14j).
 
 Exit Criteria (détaillé):
 - (Phase A) create-pr.mjs, update-pr.mjs, apply-pr-labels.mjs, session-primer.mjs supprimés. ✔
 - (Phase B) pr-check.mjs remplacé par local-check.mjs (scripts npm mis à jour). ✔
-- (Phase C) prepare-handoff.mjs supprimé, fonctionnalité accessible via `node scripts/save-session.mjs --raw`.
+- (Phase C) prepare-handoff.mjs supprimé, fonctionnalité accessible via `node scripts/save-session.mjs --raw`. ✔
 - (Phase D) debt-maintain fournit `--list --new --archive-stale` opérationnels.
 - README / GIT-WORKFLOW / LLM-ENTRYPOINT ne mentionnent plus scripts retirés (en cours au fil des phases).
 
