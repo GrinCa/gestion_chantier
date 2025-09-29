@@ -56,6 +56,7 @@ export function CalculatriceRoute({
             className={`px-3 py-1 rounded text-sm ${
               version === "core" ? "bg-green-500 text-white" : "text-gray-600"
             }`}
+            title="Nouvelle architecture avec l'interface avancée (ancienne UI modernisée)"
           >
             ✅ Nouvelle Architecture
           </button>
@@ -64,8 +65,9 @@ export function CalculatriceRoute({
             className={`px-3 py-1 rounded text-sm ${
               version === "legacy" ? "bg-yellow-500 text-white" : "text-gray-600"
             }`}
+            title="Ancienne version simplifiée (mode debug / core brut)"
           >
-            📦 Ancienne Version
+            🧪 Mode Simple (Core brut)
           </button>
         </div>
 
@@ -96,16 +98,18 @@ export function CalculatriceRoute({
       )}
 
       {version === "core" && (
-        <div className="max-w-7xl mx-auto">
-          <CalculatriceSimple selectedProject={selectedProject} />
+        <div className="flex justify-center">
+          <div className="bg-white p-6 rounded-xl shadow w-full max-w-7xl">
+            {/* Nouvelle architecture = ancienne interface visuelle branchée sur le hook avancé */}
+            <CalculatriceUI selectedProject={selectedProject} />
+          </div>
         </div>
       )}
 
       {version === "legacy" && (
-        <div className="flex justify-center">
-          <div className="bg-white p-6 rounded-xl shadow w-full max-w-7xl">
-            <CalculatriceUI selectedProject={selectedProject} />
-          </div>
+        <div className="max-w-7xl mx-auto">
+          {/* Mode simple de démonstration (ancienne implémentation core directe) */}
+          <CalculatriceSimple selectedProject={selectedProject} />
         </div>
       )}
     </div>
