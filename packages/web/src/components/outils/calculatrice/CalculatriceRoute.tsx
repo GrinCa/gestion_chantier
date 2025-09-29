@@ -2,9 +2,11 @@ import React from "react";
 import { type Projet } from "../../../api/users";
 import CalculatriceUI from "./CalculatriceUI";
 
-// Route calculatrice – version unifiée
-// Les anciennes variantes (simple, multi-ref legacy, moyenne stat) ont été supprimées
-// pour ne conserver qu'une seule implémentation: CalculatriceUI basée sur useCalculatriceAdvanced.
+/*
+  Composant CalculatriceRoute :
+  - Route dédiée à la calculatrice statistique.
+  - Version de test : permet de comparer ancienne et nouvelle architecture.
+*/
 
 export function CalculatriceRoute({
   userTools,
