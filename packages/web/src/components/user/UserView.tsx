@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserHome } from "../UserHome";
 import { CalculatriceRoute } from "../outils/calculatrice/CalculatriceRoute";
 import { type Projet } from "../../api/users";
@@ -23,22 +23,32 @@ export function UserView({
   onLogout: () => void;
   onOpenAdmin: () => void;
 }) {
-  // "page" courante : accueil ou outil
+  // page courante (utilisateur uniquement)
   const [page, setPage] = useState<"home" | "calculatrice">("home");
 
-  if (page === "calculatrice") {
+  // Si c'est l'utilisateur admin (identité unique), rediriger immédiatement
+  useEffect(() => {
+    if (username === 'admin') {
+      onOpenAdmin();
+    }
+  }, [username, onOpenAdmin]);
+
+  if (username === 'admin') {
+    return null; // redirection en cours
+  }
+
+  if (page === 'calculatrice') {
     return (
       <CalculatriceRoute
         userTools={userTools}
         selectedProject={selectedProject}
         onSelectProject={onSelectProject}
         onShowProjectManager={onShowProjectManager}
-        onBack={() => setPage("home")}
+        onBack={() => setPage('home')}
       />
     );
   }
 
-  // Accueil utilisateur
   return (
     <UserHome
       username={username}
@@ -48,7 +58,7 @@ export function UserView({
       onSelectProject={onSelectProject}
       onShowProjectManager={onShowProjectManager}
       onLogout={onLogout}
-      onOpenCalculatrice={() => setPage("calculatrice")}
+      onOpenCalculatrice={() => setPage('calculatrice')}
       onOpenAdmin={onOpenAdmin}
     />
   );

@@ -45,7 +45,19 @@ db.run(`
     role TEXT,
     tools TEXT
   )
-`);
+`, (err) => {
+  if (err) {
+    console.error('Erreur création table users:', err);
+  } else {
+    // Invariant de sécurité: seul l'utilisateur nommé exactement 'admin' peut avoir le rôle admin.
+    // Toute autre ligne marquée admin est rétrogradée user au démarrage.
+    db.run("UPDATE users SET role='user' WHERE username <> 'admin' AND role='admin'", [], (uErr) => {
+      if (uErr) {
+        console.error('Erreur normalisation rôles admin:', uErr);
+      }
+    });
+  }
+});
 
 // Table whitelist
 db.run(`
@@ -176,10 +188,16 @@ app.post("/whitelist", (req, res) => {
 // Ajoute ou modifie utilisateur
 app.post("/users", (req, res) => {
   let { username, password, role, tools } = req.body;
-  username = username.toLowerCase();
+  username = (username || '').toLowerCase();
+  // Sanitize role: only username 'admin' may store role 'admin'
+  if (username !== 'admin') {
+    role = 'user';
+  } else {
+    role = 'admin';
+  }
   db.run(
     "INSERT OR REPLACE INTO users (username, password, role, tools) VALUES (?, ?, ?, ?)",
-    [username, password, role, JSON.stringify(tools || [])],
+    [username, password || '', role, JSON.stringify(tools || [])],
     err => {
       if (err) {
         console.error("Erreur SQLite:", err);
@@ -204,16 +222,19 @@ app.delete("/users/:username", (req, res) => {
 
 // Modifie rôle utilisateur
 app.put("/users/:username/role", (req, res) => {
-  const username = req.params.username.toLowerCase();
+  const username = (req.params.username || '').toLowerCase();
+  // Enforce invariant: only the literal username 'admin' can have admin role
+  const requested = req.body.role === 'admin';
+  const finalRole = username === 'admin' && requested ? 'admin' : 'user';
   db.run(
     "UPDATE users SET role = ? WHERE username = ?",
-    [req.body.role, username],
+    [finalRole, username],
     err => {
       if (err) {
         console.error("Erreur SQLite:", err);
         return res.status(500).json({ error: "Erreur serveur" });
       }
-      res.sendStatus(200);
+      res.json({ username, role: finalRole });
     }
   );
 });
@@ -250,8 +271,12 @@ app.post("/login", (req, res) => {
           return res.status(500).json({ error: "Erreur serveur" });
         }
         if (row) {
-          row.tools = row.tools ? JSON.parse(row.tools) : [];
-          return res.json(row);
+            row.tools = row.tools ? JSON.parse(row.tools) : [];
+            // Invariant guard: correct any stray admin role on non 'admin' usernames
+            if (row.username !== 'admin' && row.role === 'admin') {
+              row.role = 'user';
+            }
+            return res.json(row);
         }
         // Auto-création en mode dev si activée
         if (!CONFIG.DEV_AUTO_CREATE_USERS) {
@@ -264,7 +289,7 @@ app.post("/login", (req, res) => {
             return res.status(500).json({ error: 'Erreur serveur' });
           }
           const isFirstAdmin = adminRow?.adminCount === 0 && username === 'admin';
-          const role = isFirstAdmin ? 'admin' : 'user';
+          const role = (username === 'admin' && isFirstAdmin) ? 'admin' : 'user';
             const tools = isFirstAdmin ? ['releve','calculatrice','export'] : ['releve','calculatrice'];
           db.run(
             "INSERT INTO users (username, password, role, tools) VALUES (?, ?, ?, ?)",
@@ -306,6 +331,9 @@ app.post("/login", (req, res) => {
           }
             if (row) {
               row.tools = row.tools ? JSON.parse(row.tools) : [];
+              if (row.username !== 'admin' && row.role === 'admin') {
+                row.role = 'user';
+              }
               res.json(row);
             } else {
               res.status(401).send();

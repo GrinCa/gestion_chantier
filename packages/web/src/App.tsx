@@ -1,6 +1,10 @@
-  // --- Mode d'authentification sans mot de passe ---
-  // Pour activer/désactiver facilement ce mode, changez la valeur ci-dessous :
-  const AUTH_SANS_MDP = true; // Mettre false pour désactiver
+  // --- Mode développement ---
+  // En `DEV_MODE` on autorise la connexion sans mot de passe pour faciliter le dev local.
+  // Ce flag n'altère que la vérification du mot de passe côté client. Le serveur
+  // garde sa propre logique (whitelist / auto-create en dev) et doit rester la source
+  // d'autorité pour rôles/outils.
+  // Pour désactiver, mettez `const DEV_MODE = false`.
+  const DEV_MODE = true;
 /**
  * Carnet de Niveaux Laser - Application React
  * -------------------------------------------
@@ -15,7 +19,6 @@ import { AdminView } from "./components/admin/AdminView";
 // Import user interface
 import { UserView } from "./components/user/UserView";
 import ProjectManager from "./components/ProjectManager";
-import { TestDataEnginePage } from "./components/TestDataEngine";
 import {
   saveUser,
   findUser,
@@ -76,67 +79,73 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showRegisterPasswordConfirm, setShowRegisterPasswordConfirm] = useState(false);
-  // Gère la connexion utilisateur
+  // Gère la connexion utilisateur (unifiée)
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (username.trim() === "") {
       setError("Identifiant requis.");
       return;
     }
-    if (AUTH_SANS_MDP) {
-      setLoading(true);
-      try {
-        // Auth sans mot de passe : on ignore le champ password
-        const user = await findUser(username, "");
-        setLoading(false);
-        if (user) {
-          setRole(user.role);
-          setUserTools(user.tools ?? []);
-          setStep("user");
-          setError("");
-        } else {
-          if (await userExists(username)) {
-            setError("Identifiant invalide.");
-          } else {
-            setShowRegisterPrompt(true);
-            setError("");
-          }
-        }
-      } catch (err: any) {
-        setLoading(false);
-        setError("Erreur de connexion au serveur.");
-      }
-      return;
-    }
-    // Auth classique avec mot de passe
-    if (password.trim() === "") {
+
+    const skipPasswordCheck = DEV_MODE;
+    if (!skipPasswordCheck && password.trim() === "") {
       setError("Mot de passe requis.");
       return;
     }
+
     setLoading(true);
     try {
-      const user = await findUser(username, password);
+      // In dev mode we still call the same endpoint but send an empty password if the user
+      // didn't provide one. The server is authoritative about whitelist/auto-create.
+      const sentPassword = skipPasswordCheck ? "" : password;
+      const user = await findUser(username, sentPassword);
       setLoading(false);
-      if (user) {
-        setRole(user.role);
-        setUserTools(user.tools ?? []);
-        setStep("user");
-        setError("");
-      } else {
-        // Si l'utilisateur n'existe pas, propose la création du compte
+      if (!user) {
         if (await userExists(username)) {
           setError("Identifiants invalides.");
         } else {
           setShowRegisterPrompt(true);
           setError("");
         }
+        return;
       }
+
+      console.debug('handleLogin: user payload:', user);
+  // Persist authenticated username then derive admin strictly from username
+  const resolvedUsername = user.username ?? username;
+  setUsername(resolvedUsername);
+  const isAdmin = resolvedUsername === 'admin';
+  setRole(isAdmin ? 'admin' : 'user');
+
+  if (isAdmin) {
+        // Admins shouldn't get user tools in the UI
+        setUserTools([]);
+        setStep('admin');
+        setError('');
+        return;
+      }
+
+      // For regular users, prefer the authoritative server record for tools
+      try {
+  const res = await fetch(`${getApiUrl()}/users/${resolvedUsername}`);
+        if (res.ok) {
+          const fresh = await res.json();
+          setUserTools(fresh.tools ?? user.tools ?? []);
+        } else {
+          setUserTools(user.tools ?? []);
+        }
+      } catch (e) {
+        setUserTools(user.tools ?? []);
+      }
+
+      setStep('user');
+      setError('');
     } catch (err: any) {
       setLoading(false);
-      if (err?.status === 403 || err?.message?.includes("non autorisé")) {
-        setError("Identifiant non autorisé. Veuillez contacter l'administrateur.");
+      if (err?.status === 403 || err?.message?.includes('non autorisé')) {
+        setError('Identifiant non autorisé. Veuillez contacter l\'administrateur.');
       } else {
-        setError("Erreur de connexion au serveur.");
+        setError('Erreur de connexion au serveur.');
       }
     }
   }
@@ -209,7 +218,7 @@ export default function App() {
               autoFocus
             />
           </div>
-          {!AUTH_SANS_MDP && (
+          {!DEV_MODE && (
             <div className="mb-3">
               <label className="block text-sm font-medium mb-1">Mot de passe</label>
               <div className="relative">
@@ -235,9 +244,9 @@ export default function App() {
           <button
             className="w-full py-2 rounded bg-black text-white font-bold"
             type="submit"
-            disabled={username.trim() === "" || (!AUTH_SANS_MDP && password.trim() === "") || loading}
+            disabled={username.trim() === "" || (!DEV_MODE && password.trim() === "") || loading}
           >
-            {loading ? "Connexion..." : AUTH_SANS_MDP ? "Connexion sans mot de passe" : "Se connecter"}
+            {loading ? "Connexion..." : DEV_MODE ? "Connexion sans mot de passe" : "Se connecter"}
           </button>
           <button
             className="w-full py-2 rounded bg-gray-200 mt-2"
@@ -245,13 +254,6 @@ export default function App() {
             onClick={() => { setStep("register"); setError(""); }}
           >
             Créer un compte
-          </button>
-          <button
-            className="w-full py-2 rounded bg-blue-500 text-white mt-2"
-            type="button"
-            onClick={() => setStep("test-engine")}
-          >
-            🚀 Test Architecture DataEngine
           </button>
         </form>
       </div>
@@ -391,11 +393,6 @@ export default function App() {
     );
   }
 
-  if (step === "test-engine") {
-    // Page de test pour la nouvelle architecture DataEngine
-    return <TestDataEnginePage />;
-  }
-
   if (step === "user") {
     // Vue principale utilisateur (symétrique à AdminView)
     return (
@@ -410,7 +407,15 @@ export default function App() {
           setShowProjectManager(true);
         }}
         onLogout={() => setStep("login")}
-        onOpenAdmin={() => setStep("admin")}
+        onOpenAdmin={async () => {
+          if (username === 'admin') {
+            setRole('admin');
+            setUserTools([]);
+            setStep('admin');
+          } else {
+            setError('Accès admin refusé. Vous n\'êtes pas administrateur.');
+          }
+        }}
       />
     );
   }

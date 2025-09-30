@@ -30,8 +30,18 @@ export function UserHome({
       </div>
 
       <div>
-        <button onClick={onOpenCalculatrice}>Ouvrir la calculatrice</button>
-        {role === "admin" && <button onClick={onOpenAdmin}>Admin Panel</button>}
+          {/* Only allow users (not admins) to open tools */}
+          {role === "user" ? (
+            <button
+              onClick={onOpenCalculatrice}
+              disabled={!userTools.includes("calculatrice")}
+            >
+              Ouvrir la calculatrice {userTools.includes("calculatrice") ? "" : "(non autorisé)"}
+            </button>
+          ) : (
+            <div className="text-sm text-gray-600">Les administrateurs ne peuvent pas utiliser les outils ici.</div>
+          )}
+          {role === "admin" && <button onClick={onOpenAdmin}>Admin Panel</button>}
         <button onClick={onLogout}>Se déconnecter</button>
       </div>
     </div>

@@ -19,7 +19,6 @@ Extraction complète de la logique métier de la calculatrice du package web ver
 ### packages/web/ - Interface utilisateur React
 ```
 ├── components/
-│   ├── TestCoreImport.tsx        ✅ Test integration core
 │   └── outils/calculatrice/
 │       ├── CalculatriceSimple.tsx ✅ UI moderne avec core
 │       ├── CalculatriceRoute.tsx  ✅ Navigation multi-versions

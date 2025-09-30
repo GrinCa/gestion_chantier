@@ -111,19 +111,15 @@ export function AdminPanel({
               <tr key={u.username} className="border-b">
                 <td className="py-2">{u.username}</td>
                 <td>
-                  <select
-                    value={u.role}
-                    onChange={(e) => onChangeRole(u.username, e.target.value as "admin" | "user")}
-                    disabled={u.username === currentUser}
-                    className="border rounded px-2 py-1"
-                  >
-                    <option value="user">Utilisateur</option>
-                    <option value="admin">Administrateur</option>
-                  </select>
+                  {u.username === 'admin' ? (
+                    <span className="px-2 py-1 inline-block text-sm font-semibold text-blue-700">Administrateur</span>
+                  ) : (
+                    <span className="px-2 py-1 inline-block text-sm">Utilisateur</span>
+                  )}
                 </td>
                 <td>
                   {/* N'affiche les outils que pour les users */}
-                  {u.role === "user" ? (
+                  {u.username !== 'admin' ? (
                     <div className="flex flex-col gap-1">
                       {TOOL_LIST.map((tool) => (
                         <label key={tool.key} className="flex items-center gap-1">
@@ -138,7 +134,7 @@ export function AdminPanel({
                       ))}
                     </div>
                   ) : (
-                    <span className="text-gray-400 italic">Tous les droits admin</span>
+                    <span className="text-gray-400 italic">Rôle admin (pas d'outils utilisateur)</span>
                   )}
                 </td>
                 <td>
